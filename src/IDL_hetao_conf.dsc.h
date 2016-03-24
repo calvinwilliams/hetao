@@ -106,7 +106,7 @@ typedef struct
 		char	wwwroot[ 1024 + 1 ] ;
 		char	index[ 1024 + 1 ] ;
 		char	access_log[ 256 + 1 ] ;
-		char	forward_rule[ 2 + 1 ] ;
+		char	forward_rule[ 1 + 1 ] ;
 		struct
 		{
 			struct
@@ -126,7 +126,7 @@ typedef struct
 			char	wwwroot[ 1024 + 1 ] ;
 			char	index[ 1024 + 1 ] ;
 			char	access_log[ 256 + 1 ] ;
-			char	forward_rule[ 2 + 1 ] ;
+			char	forward_rule[ 1 + 1 ] ;
 			struct
 			{
 				struct
@@ -150,6 +150,7 @@ typedef struct
 	{
 		int	compress_on ;
 		int	timeout ;
+		int	forward_disable ;
 	} http_options ;
 	struct
 	{

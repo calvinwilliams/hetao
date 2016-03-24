@@ -86,11 +86,12 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 		}
 		SetHttpCloseExec( p_virtualhost->access_log_fd );
 		
-		if( p_server->p_config->server.forward_servers._forward_server_count > 0 )
+		strncpy( p_virtualhost->forward_rule , p_server->p_config->server.forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
+		if( p_virtualhost->forward_rule[0] && p_server->p_config->server.forward_servers._forward_server_count > 0 )
 		{
 			struct ForwardServer	*p_forward_server = NULL ;
 			
-			INIT_LIST_HEAD( & (p_virtualhost->roundrobin_list) );
+			INIT_LIST_HEAD( & (p_virtualhost->roundrobin_list.roundrobin_node) );
 			
 			for( j = 0 ; j < p_server->p_config->server.forward_servers._forward_server_count ; j++ )
 			{
@@ -101,10 +102,11 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 					return -1;
 				}
 				memset( p_forward_server , 0x00 , sizeof(sizeof(struct ForwardServer)) );
-				strncpy( p_forward_server->ip , p_server->p_config->server.forward_servers.forward_server[j].ip , sizeof(p_forward_server->ip)-1 );
-				p_forward_server->port = p_server->p_config->server.forward_servers.forward_server[j].port ;
+				strncpy( p_forward_server->netaddr.ip , p_server->p_config->server.forward_servers.forward_server[j].ip , sizeof(p_forward_server->netaddr.ip)-1 );
+				p_forward_server->netaddr.port = p_server->p_config->server.forward_servers.forward_server[j].port ;
+				SETNETADDRESS( p_forward_server->netaddr )
 				
-				list_add_tail( & (p_forward_server->roundrobin_node) , & (p_virtualhost->roundrobin_list) );
+				list_add_tail( & (p_forward_server->roundrobin_node) , & (p_virtualhost->roundrobin_list.roundrobin_node) );
 				AddLeastConnectionCountTreeNode( p_virtualhost , p_forward_server );
 			}
 		}
@@ -151,11 +153,12 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 		}
 		SetHttpCloseExec( p_virtualhost->access_log_fd );
 		
-		if( p_server->p_config->servers.server[i].forward_servers._forward_server_count > 0 )
+		strncpy( p_virtualhost->forward_rule , p_server->p_config->servers.server[i].forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
+		if( p_virtualhost->forward_rule[0] && p_server->p_config->servers.server[i].forward_servers._forward_server_count > 0 )
 		{
 			struct ForwardServer	*p_forward_server = NULL ;
 			
-			INIT_LIST_HEAD( & (p_virtualhost->roundrobin_list) );
+			INIT_LIST_HEAD( & (p_virtualhost->roundrobin_list.roundrobin_node) );
 			
 			for( j = 0 ; j < p_server->p_config->servers.server[j].forward_servers._forward_server_count ; i++ )
 			{
@@ -166,10 +169,11 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 					return -1;
 				}
 				memset( p_forward_server , 0x00 , sizeof(sizeof(struct ForwardServer)) );
-				strncpy( p_forward_server->ip , p_server->p_config->servers.server[i].forward_servers.forward_server[j].ip , sizeof(p_forward_server->ip)-1 );
-				p_forward_server->port = p_server->p_config->servers.server[i].forward_servers.forward_server[j].port ;
+				strncpy( p_forward_server->netaddr.ip , p_server->p_config->servers.server[i].forward_servers.forward_server[j].ip , sizeof(p_forward_server->netaddr.ip)-1 );
+				p_forward_server->netaddr.port = p_server->p_config->servers.server[i].forward_servers.forward_server[j].port ;
+				SETNETADDRESS( p_forward_server->netaddr )
 				
-				list_add_tail( & (p_forward_server->roundrobin_node) , & (p_virtualhost->roundrobin_list) );
+				list_add_tail( & (p_forward_server->roundrobin_node) , & (p_virtualhost->roundrobin_list.roundrobin_node) );
 				AddLeastConnectionCountTreeNode( p_virtualhost , p_forward_server );
 			}
 		}
@@ -411,8 +415,8 @@ int SaveListenSockets( struct HetaoServer *p_server )
 	}
 	
 	/* 写入环境变量 */
-	InfoLog( __FILE__ , __LINE__ , "setenv[%s][%s]" , HTMLSERVER_LISTEN_SOCKFDS , env_value );
-	setenv( HTMLSERVER_LISTEN_SOCKFDS , env_value , 1 );
+	InfoLog( __FILE__ , __LINE__ , "setenv[%s][%s]" , HETAO_LISTEN_SOCKFDS , env_value );
+	setenv( HETAO_LISTEN_SOCKFDS , env_value , 1 );
 	
 	free( env_value );
 	
@@ -430,8 +434,8 @@ int LoadOldListenSockets( struct NetAddress **pp_old_netaddr_array , int *p_old_
 	
 	int				nret = 0 ;
 	
-	p_env_value = getenv( HTMLSERVER_LISTEN_SOCKFDS ) ;
-	InfoLog( __FILE__ , __LINE__ , "getenv[%s][%s]" , HTMLSERVER_LISTEN_SOCKFDS , p_env_value );
+	p_env_value = getenv( HETAO_LISTEN_SOCKFDS ) ;
+	InfoLog( __FILE__ , __LINE__ , "getenv[%s][%s]" , HETAO_LISTEN_SOCKFDS , p_env_value );
 	if( p_env_value )
 	{
 		p_env_value = strdup( p_env_value ) ;
@@ -463,7 +467,7 @@ int LoadOldListenSockets( struct NetAddress **pp_old_netaddr_array , int *p_old_
 					p_sockfd = strtok( NULL , "|" ) ;
 					if( p_sockfd == NULL )
 					{
-						ErrorLog( __FILE__ , __LINE__ , "env[%s][%s] invalid" , HTMLSERVER_LISTEN_SOCKFDS , p_env_value );
+						ErrorLog( __FILE__ , __LINE__ , "env[%s][%s] invalid" , HETAO_LISTEN_SOCKFDS , p_env_value );
 						free( p_env_value );
 						return -1;
 					}

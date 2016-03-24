@@ -24,7 +24,7 @@ STRUCT	hetao_conf
 		STRING	1024	wwwroot
 		STRING	1024	index
 		STRING	256	access_log
-		STRING	2	forward_rule
+		STRING	1	forward_rule
 		STRUCT	forward_servers
 		{
 			STRUCT	forward_server	ARRAY	1000
@@ -42,7 +42,7 @@ STRUCT	hetao_conf
 			STRING	1024	wwwroot
 			STRING	1024	index
 			STRING	256	access_log
-			STRING	2	forward_rule
+			STRING	1	forward_rule
 			STRUCT	forward_servers
 			{
 				STRUCT	forward_server	ARRAY	1000
@@ -64,6 +64,7 @@ STRUCT	hetao_conf
 	{
 		INT	4	compress_on
 		INT	4	timeout
+		INT	4	forward_disable
 	}
 	
 	STRUCT	error_pages

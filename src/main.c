@@ -10,12 +10,12 @@
 
 struct HetaoServer	*g_p_server = NULL ;
 
-char	__HTMLSERVER_VERSION_1_0_0[] = "1.0.0" ;
-char	*__HTMLSERVER_VERSION = __HTMLSERVER_VERSION_1_0_0 ;
+char	__HETAO_VERSION_0_1_0[] = "0.1.0" ;
+char	*__HETAO_VERSION = __HETAO_VERSION_0_1_0 ;
 
 static void usage()
 {
-	printf( "hetao v%s build %s %s\n" , __HTMLSERVER_VERSION , __DATE__ , __TIME__ );
+	printf( "hetao v%s build %s %s\n" , __HETAO_VERSION , __DATE__ , __TIME__ );
 	printf( "USAGE : hetao_in.hetao.conf\n" );
 	return;
 }
@@ -49,7 +49,7 @@ int main( int argc , char *argv[] )
 		p_server->p_config = (hetao_conf *)malloc( sizeof(hetao_conf) ) ;
 		if( p_server->p_config == NULL )
 		{
-			if( getenv( HTMLSERVER_LISTEN_SOCKFDS ) == NULL )
+			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
 				printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
 			return 1;
 		}
@@ -57,7 +57,7 @@ int main( int argc , char *argv[] )
 		nret = LoadConfig( p_server->config_pathfilename , p_server ) ;
 		if( nret )
 		{
-			if( getenv( HTMLSERVER_LISTEN_SOCKFDS ) == NULL )
+			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
 				printf( "Load config failed[%d]\n" , nret );
 			return -nret;
 		}
@@ -70,14 +70,14 @@ int main( int argc , char *argv[] )
 		SETPID
 		SETTID
 		UPDATEDATETIMECACHEFIRST
-		InfoLog( __FILE__ , __LINE__ , "--- hetao v%s build %s %s ---" , __HTMLSERVER_VERSION , __DATE__ , __TIME__ );
+		InfoLog( __FILE__ , __LINE__ , "--- hetao v%s build %s %s ---" , __HETAO_VERSION , __DATE__ , __TIME__ );
 		SetHttpCloseExec( g_file_fd );
 		
 		/* 初始化服务器环境 */
 		nret = InitServerEnvirment( p_server ) ;
 		if( nret )
 		{
-			if( getenv( HTMLSERVER_LISTEN_SOCKFDS ) == NULL )
+			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
 				printf( "Init envirment failed[%d]\n" , nret );
 			return -nret;
 		}

@@ -193,6 +193,17 @@ int LoadConfig( char *config_pathfilename , struct HetaoServer *p_server )
 	if( nret )
 		return nret;
 	
+	if( p_server->p_config->server.forward_rule[0] )
+	{
+		if( STRCMP( p_server->p_config->server.forward_rule , != , FORWARD_RULE_ROUNDROBIN )
+			&& STRCMP( p_server->p_config->server.forward_rule , != , FORWARD_RULE_LEASTCONNECTION )
+		)
+		{
+			ErrorLog( __FILE__ , __LINE__ , "p_server->p_config->server.forward_rule[%s] invalid" , p_server->p_config->server.forward_rule );
+			return -1;
+		}
+	}
+	
 	for( i = 0 ; i < p_server->p_config->servers._server_count ; i++ )
 	{
 		nret = StringExpandEnvval( p_server->p_config->servers.server[i].wwwroot , sizeof(p_server->p_config->servers.server[i].wwwroot) ) ;
@@ -209,6 +220,17 @@ int LoadConfig( char *config_pathfilename , struct HetaoServer *p_server )
 		nret = StringExpandEnvval( p_server->p_config->servers.server[i].access_log , sizeof(p_server->p_config->servers.server[i].access_log) ) ;
 		if( nret )
 			return nret;
+		
+		if( p_server->p_config->servers.server[i].forward_rule[0] )
+		{
+			if( STRCMP( p_server->p_config->servers.server[i].forward_rule , != , FORWARD_RULE_ROUNDROBIN )
+				&& STRCMP( p_server->p_config->servers.server[i].forward_rule , != , FORWARD_RULE_LEASTCONNECTION )
+			)
+			{
+				ErrorLog( __FILE__ , __LINE__ , "p_server->p_config->server.forward_rule[%s] invalid" , p_server->p_config->servers.server[i].forward_rule );
+				return -1;
+			}
+		}
 	}
 	
 	/* 设置个性化页面信息 */

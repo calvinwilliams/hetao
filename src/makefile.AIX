@@ -35,6 +35,7 @@ c_FILE		=	\
 			rbtree.c \
 			list.c \
 			fasterjson.c \
+			fasterhttp.c \
 			main.c \
 			MonitorProcess.c \
 			WorkerProcess.c \
@@ -57,18 +58,10 @@ c_FILE		=	\
 			MimeTypeHash.c \
 			ProcessHttpRequest.c \
 
-c_FILE2		=	\
-			fasterhttp.c \
-
 ###### 目标文件、安装目录配置区
 include makeinstall
 BIN		=	hetao
 BININST		=	$(_BININST)
-LIB		=	libhetao.so
-LIBINST		=	$(_LIBINST)
-HDER		=	fasterhttp.h \
-			hetao.h
-HDERINST	=	$(_HDERINST)
 
 ###### 编译选项
 CFLAGS		=	$(_CFLAGS) \
@@ -249,7 +242,4 @@ uninstall		:
 ###### 目标文件依赖关系
 hetao		:	$(c_FILE_o) $(c_FILE2_o)
 	$(CC) -o $@ $(c_FILE_o) $(c_FILE2_o) $(LFLAGS)
-
-libhetao.so	:	$(c_FILE2_o)
-	$(CC) -o $@ $(c_FILE2_o) $(SOFLAGS) $(LFLAGS)
 

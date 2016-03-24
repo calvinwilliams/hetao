@@ -255,20 +255,41 @@ void *WorkerThread( void *pv )
 					/* HTTP接收事件。如果接收完成，则马上处理 */
 					DebugLog( __FILE__ , __LINE__ , "EPOLLIN" );
 					
-					nret = OnReceivingSocket( p_server , p_http_session ) ;
-					if( nret > 0 )
+					if( p_http_session->forward_flag == 0 )
 					{
-						DebugLog( __FILE__ , __LINE__ , "OnReceivingSocket done[%d]" , nret );
-						SetHttpSessionUnused( p_server , p_http_session );
-					}
-					else if( nret < 0 )
-					{
-						ErrorLog( __FILE__ , __LINE__ , "OnReceivingSocket failed[%d] , errno[%d]" , nret , errno );
-						return NULL;
+						nret = OnReceivingSocket( p_server , p_http_session ) ;
+						if( nret > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnReceivingSocket done[%d]" , nret );
+							SetHttpSessionUnused( p_server , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnReceivingSocket failed[%d] , errno[%d]" , nret , errno );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnReceivingSocket ok" );
+						}
 					}
 					else
 					{
-						DebugLog( __FILE__ , __LINE__ , "OnReceivingSocket ok" );
+						nret = OnReceivingForward( p_server , p_http_session ) ;
+						if( nret > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnReceivingForward done[%d]" , nret );
+							SetHttpSessionUnused( p_server , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnReceivingForward failed[%d] , errno[%d]" , nret , errno );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnReceivingForward ok" );
+						}
 					}
 				}
 				else if( p_event->events & EPOLLOUT )
@@ -276,20 +297,62 @@ void *WorkerThread( void *pv )
 					/* HTTP发送事件。如果设置了Keep-Alive则等待下一个HTTP请求 */
 					DebugLog( __FILE__ , __LINE__ , "EPOLLOUT" );
 					
-					nret = OnSendingSocket( p_server , p_http_session ) ;
-					if( nret > 0 )
+					if( p_http_session->forward_flag == 0 )
 					{
-						DebugLog( __FILE__ , __LINE__ , "OnSendingSocket done[%d]" , nret );
-						SetHttpSessionUnused( p_server , p_http_session );
-					}
-					else if( nret < 0 )
-					{
-						ErrorLog( __FILE__ , __LINE__ , "OnSendingSocket failed[%d] , errno[%d]" , nret , errno );
-						return NULL;
+						nret = OnSendingSocket( p_server , p_http_session ) ;
+						if( nret > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnSendingSocket done[%d]" , nret );
+							SetHttpSessionUnused( p_server , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnSendingSocket failed[%d] , errno[%d]" , nret , errno );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnSendingSocket ok" );
+						}
 					}
 					else
 					{
-						DebugLog( __FILE__ , __LINE__ , "OnSendingSocket ok" );
+						if( p_http_session->connected_flag == 1 )
+						{
+							nret = OnSendingForward( p_server , p_http_session ) ;
+							if( nret > 0 )
+							{
+								DebugLog( __FILE__ , __LINE__ , "OnSendingForward done[%d]" , nret );
+								SetHttpSessionUnused( p_server , p_http_session );
+							}
+							else if( nret < 0 )
+							{
+								ErrorLog( __FILE__ , __LINE__ , "OnSendingForward failed[%d] , errno[%d]" , nret , errno );
+								return NULL;
+							}
+							else
+							{
+								DebugLog( __FILE__ , __LINE__ , "OnSendingForward ok" );
+							}
+						}
+						else
+						{
+							nret = OnConnectingForward( p_server , p_http_session ) ;
+							if( nret > 0 )
+							{
+								DebugLog( __FILE__ , __LINE__ , "OnConnectingForward done[%d]" , nret );
+								SetHttpSessionUnused( p_server , p_http_session );
+							}
+							else if( nret < 0 )
+							{
+								ErrorLog( __FILE__ , __LINE__ , "OnConnectingForward failed[%d] , errno[%d]" , nret , errno );
+								return NULL;
+							}
+							else
+							{
+								DebugLog( __FILE__ , __LINE__ , "OnConnectingForward ok" );
+							}
+						}
 					}
 				}
 				else if( p_event->events & EPOLLERR )

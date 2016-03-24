@@ -37,6 +37,9 @@ int IncreaseHttpSessions( struct HetaoServer *p_server , int http_session_incre_
 	{
 		p_http_session->http = CreateHttpEnv() ;
 		SetHttpTimeout( p_http_session->http , p_server->p_config->http_options.timeout );
+		p_http_session->forward_http = CreateHttpEnv() ;
+		SetHttpTimeout( p_http_session->forward_http , p_server->p_config->http_options.timeout );
+		
 		list_add_tail( & (p_http_session->list) , & (p_server->http_session_unused_list.list) );
 		DebugLog( __FILE__ , __LINE__ , "init http session[%p] http env[%p]" , p_http_session , p_http_session->http );
 	}
@@ -89,9 +92,17 @@ void SetHttpSessionUnused( struct HetaoServer *p_server , struct HttpSession *p_
 	/* 清理HTTP通讯会话 */
 	epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->netaddr.sock , NULL );
 	close( p_http_session->netaddr.sock );
-	p_http_session->p_forward_server = NULL ;
 	ResetHttpEnv( p_http_session->http );
 	p_http_session->p_virtualhost = NULL ;
+	
+	p_http_session->p_forward_server = NULL ;
+	if( p_http_session->forward_flag == 1 )
+	{
+		close( p_http_session->forward_sock );
+	}
+	ResetHttpEnv( p_http_session->forward_http );
+	p_http_session->forward_flag = 0 ;
+	p_http_session->connected_flag = 0 ;
 	
 	/* 把当前工作HTTP通讯会话移到空闲HTTP通讯会话链表中 */
 	RemoveHttpSessionTimeoutTreeNode( p_server , p_http_session );

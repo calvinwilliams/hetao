@@ -11,7 +11,7 @@
 
 #include "fasterhttp.h"
 
-extern char		*__HTMLSERVER_VERSION ;
+extern char		*__HETAO_VERSION ;
 
 typedef int funcHSProcessHttpRequest( struct HttpUri *p_httpuri , struct HttpEnv *p_httpenv );
 

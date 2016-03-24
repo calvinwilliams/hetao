@@ -6,9 +6,10 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-#ifndef _H_HTMLSERVER_IN_
-#define _H_HTMLSERVER_IN_
+#ifndef _H_HETAO_IN_
+#define _H_HETAO_IN_
 
+#if ( defined __linux ) || ( defined __unix )
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +34,62 @@
 #include <sched.h>
 #include <pthread.h>
 #include <dlfcn.h>
+#define _VSNPRINTF			vsnprintf
+#define _SNPRINTF			snprintf
+#define _CLOSESOCKET			close
+#define _CLOSESOCKET2(_fd1_,_fd2_)	close(_fd1_),close(_fd2_);
+#define _ERRNO				errno
+#define _EWOULDBLOCK			EWOULDBLOCK
+#define _ECONNABORTED			ECONNABORTED
+#define _EINPROGRESS			EINPROGRESS
+#define _ECONNRESET			ECONNRESET
+#define _ENOTCONN			ENOTCONN
+#define _EISCONN			EISCONN
+#define _SOCKLEN_T			socklen_t
+#define _GETTIMEOFDAY(_tv_)		gettimeofday(&(_tv_),NULL)
+#define _LOCALTIME(_tt_,_stime_) \
+	localtime_r(&(_tt_),&(_stime_));
+#elif ( defined _WIN32 )
+#include <stdio.h>
+#include <time.h>
+#include <sys/types.h>
+#include <io.h>
+#include <windows.h>
+#define _VSNPRINTF			_vsnprintf
+#define _SNPRINTF			_snprintf
+#define _CLOSESOCKET			closesocket
+#define _CLOSESOCKET2(_fd1_,_fd2_)	closesocket(_fd1_),closesocket(_fd2_);
+#define _ERRNO				GetLastError()
+#define _EWOULDBLOCK			WSAEWOULDBLOCK
+#define _ECONNABORTED			WSAECONNABORTED
+#define _EINPROGRESS			WSAEINPROGRESS
+#define _ECONNRESET			WSAECONNRESET
+#define _ENOTCONN			WSAENOTCONN
+#define _EISCONN			WSAEISCONN
+#define _SOCKLEN_T			int
+#define _GETTIMEOFDAY(_tv_) \
+	{ \
+		SYSTEMTIME stNow ; \
+		GetLocalTime( & stNow ); \
+		(_tv_).tv_usec = stNow.wMilliseconds * 1000 ; \
+		time( & ((_tv_).tv_sec) ); \
+	}
+#define _SYSTEMTIME2TIMEVAL_USEC(_syst_,_tv_) \
+		(_tv_).tv_usec = (_syst_).wMilliseconds * 1000 ;
+#define _SYSTEMTIME2TM(_syst_,_stime_) \
+		(_stime_).tm_year = (_syst_).wYear - 1900 ; \
+		(_stime_).tm_mon = (_syst_).wMonth - 1 ; \
+		(_stime_).tm_mday = (_syst_).wDay ; \
+		(_stime_).tm_hour = (_syst_).wHour ; \
+		(_stime_).tm_min = (_syst_).wMinute ; \
+		(_stime_).tm_sec = (_syst_).wSecond ;
+#define _LOCALTIME(_tt_,_stime_) \
+	{ \
+		SYSTEMTIME	stNow ; \
+		GetLocalTime( & stNow ); \
+		_SYSTEMTIME2TM( stNow , (_stime_) ); \
+	}
+#endif
 
 #include "fasterhttp.h"
 #include "LOGC.h"
@@ -43,7 +100,7 @@
 
 #include "hetao.h"
 
-#define HTMLSERVER_LISTEN_SOCKFDS		"HTMLSERVER_LISTEN_SOCKFDS"	/* 环境变量名，用于优雅重启时传给下一辈侦听信息 */
+#define HETAO_LISTEN_SOCKFDS			"HETAO_LISTEN_SOCKFDS"	/* 环境变量名，用于优雅重启时传给下一辈侦听信息 */
 
 #define MAX_EPOLL_EVENTS			10000	/* 每次从epoll取回事件数量 */
 
@@ -58,6 +115,21 @@
 #define DATASESSION_TYPE_HTTP			'A'
 
 #define SIGNAL_REOPEN_LOG			'L' /* 重新打开日志 */
+
+/* 负载均衡规则 */
+#define FORWARD_RULE_ROUNDROBIN			"B"
+#define FORWARD_RULE_LEASTCONNECTION		"L"
+
+/* 功能宏 */
+#define SETNETADDRESS(_netaddr_) \
+	memset( & ((_netaddr_).addr) , 0x00 , sizeof(struct sockaddr_in) ); \
+	(_netaddr_).addr.sin_family = AF_INET ; \
+	(_netaddr_).addr.sin_addr.s_addr = inet_addr((_netaddr_).ip) ; \
+	(_netaddr_).addr.sin_port = htons( (unsigned short)((_netaddr_).port) );
+
+#define GETNETADDRESS(_netaddr_) \
+	strcpy( (_netaddr_).ip , inet_ntoa((_netaddr_).addr.sin_addr) ); \
+	(_netaddr_).port = (int)ntohs( (_netaddr_).addr.sin_port ) ;
 
 /* 网络信息结构 */
 struct NetAddress
@@ -98,8 +170,9 @@ struct MimeType
 /* 转发服务器结构 */
 struct ForwardServer
 {
-	char			ip[ sizeof( ((hetao_conf*)0)->listen.ip ) ] ;
-	int			port ;
+	time_t			timestamp_to_valid ;
+	
+	struct NetAddress	netaddr ;
 	
 	int			connection_count ;
 	
@@ -118,10 +191,32 @@ struct VirtualHost
 	int			domain_len ;
 	int			access_log_fd ;
 	
-	struct list_head	roundrobin_list ;
+	char			forward_rule[ sizeof( ((hetao_conf*)0)->server.forward_rule ) ] ;
+	struct ForwardServer	roundrobin_list ;
 	struct rb_root		leastconnection_rbtree ;
 	
 	struct hlist_node	virtualhost_node ;
+} ;
+
+/* HTTP通讯会话 */
+struct HttpSession
+{
+	char			type ;
+	
+	struct NetAddress	netaddr ;
+	struct VirtualHost	*p_virtualhost ;
+	struct HttpEnv		*http ;
+	
+	struct ForwardServer	*p_forward_server ;
+	SOCKET			forward_sock ;
+	struct HttpEnv		*forward_http ;
+	char			forward_flag ;
+	char			connected_flag ;
+	
+	int			timeout_timestamp ;
+	struct rb_node		timeout_rbnode ;
+	
+	struct list_head	list ;
 } ;
 
 /* 网页缓存会话结构 */
@@ -147,25 +242,6 @@ struct HtmlCacheSession
 	struct list_head	list ;
 } ;
 
-/* HTTP通讯会话 */
-struct HttpSession
-{
-	char			type ;
-	
-	struct NetAddress	netaddr ;
-	struct VirtualHost	*p_virtualhost ;
-	struct HttpEnv		*http ;
-	
-	struct ForwardServer	*p_forward_server ;
-	SOCKET			sock ;
-	struct sockaddr_in	addr ;
-	
-	int			timeout_timestamp ;
-	struct rb_node		timeout_rbnode ;
-	
-	struct list_head	list ;
-} ;
-
 /* 工作进程共享信息结构 */
 struct ProcessInfo
 {
@@ -176,10 +252,6 @@ struct ProcessInfo
 	int			epoll_fd ;
 	int			epoll_nfds ;
 } ;
-
-struct HetaoServer ;
-
-#define HSPROCESSHTTPREQUEST		"HSProcessHttpRequest"
 
 /* 主环境结构 */
 struct HetaoServer
@@ -224,7 +296,7 @@ struct HetaoServer
 extern struct HetaoServer	*g_p_server ;
 extern signed char		g_second_elapse ;
 
-extern char			*__HTMLSERVER_VERSION ;
+extern char			*__HETAO_VERSION ;
 
 int InitMimeTypeHash( struct HetaoServer *p_server );
 void CleanMimeTypeHash( struct HetaoServer *p_server );
@@ -288,6 +360,12 @@ int BindCpuAffinity( int processor_no );
 unsigned long CalcHash( char *str , int len );
 
 int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_http_session , char *pathname , char *filename , int filename_len );
+
+int SelectForwardAddress( struct HetaoServer *p_server , struct HttpSession *p_http_session );
+int ConnectForwardServer( struct HetaoServer *p_server , struct HttpSession *p_http_session );
+int OnConnectingForward( struct HetaoServer *p_server , struct HttpSession *p_http_session );
+int OnSendingForward( struct HetaoServer *p_server , struct HttpSession *p_http_session );
+int OnReceivingForward( struct HetaoServer *p_server , struct HttpSession *p_http_session );
 
 #endif
 

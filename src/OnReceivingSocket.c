@@ -8,8 +8,6 @@
 
 #include "hetao_in.h"
 
-//static char	buf[ 3978 + 1 ] = "" ;
-
 int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http_session )
 {
 	struct epoll_event	event ;
@@ -77,29 +75,73 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 		{
 			DebugLog( __FILE__ , __LINE__ , "QueryVirtualHostHashNode[%.*s] ok , wwwroot[%s]" , host_len , host , p_http_session->p_virtualhost->wwwroot );
 			
-			/* 先格式化响应头首行，用成功状态码 */
-			nret = FormatHttpResponseStartLine( HTTP_OK , p_http_session->http , 0 ) ;
-			if( nret )
+			if( p_http_session->p_virtualhost->forward_rule[0] == 0 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
-				return 1;
-			}
-			
-			/* 处理HTTP请求 */
-			nret = ProcessHttpRequest( p_server , p_http_session , p_http_session->p_virtualhost->wwwroot , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , GetHttpHeaderLen_URI(p_http_session->http) ) ;
-			if( nret != HTTP_OK )
-			{
-				/* 格式化响应头和体，用出错状态码 */
-				nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
+				/* 先格式化响应头首行，用成功状态码 */
+				nret = FormatHttpResponseStartLine( HTTP_OK , p_http_session->http , 0 ) ;
 				if( nret )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
 					return 1;
 				}
+				
+				/* 处理HTTP请求 */
+				nret = ProcessHttpRequest( p_server , p_http_session , p_http_session->p_virtualhost->wwwroot , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , GetHttpHeaderLen_URI(p_http_session->http) ) ;
+				if( nret != HTTP_OK )
+				{
+					/* 格式化响应头和体，用出错状态码 */
+					nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
+					if( nret )
+					{
+						ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
+						return 1;
+					}
+				}
+				else
+				{
+					DebugLog( __FILE__ , __LINE__ , "ProcessHttpRequest ok" );
+				}
 			}
 			else
 			{
-				DebugLog( __FILE__ , __LINE__ , "ProcessHttpRequest ok" );
+				/* 选择转发服务端 */
+				nret = SelectForwardAddress( p_server , p_http_session ) ;
+				if( nret )
+				{
+					ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , errno );
+					
+					/* 格式化响应头和体，用出错状态码 */
+					nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
+					if( nret )
+					{
+						ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
+						return 1;
+					}
+				}
+				else
+				{
+					/* 连接转发服务端 */
+					nret = ConnectForwardServer( p_server , p_http_session ) ;
+					if( nret )
+					{
+						ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , errno );
+						
+						/* 格式化响应头和体，用出错状态码 */
+						nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
+						if( nret )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
+							return 1;
+						}
+					}
+					else
+					{
+						/* 暂禁原连接事件 */
+						p_http_session->forward_flag = 1 ;
+						epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->netaddr.sock , NULL );
+						return 0;
+					}
+				}
 			}
 		}
 		else

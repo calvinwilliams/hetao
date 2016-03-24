@@ -237,7 +237,7 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 									"Content-Length: %d\r\n"
 									"%s"
 									"\r\n"
-									, __HTMLSERVER_VERSION
+									, __HETAO_VERSION
 									, p_mimetype->mime
 									, p_htmlcache_session->html_gzip_content_len
 									, CheckHttpKeepAlive(p_http_session->http)?"Connection: Keep-Alive\r\n":"" ) ;
@@ -287,7 +287,7 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 									"Content-Length: %d\r\n"
 									"%s"
 									"\r\n"
-									, __HTMLSERVER_VERSION
+									, __HETAO_VERSION
 									, p_mimetype->mime
 									, p_htmlcache_session->html_deflate_content_len
 									, CheckHttpKeepAlive(p_http_session->http)?"Connection: Keep-Alive\r\n":"" ) ;
@@ -319,7 +319,7 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 							"Content-Length: %d\r\n"
 							"%s"
 							"\r\n"
-							, __HTMLSERVER_VERSION
+							, __HETAO_VERSION
 							, p_mimetype->mime
 							, p_htmlcache_session->html_content_len
 							, CheckHttpKeepAlive(p_http_session->http)?"Connection: Keep-Alive\r\n":"" ) ;
