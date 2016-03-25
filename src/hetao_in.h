@@ -124,7 +124,10 @@
 #define SETNETADDRESS(_netaddr_) \
 	memset( & ((_netaddr_).addr) , 0x00 , sizeof(struct sockaddr_in) ); \
 	(_netaddr_).addr.sin_family = AF_INET ; \
-	(_netaddr_).addr.sin_addr.s_addr = inet_addr((_netaddr_).ip) ; \
+	if( (_netaddr_).ip[0] == '\0' ) \
+		(_netaddr_).addr.sin_addr.s_addr = INADDR_ANY ; \
+	else \
+		(_netaddr_).addr.sin_addr.s_addr = inet_addr((_netaddr_).ip) ; \
 	(_netaddr_).addr.sin_port = htons( (unsigned short)((_netaddr_).port) );
 
 #define GETNETADDRESS(_netaddr_) \
@@ -191,6 +194,8 @@ struct VirtualHost
 	int			domain_len ;
 	int			access_log_fd ;
 	
+	char			forward_type[ sizeof( ((hetao_conf*)0)->server.forward_type ) ] ;
+	int			forward_type_len ;
 	char			forward_rule[ sizeof( ((hetao_conf*)0)->server.forward_rule ) ] ;
 	struct ForwardServer	roundrobin_list ;
 	struct rb_root		leastconnection_rbtree ;
@@ -199,19 +204,22 @@ struct VirtualHost
 } ;
 
 /* HTTP通讯会话 */
+#define HTTPSESSION_FLAGS_CONNECTING	0x0001
+#define HTTPSESSION_FLAGS_CONNECTED	0x0002
+
 struct HttpSession
 {
 	char			type ;
 	
 	struct NetAddress	netaddr ;
 	struct VirtualHost	*p_virtualhost ;
+	struct HttpUri		http_uri ;
 	struct HttpEnv		*http ;
 	
+	int			forward_flags ;
 	struct ForwardServer	*p_forward_server ;
 	SOCKET			forward_sock ;
 	struct HttpEnv		*forward_http ;
-	char			forward_flag ;
-	char			connected_flag ;
 	
 	int			timeout_timestamp ;
 	struct rb_node		timeout_rbnode ;

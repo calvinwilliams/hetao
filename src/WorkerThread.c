@@ -255,7 +255,7 @@ void *WorkerThread( void *pv )
 					/* HTTP接收事件。如果接收完成，则马上处理 */
 					DebugLog( __FILE__ , __LINE__ , "EPOLLIN" );
 					
-					if( p_http_session->forward_flag == 0 )
+					if( p_http_session->forward_flags == 0 )
 					{
 						nret = OnReceivingSocket( p_server , p_http_session ) ;
 						if( nret > 0 )
@@ -297,7 +297,7 @@ void *WorkerThread( void *pv )
 					/* HTTP发送事件。如果设置了Keep-Alive则等待下一个HTTP请求 */
 					DebugLog( __FILE__ , __LINE__ , "EPOLLOUT" );
 					
-					if( p_http_session->forward_flag == 0 )
+					if( p_http_session->forward_flags == 0 )
 					{
 						nret = OnSendingSocket( p_server , p_http_session ) ;
 						if( nret > 0 )
@@ -317,7 +317,7 @@ void *WorkerThread( void *pv )
 					}
 					else
 					{
-						if( p_http_session->connected_flag == 1 )
+						if( p_http_session->forward_flags & HTTPSESSION_FLAGS_CONNECTED )
 						{
 							nret = OnSendingForward( p_server , p_http_session ) ;
 							if( nret > 0 )
@@ -335,7 +335,7 @@ void *WorkerThread( void *pv )
 								DebugLog( __FILE__ , __LINE__ , "OnSendingForward ok" );
 							}
 						}
-						else
+						else if( p_http_session->forward_flags & HTTPSESSION_FLAGS_CONNECTING )
 						{
 							nret = OnConnectingForward( p_server , p_http_session ) ;
 							if( nret > 0 )
@@ -359,14 +359,38 @@ void *WorkerThread( void *pv )
 				{
 					DebugLog( __FILE__ , __LINE__ , "EPOLLERR" );
 					
-					ErrorLog( __FILE__ , __LINE__ , "accept_sock epoll EPOLLERR" );
-					SetHttpSessionUnused( p_server , p_http_session );
+					if( p_http_session->forward_flags == 0 )
+					{
+						ErrorLog( __FILE__ , __LINE__ , "http sock epoll EPOLLERR" );
+						SetHttpSessionUnused( p_server , p_http_session );
+					}
+					else
+					{
+						if( p_http_session->forward_flags & HTTPSESSION_FLAGS_CONNECTING )
+						{
+							nret = OnConnectingForward( p_server , p_http_session ) ;
+							if( nret > 0 )
+							{
+								DebugLog( __FILE__ , __LINE__ , "OnConnectingForward done[%d]" , nret );
+								SetHttpSessionUnused( p_server , p_http_session );
+							}
+							else if( nret < 0 )
+							{
+								ErrorLog( __FILE__ , __LINE__ , "OnConnectingForward failed[%d] , errno[%d]" , nret , errno );
+								return NULL;
+							}
+							else
+							{
+								DebugLog( __FILE__ , __LINE__ , "OnConnectingForward ok" );
+							}
+						}
+					}
 				}
 				else
 				{
 					DebugLog( __FILE__ , __LINE__ , "EPOLL?" );
 					
-					ErrorLog( __FILE__ , __LINE__ , "accept_sock epoll event invalid[%d]" , p_event->events );
+					ErrorLog( __FILE__ , __LINE__ , "http sock epoll event invalid[%d]" , p_event->events );
 					SetHttpSessionUnused( p_server , p_http_session );
 				}
 			}

@@ -24,6 +24,7 @@ STRUCT	hetao_conf
 		STRING	1024	wwwroot
 		STRING	1024	index
 		STRING	256	access_log
+		STRING	16	forward_type
 		STRING	1	forward_rule
 		STRUCT	forward_servers
 		{
@@ -42,6 +43,7 @@ STRUCT	hetao_conf
 			STRING	1024	wwwroot
 			STRING	1024	index
 			STRING	256	access_log
+			STRING	16	forward_type
 			STRING	1	forward_rule
 			STRUCT	forward_servers
 			{

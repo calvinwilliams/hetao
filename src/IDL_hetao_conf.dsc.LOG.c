@@ -28,6 +28,7 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.wwwroot[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.wwwroot );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.index[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.index );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.access_log[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.access_log );
+		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward_type[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward_type );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward_rule[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward_rule );
 				PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward_servers._forward_server_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward_servers._forward_server_count );
 				for( index[3] = 0 ; index[3] < pst->server.forward_servers._forward_server_count ; index[3]++ )
@@ -42,6 +43,7 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 			PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].wwwroot[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].wwwroot );
 			PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].index[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].index );
 			PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].access_log[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].access_log );
+			PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward_type[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward_type );
 			PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward_rule[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward_rule );
 					PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward_servers._forward_server_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward_servers._forward_server_count );
 					for( index[4] = 0 ; index[4] < pst->servers.server[index[2]].forward_servers._forward_server_count ; index[4]++ )

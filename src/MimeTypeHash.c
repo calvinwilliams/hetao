@@ -60,7 +60,6 @@ int PushMimeTypeHashNode( struct HetaoServer *p_server , struct MimeType *p_mime
 	struct MimeType		*p ;
 	
 	index = CalcHash(p_mimetype->type,p_mimetype->type_len) % (p_server->mimetype_hashsize) ;
-	DebugLog( __FILE__ , __LINE__ , "MimeType[%d]=CalcHash[%.*s][%d]" , index , p_mimetype->type_len , p_mimetype->type , p_server->mimetype_hashsize );
 	p_hlist_head = p_server->mimetype_hash + index ;
 	hlist_for_each_entry( p , p_hlist_head , mimetype_node )
 	{

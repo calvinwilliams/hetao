@@ -59,7 +59,6 @@ static int CompressData( char *html_content , int html_content_len , int compres
 
 int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_http_session , char *pathname , char *filename , int filename_len )
 {
-	struct HttpUri		http_uri ;
 	struct MimeType		*p_mimetype = NULL ;
 	
 	char			pathfilename[ 1024 + 1 ] ;
@@ -75,19 +74,11 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 	
 	int			nret = 0 ;
 	
-	memset( & http_uri , 0x00 , sizeof(struct HttpUri) );
-	nret = SplitHttpUri( pathname , filename , filename_len , & http_uri ) ;
-	if( nret )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "SplitHttpUri failed[%d] , errno[%d]" , nret , errno );
-		return HTTP_BAD_REQUEST;
-	}
-	
 	/* 查询流类型 */
-	p_mimetype = QueryMimeTypeHashNode( p_server , http_uri.ext_filename_base , http_uri.ext_filename_len ) ;
+	p_mimetype = QueryMimeTypeHashNode( p_server , p_http_session->http_uri.ext_filename_base , p_http_session->http_uri.ext_filename_len ) ;
 	if( p_mimetype == NULL )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "QueryMimeTypeHashNode[%.*s] failed[%d]" , http_uri.ext_filename_len , http_uri.ext_filename_base , nret );
+		ErrorLog( __FILE__ , __LINE__ , "QueryMimeTypeHashNode[%.*s] failed[%d]" , p_http_session->http_uri.ext_filename_len , p_http_session->http_uri.ext_filename_base , nret );
 		return HTTP_FORBIDDEN;
 	}
 	

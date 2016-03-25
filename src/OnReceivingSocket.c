@@ -63,6 +63,7 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 		b = GetHttpRequestBuffer(p_http_session->http) ;
 		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpRequestBuffer" );
 		
+		/* 查询虚拟主机 */
 		host = QueryHttpHeaderPtr( p_http_session->http , "Host" , & host_len ) ;
 		if( host == NULL )
 			host = "" , host_len = 0 ;
@@ -71,11 +72,25 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 		{
 			p_http_session->p_virtualhost = p_server->p_virtualhost_default ;
 		}
+		
+		/* 分解URI */
+		memset( & (p_http_session->http_uri) , 0x00 , sizeof(struct HttpUri) );
+		nret = SplitHttpUri( p_http_session->p_virtualhost->wwwroot , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , GetHttpHeaderLen_URI(p_http_session->http) , & (p_http_session->http_uri) ) ;
+		if( nret )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "SplitHttpUri failed[%d] , errno[%d]" , nret , errno );
+			return HTTP_BAD_REQUEST;
+		}
+		
+		/* 处理HTTP请求 */
 		if( p_http_session->p_virtualhost )
 		{
 			DebugLog( __FILE__ , __LINE__ , "QueryVirtualHostHashNode[%.*s] ok , wwwroot[%s]" , host_len , host , p_http_session->p_virtualhost->wwwroot );
 			
-			if( p_http_session->p_virtualhost->forward_rule[0] == 0 )
+			if( p_http_session->http_uri.ext_filename_len != p_http_session->p_virtualhost->forward_type_len
+				|| MEMCMP( p_http_session->http_uri.ext_filename_base , != , p_http_session->p_virtualhost->forward_type , p_http_session->http_uri.ext_filename_len )
+				|| p_http_session->p_virtualhost->forward_rule[0] == 0
+				|| p_server->virtualhost_count <= 0 )
 			{
 				/* 先格式化响应头首行，用成功状态码 */
 				nret = FormatHttpResponseStartLine( HTTP_OK , p_http_session->http , 0 ) ;
@@ -106,23 +121,25 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 			{
 				/* 选择转发服务端 */
 				nret = SelectForwardAddress( p_server , p_http_session ) ;
-				if( nret )
-				{
-					ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , errno );
-					
-					/* 格式化响应头和体，用出错状态码 */
-					nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
-					if( nret )
-					{
-						ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
-						return 1;
-					}
-				}
-				else
+				if( nret == 0 )
 				{
 					/* 连接转发服务端 */
 					nret = ConnectForwardServer( p_server , p_http_session ) ;
-					if( nret )
+					if( nret == 0 )
+					{
+						/* 暂禁原连接事件 */
+						memset( & event , 0x00 , sizeof(struct epoll_event) );
+						event.events = EPOLLERR ;
+						event.data.ptr = p_http_session ;
+						nret = epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
+						if( nret == -1 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
+							return -1;
+						}
+						return 0;
+					}
+					else
 					{
 						ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , errno );
 						
@@ -134,12 +151,17 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 							return 1;
 						}
 					}
-					else
+				}
+				else
+				{
+					ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , errno );
+					
+					/* 格式化响应头和体，用出错状态码 */
+					nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
+					if( nret )
 					{
-						/* 暂禁原连接事件 */
-						p_http_session->forward_flag = 1 ;
-						epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->netaddr.sock , NULL );
-						return 0;
+						ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
+						return 1;
 					}
 				}
 			}

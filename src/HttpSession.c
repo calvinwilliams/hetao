@@ -96,13 +96,12 @@ void SetHttpSessionUnused( struct HetaoServer *p_server , struct HttpSession *p_
 	p_http_session->p_virtualhost = NULL ;
 	
 	p_http_session->p_forward_server = NULL ;
-	if( p_http_session->forward_flag == 1 )
+	if( p_http_session->forward_flags )
 	{
+		p_http_session->forward_flags = 0 ;
 		close( p_http_session->forward_sock );
+		ResetHttpEnv( p_http_session->forward_http );
 	}
-	ResetHttpEnv( p_http_session->forward_http );
-	p_http_session->forward_flag = 0 ;
-	p_http_session->connected_flag = 0 ;
 	
 	/* 把当前工作HTTP通讯会话移到空闲HTTP通讯会话链表中 */
 	RemoveHttpSessionTimeoutTreeNode( p_server , p_http_session );

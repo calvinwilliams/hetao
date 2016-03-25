@@ -86,6 +86,8 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 		}
 		SetHttpCloseExec( p_virtualhost->access_log_fd );
 		
+		strncpy( p_virtualhost->forward_type , p_server->p_config->server.forward_type , sizeof(p_virtualhost->forward_type)-1 );
+		p_virtualhost->forward_type_len = strlen(p_virtualhost->forward_type) ;
 		strncpy( p_virtualhost->forward_rule , p_server->p_config->server.forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
 		if( p_virtualhost->forward_rule[0] && p_server->p_config->server.forward_servers._forward_server_count > 0 )
 		{
@@ -105,6 +107,8 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 				strncpy( p_forward_server->netaddr.ip , p_server->p_config->server.forward_servers.forward_server[j].ip , sizeof(p_forward_server->netaddr.ip)-1 );
 				p_forward_server->netaddr.port = p_server->p_config->server.forward_servers.forward_server[j].port ;
 				SETNETADDRESS( p_forward_server->netaddr )
+				
+				DebugLog( __FILE__ , __LINE__ , "forward[%p]node[%p] server[%s:%d]" , p_forward_server , & (p_forward_server->roundrobin_node) , p_forward_server->netaddr.ip , p_forward_server->netaddr.port );
 				
 				list_add_tail( & (p_forward_server->roundrobin_node) , & (p_virtualhost->roundrobin_list.roundrobin_node) );
 				AddLeastConnectionCountTreeNode( p_virtualhost , p_forward_server );
@@ -153,6 +157,8 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 		}
 		SetHttpCloseExec( p_virtualhost->access_log_fd );
 		
+		strncpy( p_virtualhost->forward_type , p_server->p_config->servers.server[i].forward_type , sizeof(p_virtualhost->forward_type)-1 );
+		p_virtualhost->forward_type_len = strlen(p_virtualhost->forward_type) ;
 		strncpy( p_virtualhost->forward_rule , p_server->p_config->servers.server[i].forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
 		if( p_virtualhost->forward_rule[0] && p_server->p_config->servers.server[i].forward_servers._forward_server_count > 0 )
 		{
@@ -309,13 +315,9 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 			SetHttpNonblock( p_listen_session->netaddr.sock );
 			SetHttpReuseAddr( p_listen_session->netaddr.sock );
 			
-			memset( & (p_listen_session->netaddr.addr) , 0x00 , sizeof(struct sockaddr_in) ) ;
-			p_listen_session->netaddr.addr.sin_family = AF_INET ;
-			if( p_server->p_config->listen.ip[0] == '\0' )
-				p_listen_session->netaddr.addr.sin_addr.s_addr = INADDR_ANY ;
-			else
-				p_listen_session->netaddr.addr.sin_addr.s_addr = inet_addr(p_server->p_config->listen.ip) ;
-			p_listen_session->netaddr.addr.sin_port = htons( (unsigned short)port ) ;
+			strncpy( p_listen_session->netaddr.ip , p_server->p_config->listen.ip , sizeof(p_listen_session->netaddr.ip)-1 );
+			p_listen_session->netaddr.port = port ;
+			SETNETADDRESS( p_listen_session->netaddr )
 			nret = bind( p_listen_session->netaddr.sock , (struct sockaddr *) & (p_listen_session->netaddr.addr) , sizeof(struct sockaddr) ) ;
 			if( nret == -1 )
 			{

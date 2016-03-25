@@ -106,6 +106,7 @@ typedef struct
 		char	wwwroot[ 1024 + 1 ] ;
 		char	index[ 1024 + 1 ] ;
 		char	access_log[ 256 + 1 ] ;
+		char	forward_type[ 16 + 1 ] ;
 		char	forward_rule[ 1 + 1 ] ;
 		struct
 		{
@@ -126,6 +127,7 @@ typedef struct
 			char	wwwroot[ 1024 + 1 ] ;
 			char	index[ 1024 + 1 ] ;
 			char	access_log[ 256 + 1 ] ;
+			char	forward_type[ 16 + 1 ] ;
 			char	forward_rule[ 1 + 1 ] ;
 			struct
 			{

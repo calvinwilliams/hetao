@@ -12,11 +12,11 @@ fi
 
 case $1 in
 	status)
-		ps -ef | grep -w hetao | grep -v grep | awk '{if($3=="1")print $0}'
-		ps -ef | grep -w hetao | grep -v grep | awk '{if($3!="1")print $0}'
+		ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk '{if($3=="1")print $0}'
+		ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk '{if($3!="1")print $0}'
 		;;
 	start)
-		PID=`ps -ef | grep -w hetao | grep -v grep | awk '{if($3=="1")print $2}'`
+		PID=`ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk '{if($3=="1")print $2}'`
 		if [ x"$PID" != x"" ] ; then
 			echo "*** WARN : hetao existed"
 			exit 1
@@ -24,7 +24,7 @@ case $1 in
 		hetao ~/etc/hetao.conf
 		while [ 1 ] ; do
 			sleep 1
-			PID=`ps -ef | grep -w hetao | grep -v grep | awk '{if($3=="1")print $2}'`
+			PID=`ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk '{if($3=="1")print $2}'`
 			if [ x"$PID" != x"" ] ; then
 				break
 			fi
@@ -34,7 +34,7 @@ case $1 in
 		;;
 	stop)
 		hetao.do status
-		PID=`ps -ef | grep -w hetao | grep -v grep | awk '{if($3=="1")print $2}'`
+		PID=`ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk '{if($3=="1")print $2}'`
 		if [ x"$PID" = x"" ] ; then
 			echo "*** WARN : hetao not existed"
 			exit 1
@@ -42,7 +42,7 @@ case $1 in
 		kill $PID
 		while [ 1 ] ; do
 			sleep 1
-			PID=`ps -ef | grep -w hetao | grep -v grep | awk '{if($3=="1")print $2}'`
+			PID=`ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk '{if($3=="1")print $2}'`
 			if [ x"$PID" = x"" ] ; then
 				break
 			fi
@@ -59,7 +59,7 @@ case $1 in
 		;;
 	restart_graceful)
 		hetao.do status
-		PID=`ps -ef | grep -w hetao | grep -v grep | awk '{if($3=="1")print $2}'`
+		PID=`ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk '{if($3=="1")print $2}'`
 		if [ x"$PID" = x"" ] ; then
 			echo "*** WARN : hetao not existed"
 			exit 1
@@ -67,7 +67,7 @@ case $1 in
 		kill -USR2 $PID
 		while [ 1 ] ; do
 			sleep 1
-			PID2=`ps -ef | grep -w hetao | grep -v grep | awk -v pid="$PID" '{if($3=="1"&&$2!=pid)print $2}'`
+			PID2=`ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk -v pid="$PID" '{if($3=="1"&&$2!=pid)print $2}'`
 			if [ x"$PID2" != x"" ] ; then
 				break
 			fi
@@ -76,7 +76,7 @@ case $1 in
 		kill $PID
 		while [ 1 ] ; do
 			sleep 1
-			PID3=`ps -ef | grep -w hetao | grep -v grep | awk -v pid="$PID" '{if($3=="1"&&$2==pid)print $2}'`
+			PID3=`ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk -v pid="$PID" '{if($3=="1"&&$2==pid)print $2}'`
 			if [ x"$PID3" = x"" ] ; then
 				break
 			fi
@@ -86,7 +86,7 @@ case $1 in
 		;;
 	relog)
 		hetao.do status
-		PID=`ps -ef | grep -w hetao | grep -v grep | awk '{if($3=="1")print $2}'`
+		PID=`ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk '{if($3=="1")print $2}'`
 		if [ x"$PID" = x"" ] ; then
 			echo "*** WARN : hetao not existed"
 			exit 1

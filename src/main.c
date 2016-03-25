@@ -16,7 +16,7 @@ char	*__HETAO_VERSION = __HETAO_VERSION_0_1_0 ;
 static void usage()
 {
 	printf( "hetao v%s build %s %s\n" , __HETAO_VERSION , __DATE__ , __TIME__ );
-	printf( "USAGE : hetao_in.hetao.conf\n" );
+	printf( "USAGE : hetao hetao.conf\n" );
 	return;
 }
 
