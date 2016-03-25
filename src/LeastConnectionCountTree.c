@@ -35,28 +35,40 @@ int AddLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct 
 	return 0;
 }
 
-struct ForwardServer *QueryLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , int connection_count )
-{
-	struct rb_node		*node = p_virtualhost->leastconnection_rbtree.rb_node ;
-	struct ForwardServer	*p = NULL ;
-
-	while( node )
-	{
-		p = container_of( node , struct ForwardServer , leastconnection_rbnode ) ;
-		if( connection_count < p->connection_count )
-			node = node->rb_left ;
-		else if( connection_count > p->connection_count )
-			node = node->rb_right ;
-		else
-			return p ;
-	}
-	
-	return NULL;
-}
-
 void RemoveLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server )
 {
 	rb_erase( & (p_forward_server->leastconnection_rbnode) , & (p_virtualhost->leastconnection_rbtree) );
 	return;
+}
+
+int UpdateLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server )
+{
+	int		nret = 0 ;
+	
+	RemoveLeastConnectionCountTreeNode( p_virtualhost , p_forward_server );
+	
+	nret = AddLeastConnectionCountTreeNode( p_virtualhost , p_forward_server ) ;
+	
+	return nret;
+}
+
+struct ForwardServer *TravelMinLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server )
+{
+	struct rb_node		*p_curr = NULL ;
+	
+	if( p_forward_server == NULL )
+	{
+		p_curr = rb_first( & (p_virtualhost->leastconnection_rbtree) ); 
+		if (p_curr == NULL)
+			return NULL;
+	}
+	else
+	{
+		p_curr = rb_next( & (p_forward_server->leastconnection_rbnode) ) ;
+		if (p_curr == NULL)
+			return NULL;
+	}
+	
+	return rb_entry( p_curr , struct ForwardServer , leastconnection_rbnode );
 }
 

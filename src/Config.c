@@ -193,13 +193,13 @@ int LoadConfig( char *config_pathfilename , struct HetaoServer *p_server )
 	if( nret )
 		return nret;
 	
-	if( p_server->p_config->server.forward_rule[0] )
+	if( p_server->p_config->server.forward.forward_rule[0] )
 	{
-		if( STRCMP( p_server->p_config->server.forward_rule , != , FORWARD_RULE_ROUNDROBIN )
-			&& STRCMP( p_server->p_config->server.forward_rule , != , FORWARD_RULE_LEASTCONNECTION )
+		if( STRCMP( p_server->p_config->server.forward.forward_rule , != , FORWARD_RULE_ROUNDROBIN )
+			&& STRCMP( p_server->p_config->server.forward.forward_rule , != , FORWARD_RULE_LEASTCONNECTION )
 		)
 		{
-			ErrorLog( __FILE__ , __LINE__ , "p_server->p_config->server.forward_rule[%s] invalid" , p_server->p_config->server.forward_rule );
+			ErrorLog( __FILE__ , __LINE__ , "p_server->p_config->server.forward.forward_rule[%s] invalid" , p_server->p_config->server.forward.forward_rule );
 			return -1;
 		}
 	}
@@ -221,13 +221,13 @@ int LoadConfig( char *config_pathfilename , struct HetaoServer *p_server )
 		if( nret )
 			return nret;
 		
-		if( p_server->p_config->servers.server[i].forward_rule[0] )
+		if( p_server->p_config->servers.server[i].forward.forward_rule[0] )
 		{
-			if( STRCMP( p_server->p_config->servers.server[i].forward_rule , != , FORWARD_RULE_ROUNDROBIN )
-				&& STRCMP( p_server->p_config->servers.server[i].forward_rule , != , FORWARD_RULE_LEASTCONNECTION )
+			if( STRCMP( p_server->p_config->servers.server[i].forward.forward_rule , != , FORWARD_RULE_ROUNDROBIN )
+				&& STRCMP( p_server->p_config->servers.server[i].forward.forward_rule , != , FORWARD_RULE_LEASTCONNECTION )
 			)
 			{
-				ErrorLog( __FILE__ , __LINE__ , "p_server->p_config->server.forward_rule[%s] invalid" , p_server->p_config->servers.server[i].forward_rule );
+				ErrorLog( __FILE__ , __LINE__ , "p_server->p_config->server.forward.forward_rule[%s] invalid" , p_server->p_config->servers.server[i].forward.forward_rule );
 				return -1;
 			}
 		}

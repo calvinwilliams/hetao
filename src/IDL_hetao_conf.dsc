@@ -24,14 +24,17 @@ STRUCT	hetao_conf
 		STRING	1024	wwwroot
 		STRING	1024	index
 		STRING	256	access_log
-		STRING	16	forward_type
-		STRING	1	forward_rule
-		STRUCT	forward_servers
+		STRUCT	forward
 		{
-			STRUCT	forward_server	ARRAY	1000
+			STRING	16	forward_type
+			STRING	1	forward_rule
+			STRUCT	forward_servers
 			{
-				STRING	15	ip
-				INT	4	port
+				STRUCT	forward_server	ARRAY	1000
+				{
+					STRING	15	ip
+					INT	4	port
+				}
 			}
 		}
 	}
@@ -43,14 +46,17 @@ STRUCT	hetao_conf
 			STRING	1024	wwwroot
 			STRING	1024	index
 			STRING	256	access_log
-			STRING	16	forward_type
-			STRING	1	forward_rule
-			STRUCT	forward_servers
+			STRUCT	forward
 			{
-				STRUCT	forward_server	ARRAY	1000
+				STRING	16	forward_type
+				STRING	1	forward_rule
+				STRUCT	forward_servers
 				{
-					STRING	15	ip
-					INT	4	port
+					STRUCT	forward_server	ARRAY	1000
+					{
+						STRING	15	ip
+						INT	4	port
+					}
 				}
 			}
 		}

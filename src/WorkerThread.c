@@ -355,6 +355,16 @@ void *WorkerThread( void *pv )
 						}
 					}
 				}
+				else if( p_event->events & EPOLLRDHUP )
+				{
+					DebugLog( __FILE__ , __LINE__ , "EPOLLRDHUP" );
+					
+					if( p_http_session->forward_flags )
+					{
+						InfoLog( __FILE__ , __LINE__ , "http sock epoll EPOLLRDHUP" );
+						SetHttpSessionUnused( p_server , p_http_session );
+					}
+				}
 				else if( p_event->events & EPOLLERR )
 				{
 					DebugLog( __FILE__ , __LINE__ , "EPOLLERR" );

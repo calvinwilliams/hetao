@@ -87,10 +87,10 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 		{
 			DebugLog( __FILE__ , __LINE__ , "QueryVirtualHostHashNode[%.*s] ok , wwwroot[%s]" , host_len , host , p_http_session->p_virtualhost->wwwroot );
 			
-			if( p_http_session->http_uri.ext_filename_len != p_http_session->p_virtualhost->forward_type_len
-				|| MEMCMP( p_http_session->http_uri.ext_filename_base , != , p_http_session->p_virtualhost->forward_type , p_http_session->http_uri.ext_filename_len )
-				|| p_http_session->p_virtualhost->forward_rule[0] == 0
-				|| p_server->virtualhost_count <= 0 )
+			if( p_http_session->p_virtualhost->forward_rule[0] == 0
+				|| p_server->virtualhost_count <= 0
+				|| p_http_session->http_uri.ext_filename_len != p_http_session->p_virtualhost->forward_type_len
+				|| MEMCMP( p_http_session->http_uri.ext_filename_base , != , p_http_session->p_virtualhost->forward_type , p_http_session->http_uri.ext_filename_len ) )
 			{
 				/* 先格式化响应头首行，用成功状态码 */
 				nret = FormatHttpResponseStartLine( HTTP_OK , p_http_session->http , 0 ) ;
@@ -121,15 +121,15 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 			{
 				/* 选择转发服务端 */
 				nret = SelectForwardAddress( p_server , p_http_session ) ;
-				if( nret == 0 )
+				if( nret == HTTP_OK )
 				{
 					/* 连接转发服务端 */
 					nret = ConnectForwardServer( p_server , p_http_session ) ;
-					if( nret == 0 )
+					if( nret == HTTP_OK )
 					{
 						/* 暂禁原连接事件 */
 						memset( & event , 0x00 , sizeof(struct epoll_event) );
-						event.events = EPOLLERR ;
+						event.events = EPOLLRDHUP | EPOLLERR ;
 						event.data.ptr = p_http_session ;
 						nret = epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
 						if( nret == -1 )
@@ -137,6 +137,7 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 							ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
 							return -1;
 						}
+						
 						return 0;
 					}
 					else

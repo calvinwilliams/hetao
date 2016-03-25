@@ -95,12 +95,9 @@ void SetHttpSessionUnused( struct HetaoServer *p_server , struct HttpSession *p_
 	ResetHttpEnv( p_http_session->http );
 	p_http_session->p_virtualhost = NULL ;
 	
-	p_http_session->p_forward_server = NULL ;
-	if( p_http_session->forward_flags )
+	if( p_http_session->p_forward_server )
 	{
-		p_http_session->forward_flags = 0 ;
-		close( p_http_session->forward_sock );
-		ResetHttpEnv( p_http_session->forward_http );
+		SetHttpSessionUnused_05( p_server , p_http_session );
 	}
 	
 	/* 把当前工作HTTP通讯会话移到空闲HTTP通讯会话链表中 */
@@ -113,3 +110,24 @@ void SetHttpSessionUnused( struct HetaoServer *p_server , struct HttpSession *p_
 	return;
 }
 
+void SetHttpSessionUnused_05( struct HetaoServer *p_server , struct HttpSession *p_http_session )
+{
+	if( p_http_session->forward_flags )
+	{
+		SetHttpSessionUnused_02( p_server , p_http_session );
+	}
+	
+	p_http_session->p_forward_server = NULL ;
+	
+	return;
+}
+
+void SetHttpSessionUnused_02( struct HetaoServer *p_server , struct HttpSession *p_http_session )
+{
+	p_http_session->p_forward_server->connection_count--;
+	close( p_http_session->forward_sock );
+	ResetHttpEnv( p_http_session->forward_http );
+	p_http_session->forward_flags = 0 ;
+	
+	return;
+}

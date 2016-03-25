@@ -106,27 +106,8 @@ typedef struct
 		char	wwwroot[ 1024 + 1 ] ;
 		char	index[ 1024 + 1 ] ;
 		char	access_log[ 256 + 1 ] ;
-		char	forward_type[ 16 + 1 ] ;
-		char	forward_rule[ 1 + 1 ] ;
 		struct
 		{
-			struct
-			{
-				char	ip[ 15 + 1 ] ;
-				int	port ;
-			} forward_server [ 1000 ] ;
-			int	_forward_server_count ;
-			int	_forward_server_size ;
-		} forward_servers ;
-	} server ;
-	struct
-	{
-		struct
-		{
-			char	domain[ 256 + 1 ] ;
-			char	wwwroot[ 1024 + 1 ] ;
-			char	index[ 1024 + 1 ] ;
-			char	access_log[ 256 + 1 ] ;
 			char	forward_type[ 16 + 1 ] ;
 			char	forward_rule[ 1 + 1 ] ;
 			struct
@@ -139,6 +120,31 @@ typedef struct
 				int	_forward_server_count ;
 				int	_forward_server_size ;
 			} forward_servers ;
+		} forward ;
+	} server ;
+	struct
+	{
+		struct
+		{
+			char	domain[ 256 + 1 ] ;
+			char	wwwroot[ 1024 + 1 ] ;
+			char	index[ 1024 + 1 ] ;
+			char	access_log[ 256 + 1 ] ;
+			struct
+			{
+				char	forward_type[ 16 + 1 ] ;
+				char	forward_rule[ 1 + 1 ] ;
+				struct
+				{
+					struct
+					{
+						char	ip[ 15 + 1 ] ;
+						int	port ;
+					} forward_server [ 1000 ] ;
+					int	_forward_server_count ;
+					int	_forward_server_size ;
+				} forward_servers ;
+			} forward ;
 		} server [ 64 ] ;
 		int	_server_count ;
 		int	_server_size ;

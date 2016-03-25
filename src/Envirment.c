@@ -86,16 +86,16 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 		}
 		SetHttpCloseExec( p_virtualhost->access_log_fd );
 		
-		strncpy( p_virtualhost->forward_type , p_server->p_config->server.forward_type , sizeof(p_virtualhost->forward_type)-1 );
+		strncpy( p_virtualhost->forward_type , p_server->p_config->server.forward.forward_type , sizeof(p_virtualhost->forward_type)-1 );
 		p_virtualhost->forward_type_len = strlen(p_virtualhost->forward_type) ;
-		strncpy( p_virtualhost->forward_rule , p_server->p_config->server.forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
-		if( p_virtualhost->forward_rule[0] && p_server->p_config->server.forward_servers._forward_server_count > 0 )
+		strncpy( p_virtualhost->forward_rule , p_server->p_config->server.forward.forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
+		if( p_virtualhost->forward_type[0] && p_virtualhost->forward_rule[0] && p_server->p_config->server.forward.forward_servers._forward_server_count > 0 )
 		{
 			struct ForwardServer	*p_forward_server = NULL ;
 			
 			INIT_LIST_HEAD( & (p_virtualhost->roundrobin_list.roundrobin_node) );
 			
-			for( j = 0 ; j < p_server->p_config->server.forward_servers._forward_server_count ; j++ )
+			for( j = 0 ; j < p_server->p_config->server.forward.forward_servers._forward_server_count ; j++ )
 			{
 				p_forward_server = (struct ForwardServer *)malloc( sizeof(struct ForwardServer) ) ;
 				if( p_forward_server == NULL )
@@ -104,8 +104,8 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 					return -1;
 				}
 				memset( p_forward_server , 0x00 , sizeof(sizeof(struct ForwardServer)) );
-				strncpy( p_forward_server->netaddr.ip , p_server->p_config->server.forward_servers.forward_server[j].ip , sizeof(p_forward_server->netaddr.ip)-1 );
-				p_forward_server->netaddr.port = p_server->p_config->server.forward_servers.forward_server[j].port ;
+				strncpy( p_forward_server->netaddr.ip , p_server->p_config->server.forward.forward_servers.forward_server[j].ip , sizeof(p_forward_server->netaddr.ip)-1 );
+				p_forward_server->netaddr.port = p_server->p_config->server.forward.forward_servers.forward_server[j].port ;
 				SETNETADDRESS( p_forward_server->netaddr )
 				
 				DebugLog( __FILE__ , __LINE__ , "forward[%p]node[%p] server[%s:%d]" , p_forward_server , & (p_forward_server->roundrobin_node) , p_forward_server->netaddr.ip , p_forward_server->netaddr.port );
@@ -157,16 +157,16 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 		}
 		SetHttpCloseExec( p_virtualhost->access_log_fd );
 		
-		strncpy( p_virtualhost->forward_type , p_server->p_config->servers.server[i].forward_type , sizeof(p_virtualhost->forward_type)-1 );
+		strncpy( p_virtualhost->forward_type , p_server->p_config->servers.server[i].forward.forward_type , sizeof(p_virtualhost->forward_type)-1 );
 		p_virtualhost->forward_type_len = strlen(p_virtualhost->forward_type) ;
-		strncpy( p_virtualhost->forward_rule , p_server->p_config->servers.server[i].forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
-		if( p_virtualhost->forward_rule[0] && p_server->p_config->servers.server[i].forward_servers._forward_server_count > 0 )
+		strncpy( p_virtualhost->forward_rule , p_server->p_config->servers.server[i].forward.forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
+		if( p_virtualhost->forward_rule[0] && p_server->p_config->servers.server[i].forward.forward_servers._forward_server_count > 0 )
 		{
 			struct ForwardServer	*p_forward_server = NULL ;
 			
 			INIT_LIST_HEAD( & (p_virtualhost->roundrobin_list.roundrobin_node) );
 			
-			for( j = 0 ; j < p_server->p_config->servers.server[j].forward_servers._forward_server_count ; i++ )
+			for( j = 0 ; j < p_server->p_config->servers.server[j].forward.forward_servers._forward_server_count ; i++ )
 			{
 				p_forward_server = (struct ForwardServer *)malloc( sizeof(struct ForwardServer) ) ;
 				if( p_forward_server == NULL )
@@ -175,8 +175,8 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 					return -1;
 				}
 				memset( p_forward_server , 0x00 , sizeof(sizeof(struct ForwardServer)) );
-				strncpy( p_forward_server->netaddr.ip , p_server->p_config->servers.server[i].forward_servers.forward_server[j].ip , sizeof(p_forward_server->netaddr.ip)-1 );
-				p_forward_server->netaddr.port = p_server->p_config->servers.server[i].forward_servers.forward_server[j].port ;
+				strncpy( p_forward_server->netaddr.ip , p_server->p_config->servers.server[i].forward.forward_servers.forward_server[j].ip , sizeof(p_forward_server->netaddr.ip)-1 );
+				p_forward_server->netaddr.port = p_server->p_config->servers.server[i].forward.forward_servers.forward_server[j].port ;
 				SETNETADDRESS( p_forward_server->netaddr )
 				
 				list_add_tail( & (p_forward_server->roundrobin_node) , & (p_virtualhost->roundrobin_list.roundrobin_node) );

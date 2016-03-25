@@ -17,6 +17,9 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
+#ifndef EPOLLRDHUP
+#define EPOLLRDHUP	0x2000
+#endif
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -116,10 +119,6 @@
 
 #define SIGNAL_REOPEN_LOG			'L' /* 重新打开日志 */
 
-/* 负载均衡规则 */
-#define FORWARD_RULE_ROUNDROBIN			"B"
-#define FORWARD_RULE_LEASTCONNECTION		"L"
-
 /* 功能宏 */
 #define SETNETADDRESS(_netaddr_) \
 	memset( & ((_netaddr_).addr) , 0x00 , sizeof(struct sockaddr_in) ); \
@@ -184,6 +183,9 @@ struct ForwardServer
 } ;
 
 /* 虚拟主机结构 */
+#define FORWARD_RULE_ROUNDROBIN			"B"
+#define FORWARD_RULE_LEASTCONNECTION		"L"
+
 struct VirtualHost
 {
 	char			domain[ sizeof( ((hetao_conf*)0)->server.domain ) ] ;
@@ -194,9 +196,9 @@ struct VirtualHost
 	int			domain_len ;
 	int			access_log_fd ;
 	
-	char			forward_type[ sizeof( ((hetao_conf*)0)->server.forward_type ) ] ;
+	char			forward_type[ sizeof( ((hetao_conf*)0)->server.forward.forward_type ) ] ;
 	int			forward_type_len ;
-	char			forward_rule[ sizeof( ((hetao_conf*)0)->server.forward_rule ) ] ;
+	char			forward_rule[ sizeof( ((hetao_conf*)0)->server.forward.forward_rule ) ] ;
 	struct ForwardServer	roundrobin_list ;
 	struct rb_root		leastconnection_rbtree ;
 	
@@ -339,10 +341,13 @@ int CloseUnusedOldListeners( struct NetAddress *p_old_netaddr_array , int old_ne
 int IncreaseHttpSessions( struct HetaoServer *p_server , int http_session_incre_count );
 struct HttpSession *FetchHttpSessionUnused( struct HetaoServer *p_server );
 void SetHttpSessionUnused( struct HetaoServer *p_server , struct HttpSession *p_http_session );
+void SetHttpSessionUnused_05( struct HetaoServer *p_server , struct HttpSession *p_http_session );
+void SetHttpSessionUnused_02( struct HetaoServer *p_server , struct HttpSession *p_http_session );
 
 int AddLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
-struct ForwardServer *QueryLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , int connection_count );
 void RemoveLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
+int UpdateLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
+struct ForwardServer *TravelMinLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
 
 void FreeHtmlCacheSession( struct HtmlCacheSession *p_htmlcache_session );
 

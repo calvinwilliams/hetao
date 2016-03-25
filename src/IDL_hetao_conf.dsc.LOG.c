@@ -28,14 +28,14 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.wwwroot[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.wwwroot );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.index[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.index );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.access_log[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.access_log );
-		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward_type[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward_type );
-		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward_rule[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward_rule );
-				PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward_servers._forward_server_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward_servers._forward_server_count );
-				for( index[3] = 0 ; index[3] < pst->server.forward_servers._forward_server_count ; index[3]++ )
-				{
-				PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward_servers.forward_server[index[3]].ip[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward_servers.forward_server[index[3]].ip );
-				PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward_servers.forward_server[index[3]].port[%d]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward_servers.forward_server[index[3]].port );
-				}
+			PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward.forward_type[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward.forward_type );
+			PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward.forward_rule[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward.forward_rule );
+					PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward.forward_servers._forward_server_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward.forward_servers._forward_server_count );
+					for( index[4] = 0 ; index[4] < pst->server.forward.forward_servers._forward_server_count ; index[4]++ )
+					{
+					PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward.forward_servers.forward_server[index[4]].ip[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward.forward_servers.forward_server[index[4]].ip );
+					PREFIX_DSCLOG_hetao_conf "hetao_conf.server.forward.forward_servers.forward_server[index[4]].port[%d]" NEWLINE_DSCLOG_hetao_conf , pst->server.forward.forward_servers.forward_server[index[4]].port );
+					}
 			PREFIX_DSCLOG_hetao_conf "hetao_conf.servers._server_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->servers._server_count );
 			for( index[2] = 0 ; index[2] < pst->servers._server_count ; index[2]++ )
 			{
@@ -43,14 +43,14 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 			PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].wwwroot[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].wwwroot );
 			PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].index[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].index );
 			PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].access_log[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].access_log );
-			PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward_type[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward_type );
-			PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward_rule[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward_rule );
-					PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward_servers._forward_server_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward_servers._forward_server_count );
-					for( index[4] = 0 ; index[4] < pst->servers.server[index[2]].forward_servers._forward_server_count ; index[4]++ )
-					{
-					PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward_servers.forward_server[index[4]].ip[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward_servers.forward_server[index[4]].ip );
-					PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward_servers.forward_server[index[4]].port[%d]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward_servers.forward_server[index[4]].port );
-					}
+				PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward.forward_type[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward.forward_type );
+				PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward.forward_rule[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward.forward_rule );
+						PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward.forward_servers._forward_server_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward.forward_servers._forward_server_count );
+						for( index[5] = 0 ; index[5] < pst->servers.server[index[2]].forward.forward_servers._forward_server_count ; index[5]++ )
+						{
+						PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward.forward_servers.forward_server[index[5]].ip[%s]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward.forward_servers.forward_server[index[5]].ip );
+						PREFIX_DSCLOG_hetao_conf "hetao_conf.servers.server[index[2]].forward.forward_servers.forward_server[index[5]].port[%d]" NEWLINE_DSCLOG_hetao_conf , pst->servers.server[index[2]].forward.forward_servers.forward_server[index[5]].port );
+						}
 			}
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.tcp_options.nodelay[%d]" NEWLINE_DSCLOG_hetao_conf , pst->tcp_options.nodelay );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.tcp_options.nolinger[%d]" NEWLINE_DSCLOG_hetao_conf , pst->tcp_options.nolinger );

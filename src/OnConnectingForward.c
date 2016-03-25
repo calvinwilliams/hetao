@@ -10,26 +10,58 @@
 
 int SelectForwardAddress( struct HetaoServer *p_server , struct HttpSession *p_http_session )
 {
-	struct list_head	*p_curr = NULL , *p_next = NULL ;
-	struct ForwardServer	*p_forward_server = NULL ;
-	
-	list_for_each_safe( p_curr , p_next , & (p_http_session->p_virtualhost->roundrobin_list.roundrobin_node) )
+	/* 轮询算法 */
+	if( p_http_session->p_virtualhost->forward_rule[0] == FORWARD_RULE_ROUNDROBIN[0] )
 	{
-		p_forward_server = container_of( p_curr , struct ForwardServer , roundrobin_node ) ;
+		struct list_head	*p_curr = NULL , *p_next = NULL ;
+		struct ForwardServer	*p_forward_server = NULL ;
 		
-		if( p_forward_server->timestamp_to_valid == 0 || GETSECONDSTAMP > p_forward_server->timestamp_to_valid )
+		list_for_each_safe( p_curr , p_next , & (p_http_session->p_virtualhost->roundrobin_list.roundrobin_node) )
 		{
-			p_forward_server->timestamp_to_valid = 0 ;
+			p_forward_server = container_of( p_curr , struct ForwardServer , roundrobin_node ) ;
 			
-			list_move_tail( p_curr , & (p_http_session->p_virtualhost->roundrobin_list.roundrobin_node) );
-			p_http_session->p_forward_server = p_forward_server ;
-			DebugLog( __FILE__ , __LINE__ , "select forward[%p]node[%p] server[%s:%d]" , p_http_session->p_forward_server , & (p_http_session->p_forward_server->roundrobin_node) , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
-			
-			return 0;
+			if( p_forward_server->timestamp_to_valid == 0 || GETSECONDSTAMP > p_forward_server->timestamp_to_valid )
+			{
+				p_forward_server->timestamp_to_valid = 0 ;
+				
+				list_move_tail( p_curr , & (p_http_session->p_virtualhost->roundrobin_list.roundrobin_node) );
+				p_http_session->p_forward_server = p_forward_server ;
+				DebugLog( __FILE__ , __LINE__ , "forward_rule[B] server[%s:%d]" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
+				
+				return HTTP_OK;
+			}
 		}
+		
+		return HTTP_SERVICE_UNAVAILABLE;
 	}
-	
-	return HTTP_SERVICE_UNAVAILABLE;
+	/* 最少连接数算法 */
+	else if( p_http_session->p_virtualhost->forward_rule[0] == FORWARD_RULE_LEASTCONNECTION[0] )
+	{
+		struct ForwardServer	*p_forward_server = NULL ;
+		
+		p_forward_server = TravelMinLeastConnectionCountTreeNode( p_http_session->p_virtualhost , NULL ) ;
+		while(p_forward_server)
+		{
+			if( p_forward_server->timestamp_to_valid == 0 || GETSECONDSTAMP > p_forward_server->timestamp_to_valid )
+			{
+				p_forward_server->timestamp_to_valid = 0 ;
+				
+				p_http_session->p_forward_server = p_forward_server ;
+				DebugLog( __FILE__ , __LINE__ , "forward_rule[L] server[%s:%d]" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
+				
+				return HTTP_OK;
+			}
+			
+			p_forward_server = TravelMinLeastConnectionCountTreeNode( p_http_session->p_virtualhost , p_forward_server ) ;
+		}
+		
+		return HTTP_SERVICE_UNAVAILABLE;
+	}
+	else
+	{
+		ErrorLog( __FILE__ , __LINE__ , "forward_rule[%c] invalid" , p_http_session->p_virtualhost->forward_rule[0] );
+		return HTTP_INTERNAL_SERVER_ERROR;
+	}
 }
 
 int ConnectForwardServer( struct HetaoServer *p_server , struct HttpSession *p_http_session )
@@ -57,6 +89,8 @@ int ConnectForwardServer( struct HetaoServer *p_server , struct HttpSession *p_h
 	SetHttpNoLinger( p_http_session->forward_sock , p_server->p_config->tcp_options.nolinger );
 	
 	p_http_session->forward_flags |= HTTPSESSION_FLAGS_CONNECTING ;
+	p_http_session->p_forward_server->connection_count++;
+	UpdateLeastConnectionCountTreeNode( p_http_session->p_virtualhost , p_http_session->p_forward_server );
 	
 	/* 连接服务端 */
 	DebugLog( __FILE__ , __LINE__ , "connecting[%s:%d] ..." , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
@@ -75,8 +109,7 @@ int ConnectForwardServer( struct HetaoServer *p_server , struct HttpSession *p_h
 			if( nret == -1 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
-				close( p_http_session->forward_sock );
-				p_http_session->forward_flags = 0 ;
+				SetHttpSessionUnused_05( p_server , p_http_session );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
 		}
@@ -97,8 +130,7 @@ int ConnectForwardServer( struct HetaoServer *p_server , struct HttpSession *p_h
 		if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , errno );
-			close( p_http_session->forward_sock );
-			p_http_session->forward_flags = 0 ;
+			SetHttpSessionUnused_05( p_server , p_http_session );
 			return HTTP_INTERNAL_SERVER_ERROR;
 		}
 		
@@ -110,15 +142,14 @@ int ConnectForwardServer( struct HetaoServer *p_server , struct HttpSession *p_h
 		if( nret == -1 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
-			close( p_http_session->forward_sock );
-			p_http_session->forward_flags = 0 ;
+			SetHttpSessionUnused_05( p_server , p_http_session );
 			return HTTP_INTERNAL_SERVER_ERROR;
 		}
 		
 		p_http_session->forward_flags |= HTTPSESSION_FLAGS_CONNECTED ;
 	}
 	
-	return 0;
+	return HTTP_OK;
 }
 
 int OnConnectingForward( struct HetaoServer *p_server , struct HttpSession *p_http_session )
@@ -156,18 +187,17 @@ int OnConnectingForward( struct HetaoServer *p_server , struct HttpSession *p_ht
 		ErrorLog( __FILE__ , __LINE__ , "connect[%s:%d] failed , errno[%d]" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port , errno );
 		
 		epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->forward_sock , NULL );
-		close( p_http_session->forward_sock );
-		p_http_session->forward_flags = 0 ;
+		SetHttpSessionUnused_02( p_server , p_http_session );
 		
 		p_http_session->p_forward_server->timestamp_to_valid = GETSECONDSTAMP + p_server->p_config->http_options.forward_disable ;
 		
 		/* 选择转发服务端 */
 		nret = SelectForwardAddress( p_server , p_http_session ) ;
-		if( nret == 0 )
+		if( nret == HTTP_OK )
 		{
 			/* 连接转发服务端 */
 			nret = ConnectForwardServer( p_server , p_http_session ) ;
-			if( nret == 0 )
+			if( nret == HTTP_OK )
 			{
 				return 0;
 			}
@@ -223,9 +253,8 @@ int OnConnectingForward( struct HetaoServer *p_server , struct HttpSession *p_ht
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
-		close( p_http_session->forward_sock );
-		p_http_session->forward_flags = 0 ;
-		return -1;
+		SetHttpSessionUnused_05( p_server , p_http_session );
+		return 1;
 	}
 	
 	/* 注册epoll写事件 */
@@ -236,8 +265,7 @@ int OnConnectingForward( struct HetaoServer *p_server , struct HttpSession *p_ht
 	if( nret == -1 )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
-		close( p_http_session->forward_sock );
-		p_http_session->forward_flags = 0 ;
+		SetHttpSessionUnused_05( p_server , p_http_session );
 		return -1;
 	}
 	
