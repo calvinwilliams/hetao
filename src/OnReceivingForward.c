@@ -30,12 +30,12 @@ int OnReceivingForward( struct HetaoServer *p_server , struct HttpSession *p_htt
 		/* 接收报错了 */
 		if( nret == FASTERHTTP_ERROR_TCP_CLOSE )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "accepted socket closed detected" );
+			ErrorLog( __FILE__ , __LINE__ , "http socket closed detected" );
 			return 1;
 		}
 		else if( nret == FASTERHTTP_INFO_TCP_CLOSE )
 		{
-			InfoLog( __FILE__ , __LINE__ , "accepted socket closed detected" );
+			InfoLog( __FILE__ , __LINE__ , "http socket closed detected" );
 			return 1;
 		}
 		else

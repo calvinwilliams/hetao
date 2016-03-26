@@ -1,6 +1,9 @@
-V0.2.0		2016-08-27	calvin
+v0.3.0		2016-09-01	calvin
+		* Support HTTPS
+
+v0.2.0		2016-08-27	calvin
 		* Add reverse proxy with round-robin rule and least-connections
 
-V0.1.0		2016-08-17	calvin
+v0.1.0		2016-08-17	calvin
 		* Create hetao v0.1.0 from htmlserver v1.0.0
 

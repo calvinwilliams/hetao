@@ -346,6 +346,37 @@ int InitServerEnvirment( struct HetaoServer *p_server )
 	/* 清理上一辈侦听信息 */
 	CloseUnusedOldListeners( old_netaddr_array , old_netaddr_array_count );
 	
+	/* 创建SSL环境 */
+	if( p_server->p_config->ssl.certificate_file[0] )
+	{
+		SSL_library_init();
+		OpenSSL_add_ssl_algorithms();
+		SSL_load_error_strings();
+		
+		p_server->ssl_ctx = SSL_CTX_new( SSLv23_method() ) ;
+		if( p_server->ssl_ctx == NULL )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_new failed , errno[%d]" , errno );
+			return -1;
+		}
+		
+		SSL_CTX_set_verify( p_server->ssl_ctx , SSL_VERIFY_PEER , NULL );
+		
+		nret = SSL_CTX_use_certificate_file( p_server->ssl_ctx , p_server->p_config->ssl.certificate_file , SSL_FILETYPE_PEM ) ;
+		if( nret <= 0 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file failed , errno[%d]" , errno );
+			return -1;
+		}
+		
+		nret = SSL_CTX_use_PrivateKey_file( p_server->ssl_ctx , p_server->p_config->ssl.certificate_key_file , SSL_FILETYPE_PEM ) ;
+		if( nret <= 0 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_PrivateKey_file failed , errno[%d]" , errno );
+			return -1;
+		}
+	}
+	
 	return 0;
 }
 

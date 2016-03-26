@@ -18,6 +18,12 @@ STRUCT	hetao_conf
 		STRING	256	port
 	}
 	
+	STRUCT	ssl
+	{
+		STRING	256	certificate_file
+		STRING	256	certificate_key_file
+	}
+	
 	STRUCT	server
 	{
 		STRING	256	domain

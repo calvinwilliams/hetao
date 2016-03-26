@@ -177,6 +177,35 @@ int LoadConfig( char *config_pathfilename , struct HetaoServer *p_server )
 		return nret;
 	}
 	
+	/* 展开SSL证书文件名中的环境变量 */
+	nret = StringExpandEnvval( p_server->p_config->ssl.certificate_file , sizeof(p_server->p_config->ssl.certificate_file) ) ;
+	if( nret )
+		return nret;
+	
+	if( p_server->p_config->ssl.certificate_file[0] )
+	{
+		nret = AccessFileExist( p_server->p_config->ssl.certificate_file ) ;
+		if( nret != 1 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "ssl.certificate_file[%s] not exist" , p_server->p_config->ssl.certificate_file , nret );
+			return -1;
+		}
+	}
+	
+	nret = StringExpandEnvval( p_server->p_config->ssl.certificate_key_file , sizeof(p_server->p_config->ssl.certificate_key_file) ) ;
+	if( nret )
+		return nret;
+	
+	if( p_server->p_config->ssl.certificate_key_file[0] )
+	{
+		nret = AccessFileExist( p_server->p_config->ssl.certificate_key_file ) ;
+		if( nret != 1 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "ssl.certificate_key_file[%s] not exist" , p_server->p_config->ssl.certificate_key_file , nret );
+			return -1;
+		}
+	}
+	
 	/* 展开日志文件名中的环境变量 */
 	nret = StringExpandEnvval( p_server->p_config->server.wwwroot , sizeof(p_server->p_config->server.wwwroot) ) ;
 	if( nret )

@@ -15,7 +15,7 @@ int OnSendingSocket( struct HetaoServer *p_server , struct HttpSession *p_http_s
 	int			nret = 0 ;
 	
 	/* 发一把HTTP响应 */
-	nret = SendHttpResponseNonblock( p_http_session->netaddr.sock , NULL , p_http_session->http ) ;
+	nret = SendHttpResponseNonblock( p_http_session->netaddr.sock , p_http_session->ssl , p_http_session->http ) ;
 	if( nret == FASTERHTTP_INFO_TCP_SEND_WOULDBLOCK )
 	{
 		/* 没发完 */

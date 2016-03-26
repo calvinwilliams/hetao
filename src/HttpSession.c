@@ -91,6 +91,11 @@ void SetHttpSessionUnused( struct HetaoServer *p_server , struct HttpSession *p_
 	
 	/* 清理HTTP通讯会话 */
 	epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->netaddr.sock , NULL );
+	if( p_http_session->ssl )
+	{
+		SSL_shutdown( p_http_session->ssl ) ;
+		SSL_free( p_http_session->ssl ) ;
+	}
 	close( p_http_session->netaddr.sock );
 	ResetHttpEnv( p_http_session->http );
 	p_http_session->p_virtualhost = NULL ;

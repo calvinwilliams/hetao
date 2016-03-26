@@ -52,6 +52,8 @@
 #define _GETTIMEOFDAY(_tv_)		gettimeofday(&(_tv_),NULL)
 #define _LOCALTIME(_tt_,_stime_) \
 	localtime_r(&(_tt_),&(_stime_));
+#define _ACCESS				access
+#define _ACCESS_MODE			R_OK
 #elif ( defined _WIN32 )
 #include <stdio.h>
 #include <time.h>
@@ -92,6 +94,8 @@
 		GetLocalTime( & stNow ); \
 		_SYSTEMTIME2TM( stNow , (_stime_) ); \
 	}
+#define _ACCESS				_access
+#define _ACCESS_MODE			04
 #endif
 
 #include "fasterhttp.h"
@@ -225,6 +229,8 @@ struct HttpSession
 	struct rb_node		timeout_rbnode ;
 	
 	struct list_head	list ;
+	
+	SSL			*ssl ;
 } ;
 
 /* 网页缓存会话结构 */
@@ -299,6 +305,8 @@ struct HetaoServer
 	int				http_session_unused_count ;
 	
 	struct rb_root			http_session_rbtree_used ;
+	
+	SSL_CTX				*ssl_ctx ;
 } ;
 
 extern struct HetaoServer	*g_p_server ;
@@ -367,6 +375,7 @@ int LoadConfig( char *config_pathfilename , struct HetaoServer *p_server );
 
 int BindDaemonServer( int (* ServerMain)( void *pv ) , void *pv );
 int AccessDirectoryExist( char *pathdirname );
+int AccessFileExist( char *pathfilename );
 int BindCpuAffinity( int processor_no );
 unsigned long CalcHash( char *str , int len );
 

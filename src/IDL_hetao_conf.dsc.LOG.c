@@ -24,6 +24,8 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.limits.max_http_session_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->limits.max_http_session_count );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.listen.ip[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen.ip );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.listen.port[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen.port );
+		PREFIX_DSCLOG_hetao_conf "hetao_conf.ssl.certificate_file[%s]" NEWLINE_DSCLOG_hetao_conf , pst->ssl.certificate_file );
+		PREFIX_DSCLOG_hetao_conf "hetao_conf.ssl.certificate_key_file[%s]" NEWLINE_DSCLOG_hetao_conf , pst->ssl.certificate_key_file );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.domain[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.domain );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.wwwroot[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.wwwroot );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.server.index[%s]" NEWLINE_DSCLOG_hetao_conf , pst->server.index );

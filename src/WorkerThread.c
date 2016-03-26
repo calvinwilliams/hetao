@@ -439,6 +439,8 @@ void *WorkerThread( void *pv )
 					struct ListenSession	*p_clean_session = NULL ;
 					
 					/* ¹Ø±ÕËùÓĞÕìÌı */
+					SSL_CTX_free( p_server->ssl_ctx );
+					
 					list_for_each_safe( p_curr , p_next , & (p_server->listen_session_list.list) )
 					{
 						p_clean_session = list_entry( p_curr , struct ListenSession , list ) ;

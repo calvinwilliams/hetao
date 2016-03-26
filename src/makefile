@@ -51,8 +51,8 @@ CFLAGS		=	$(_CFLAGS) \
 LFLAGS		=	$(_LFLAGS) \
 			-L$(HOME)/lib \
 			-lpthread \
-			-lz \
 			-lssl \
+			-lz \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=

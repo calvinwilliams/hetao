@@ -13,6 +13,9 @@ int OnAcceptingSocket( struct HetaoServer *p_server , struct ListenSession *p_li
 	SOCKET			sock ;
 	struct sockaddr_in	addr ;
 	SOCKLEN_T		accept_addr_len ;
+	SSL			*ssl = NULL ;
+	X509			*x509 = NULL ;
+	char			*line = NULL ;
 	
 	struct HttpSession	*p_http_session = NULL ;
 	
@@ -23,6 +26,7 @@ int OnAcceptingSocket( struct HetaoServer *p_server , struct ListenSession *p_li
 	/* 循环接受所有新连接，直到没有了 */
 	while(1)
 	{
+		/* 接受新连接 */
 		accept_addr_len = sizeof(struct sockaddr) ;
 		sock = accept( p_listen_session->netaddr.sock , (struct sockaddr *) & addr , & accept_addr_len );
 		if( sock == -1 )
@@ -38,6 +42,40 @@ int OnAcceptingSocket( struct HetaoServer *p_server , struct ListenSession *p_li
 			InfoLog( __FILE__ , __LINE__ , "accept ok , listen #%d# accept #%d#" , p_listen_session->netaddr.sock , sock );
 		}
 		
+		/* SSL握手 */
+		if( p_server->ssl_ctx )
+		{
+			ssl = SSL_new( p_server->ssl_ctx ) ;
+			if( ssl == NULL )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "SSL_new failed , errno[%d]" , errno );
+				close( sock );
+				return 1;
+			}
+			
+			SSL_set_fd( ssl , sock );
+			
+			nret = SSL_accept( ssl ) ;
+			if( nret == -1 )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "SSL_accept failed , errno[%d]" , errno );
+				SSL_free( ssl ) ;
+				close( sock );
+				return 1;
+			}
+			
+			x509 = SSL_get_peer_certificate( ssl ) ;
+			if( x509 )
+			{
+				line = X509_NAME_oneline( X509_get_subject_name(x509) , 0 , 0 );
+				free( line );
+				line = X509_NAME_oneline( X509_get_issuer_name(x509) , 0 , 0 );
+				free( line );
+				X509_free( x509 );
+			}
+		}
+		
+		/* 获得一个新的会话结构 */
 		p_http_session = FetchHttpSessionUnused( p_server ) ;
 		if( p_http_session == NULL )
 		{
@@ -53,6 +91,12 @@ int OnAcceptingSocket( struct HetaoServer *p_server , struct ListenSession *p_li
 		p_http_session->netaddr.ip[sizeof(p_http_session->netaddr.ip)-1] = '\0' ;
 		inet_ntop( AF_INET , & (p_http_session->netaddr.addr) , p_http_session->netaddr.ip , sizeof(p_http_session->netaddr.ip) );
 		
+		if( p_server->ssl_ctx )
+		{
+			p_http_session->ssl = ssl ;
+		}
+		
+		/* 设置TCP选项 */
 		SetHttpNonblock( p_http_session->netaddr.sock );
 		SetHttpNodelay( p_http_session->netaddr.sock , p_server->p_config->tcp_options.nodelay );
 		SetHttpNoLinger( p_http_session->netaddr.sock , p_server->p_config->tcp_options.nolinger );

@@ -15,7 +15,7 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 	int			nret = 0 ;
 	
 	/* 收一把HTTP请求 */
-	nret = ReceiveHttpRequestNonblock( p_http_session->netaddr.sock , NULL , p_http_session->http ) ;
+	nret = ReceiveHttpRequestNonblock( p_http_session->netaddr.sock , p_http_session->ssl , p_http_session->http ) ;
 	if( nret == FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER )
 	{
 		/* 没收完整 */
@@ -26,26 +26,18 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 		/* 接收报错了 */
 		if( nret == FASTERHTTP_ERROR_TCP_CLOSE )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "accepted socket closed detected" );
+			ErrorLog( __FILE__ , __LINE__ , "http socket closed detected" );
 			return 1;
 		}
 		else if( nret == FASTERHTTP_INFO_TCP_CLOSE )
 		{
-			InfoLog( __FILE__ , __LINE__ , "accepted socket closed detected" );
+			InfoLog( __FILE__ , __LINE__ , "http socket closed detected" );
 			return 1;
 		}
 		else
 		{
 			ErrorLog( __FILE__ , __LINE__ , "ReceiveHttpRequestNonblock failed[%d] , errno[%d]" , nret , errno );
-			
-			nret = FormatHttpResponseStartLine( abs(nret)/100 , p_http_session->http , 1 ) ;
-			if( nret )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
-				return 1;
-			}
-			
-			return 0;
+			return 1;
 		}
 	}
 	else

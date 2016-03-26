@@ -102,6 +102,11 @@ typedef struct
 	} listen ;
 	struct
 	{
+		char	certificate_file[ 256 + 1 ] ;
+		char	certificate_key_file[ 256 + 1 ] ;
+	} ssl ;
+	struct
+	{
 		char	domain[ 256 + 1 ] ;
 		char	wwwroot[ 1024 + 1 ] ;
 		char	index[ 1024 + 1 ] ;
