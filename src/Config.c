@@ -8,6 +8,11 @@
 
 #include "hetao_in.h"
 
+struct HetaoEnv	*g_p_env = NULL ;
+
+char	__HETAO_VERSION_0_7_0[] = "0.7.0" ;
+char	*__HETAO_VERSION = __HETAO_VERSION_0_7_0 ;
+
 char *strndup(const char *s, size_t n);
 
 /* 把字符串中的$...$用环境变量替换 */

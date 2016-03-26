@@ -41,10 +41,19 @@ c_FILE		=	\
 			MimeTypeHash.c \
 			RewriteUrl.c \
 
+c_FILE2		=	\
+			LOGC.c \
+			fasterjson.c \
+			fasterhttp.c \
+			IDL_hetao_conf.dsc.c \
+			Util.c \
+			Config.c \
+			hetaocheck.c \
+
 ###### 目标文件、安装目录配置区
 NOCLEAN_DIRINST_NOCOVER=	/var/hetao
 NOCLEAN_DIRINST2_NOCOVER=	/var/hetao/log
-BIN			=	hetao
+BIN			=	hetaocheck hetao
 BININST			=	/usr/local/bin
 NOCLEAN_OBJ		=	../bin/hetao.sh
 NOCLEAN_OBJINST		=	/usr/local/bin
@@ -56,10 +65,10 @@ NOCLEAN_OBJ3_NOCOVER	=	../www/*
 NOCLEAN_OBJINST3_NOCOVER=	/var/hetao/www
 
 ###### 编译选项
-CFLAGS		=	$(_CFLAGS) \
+CFLAGS		=	-I.
 
 ###### 链接选项
-LFLAGS		=	$(_LFLAGS) \
+LFLAGS		=	-L. \
 			-lpcre \
 			-lpthread \
 			-lssl \
@@ -85,15 +94,19 @@ CLEAN_ADDITION	=
 include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 
 ###### 目标文件依赖关系
-hetao		:	$(c_FILE_o) $(c_FILE2_o)
-	$(CC) -o $@ $(c_FILE_o) $(c_FILE2_o) $(LFLAGS)
-	@echo "INSTALL CONFIG :"
-	@echo "	$(MKDIR) $(NOCLEAN_DIRINST_NOCOVER)"
-	@echo "	$(MKDIR) $(NOCLEAN_DIRINST2_NOCOVER)"
-	@echo "	$(BIN) -> $(BININST)"
-	@echo "	$(NOCLEAN_OBJ) -> $(NOCLEAN_OBJINST)"
-	@echo "	$(NOCLEAN_OBJ_NOCOVER) -> $(NOCLEAN_OBJINST_NOCOVER)"
-	@echo "	$(NOCLEAN_OBJ2_NOCOVER) -> $(NOCLEAN_OBJINST2_NOCOVER)"
-	@echo "	$(NOCLEAN_OBJ3_NOCOVER) -> $(NOCLEAN_OBJINST3_NOCOVER)"
-	@echo "Execute the command to install : sudo make -f makefile.$(MKTPLOS) install"
+hetaocheck	:	$(c_FILE2_o)
+	$(CC) -o $@ $(c_FILE2_o) $(LFLAGS)
+
+hetao		:	$(c_FILE_o)
+	$(CC) -o $@ $(c_FILE_o) $(LFLAGS)
+	@echo "	=== INSTALL CONFIG ==============="
+	@echo "	= $(MKDIR) $(NOCLEAN_DIRINST_NOCOVER)"
+	@echo "	= $(MKDIR) $(NOCLEAN_DIRINST2_NOCOVER)"
+	@echo "	= $(BIN) -> $(BININST)"
+	@echo "	= $(NOCLEAN_OBJ) -> $(NOCLEAN_OBJINST)"
+	@echo "	= $(NOCLEAN_OBJ_NOCOVER) -> $(NOCLEAN_OBJINST_NOCOVER)"
+	@echo "	= $(NOCLEAN_OBJ2_NOCOVER) -> $(NOCLEAN_OBJINST2_NOCOVER)"
+	@echo "	= $(NOCLEAN_OBJ3_NOCOVER) -> $(NOCLEAN_OBJINST3_NOCOVER)"
+	@echo "	=== EXECUTE THE COMMAND TO INSTALL ==="
+	@echo "	sudo make -f makefile.$(MKTPLOS) install"
 

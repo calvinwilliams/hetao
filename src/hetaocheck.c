@@ -10,8 +10,8 @@
 
 static void usage()
 {
-	printf( "hetao v%s build %s %s\n" , __HETAO_VERSION , __DATE__ , __TIME__ );
-	printf( "USAGE : hetao hetao.conf\n" );
+	printf( "hetaocheck v%s build %s %s\n" , __HETAO_VERSION , __DATE__ , __TIME__ );
+	printf( "USAGE : hetaocheck hetao.conf\n" );
 	return;
 }
 
@@ -26,19 +26,12 @@ int main( int argc , char *argv[] )
 	
 	if( argc == 1 + 1 )
 	{
-		/* 重置所有HTTP状态码、描述为缺省 */
-		ResetAllHttpStatus();
-		
 		p_env = & server ;
 		g_p_env = p_env ;
 		memset( p_env , 0x00 , sizeof(struct HetaoEnv) );
-		p_env->argv = argv ;
 		
 		/* 设置缺省主日志 */
-		if( getenv( HETAO_LOG_PATHFILENAME ) == NULL )
-			SetLogFile( "#" );
-		else
-			SetLogFile( getenv(HETAO_LOG_PATHFILENAME) );
+		SetLogFile( "#" );
 		SetLogLevel( LOGLEVEL_ERROR );
 		SETPID
 		SETTID
@@ -57,35 +50,19 @@ int main( int argc , char *argv[] )
 		nret = LoadConfig( p_env->config_pathfilename , p_env ) ;
 		if( nret )
 		{
-			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
-				printf( "LoadConfig failed[%d]\n" , nret );
-			return -nret;
+			printf( "FAILED[%d]\n" , nret );
+		}
+		else
+		{
+			printf( "OK\n" );
 		}
 		
-		/* 重新设置主日志 */
+		free( p_env->p_config );
+		
+		/* 关闭主日志 */
 		CloseLogFile();
 		
-		SetLogFile( p_env->p_config->error_log );
-		SetLogLevel( p_env->log_level );
-		SETPID
-		SETTID
-		UPDATEDATETIMECACHEFIRST
-		InfoLog( __FILE__ , __LINE__ , "--- hetao v%s build %s %s ---" , __HETAO_VERSION , __DATE__ , __TIME__ );
-		SetHttpCloseExec( g_file_fd );
-		
-		/* 初始化服务器环境 */
-		nret = InitEnvirment( p_env ) ;
-		if( nret )
-		{
-			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
-				printf( "InitEnvirment failed[%d]\n" , nret );
-			return -nret;
-		}
-		
-		return -BindDaemonServer( & MonitorProcess , p_env );
-		/*
-		return -MonitorProcess( p_env );
-		*/
+		return -nret;
 	}
 	else
 	{
