@@ -11,12 +11,16 @@ int DSCINIT_hetao_conf( hetao_conf *pst )
 		{
 			for( index[2] = 0 ; index[2] < 64 ; index[2]++ )
 			{
+				for( index[3] = 0 ; index[3] < 10 ; index[3]++ )
+				{
+				}
+				pst->listen[index[1]].website[index[2]]._rewrite_size = 10 ;
 					for( index[4] = 0 ; index[4] < 1000 ; index[4]++ )
 					{
 					}
-					pst->listen[index[1]].server[index[2]].forward._forward_server_size = 1000 ;
+					pst->listen[index[1]].website[index[2]].forward._forward_server_size = 1000 ;
 			}
-			pst->listen[index[1]]._server_size = 64 ;
+			pst->listen[index[1]]._website_size = 64 ;
 		}
 		pst->_listen_size = 16 ;
 			for( index[2] = 0 ; index[2] < 256 ; index[2]++ )
@@ -133,121 +137,158 @@ int DSCSERIALIZE_JSON_hetao_conf( hetao_conf *pst , char *encoding , char *buf ,
 	}
 	len=SNPRINTF(buf,remain_len,"\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"		} ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len,"		\"server\" : \n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"		\"website\" : \n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"		[\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-				for( index[2] = 0 ; index[2]<pst->listen[index[1]]._server_count ; index[2]++ )
+				for( index[2] = 0 ; index[2]<pst->listen[index[1]]._website_count ; index[2]++ )
 				{
 	len=SNPRINTF(buf,remain_len,"		{\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"			"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"domain\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].domain[0]==127)
+	if(pst->listen[index[1]].website[index[2]].domain[0]==127)
 	{
 	len=SNPRINTF(buf,remain_len,"null"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].domain,strlen(pst->listen[index[1]].server[index[2]].domain),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
+	JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].domain,strlen(pst->listen[index[1]].website[index[2]].domain),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"			"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"wwwroot\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].wwwroot[0]==127)
+	if(pst->listen[index[1]].website[index[2]].wwwroot[0]==127)
 	{
 	len=SNPRINTF(buf,remain_len,"null"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].wwwroot,strlen(pst->listen[index[1]].server[index[2]].wwwroot),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
+	JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].wwwroot,strlen(pst->listen[index[1]].website[index[2]].wwwroot),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"			"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"index\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].index[0]==127)
+	if(pst->listen[index[1]].website[index[2]].index[0]==127)
 	{
 	len=SNPRINTF(buf,remain_len,"null"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].index,strlen(pst->listen[index[1]].server[index[2]].index),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
+	JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].index,strlen(pst->listen[index[1]].website[index[2]].index),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"			"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"access_log\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].access_log[0]==127)
+	if(pst->listen[index[1]].website[index[2]].access_log[0]==127)
 	{
 	len=SNPRINTF(buf,remain_len,"null"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].access_log,strlen(pst->listen[index[1]].server[index[2]].access_log),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
+	JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].access_log,strlen(pst->listen[index[1]].website[index[2]].access_log),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"			\"rewrite\" : \n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"			[\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+					for( index[3] = 0 ; index[3]<pst->listen[index[1]].website[index[2]]._rewrite_count ; index[3]++ )
+					{
+	len=SNPRINTF(buf,remain_len,"			{\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"				"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"pattern\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	if(pst->listen[index[1]].website[index[2]].rewrite[index[3]].pattern[0]==127)
+	{
+	len=SNPRINTF(buf,remain_len,"null"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	}
+	else
+	{
+	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].rewrite[index[3]].pattern,strlen(pst->listen[index[1]].website[index[2]].rewrite[index[3]].pattern),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	}
+	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"				"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\"template\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	if(pst->listen[index[1]].website[index[2]].rewrite[index[3]].template[0]==127)
+	{
+	len=SNPRINTF(buf,remain_len,"null"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	}
+	else
+	{
+	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].rewrite[index[3]].template,strlen(pst->listen[index[1]].website[index[2]].rewrite[index[3]].template),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	}
+	len=SNPRINTF(buf,remain_len,"\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+					if((pst->listen[index[1]].website[index[2]]._rewrite_count==0)?(index[3]<10-1):(index[3]<pst->listen[index[1]].website[index[2]]._rewrite_count-1))
+					{ len=SNPRINTF(buf,remain_len,"			} ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len; }
+					else
+					{ len=SNPRINTF(buf,remain_len,"			}\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len; }
+					}
+	len=SNPRINTF(buf,remain_len,"			] ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"			\"forward\" : \n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"			{\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"				"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"forward_type\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].forward.forward_type[0]==127)
+	if(pst->listen[index[1]].website[index[2]].forward.forward_type[0]==127)
 	{
 	len=SNPRINTF(buf,remain_len,"null"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].forward.forward_type,strlen(pst->listen[index[1]].server[index[2]].forward.forward_type),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
+	JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].forward.forward_type,strlen(pst->listen[index[1]].website[index[2]].forward.forward_type),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"				"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"forward_rule\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].forward.forward_rule[0]==127)
+	if(pst->listen[index[1]].website[index[2]].forward.forward_rule[0]==127)
 	{
 	len=SNPRINTF(buf,remain_len,"null"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].forward.forward_rule,strlen(pst->listen[index[1]].server[index[2]].forward.forward_rule),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
+	JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].forward.forward_rule,strlen(pst->listen[index[1]].website[index[2]].forward.forward_rule),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"				\"forward_server\" : \n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"				[\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-						for( index[4] = 0 ; index[4]<pst->listen[index[1]].server[index[2]].forward._forward_server_count ; index[4]++ )
+						for( index[4] = 0 ; index[4]<pst->listen[index[1]].website[index[2]].forward._forward_server_count ; index[4]++ )
 						{
 	len=SNPRINTF(buf,remain_len,"				{\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"					"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"ip\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].forward.forward_server[index[4]].ip[0]==127)
+	if(pst->listen[index[1]].website[index[2]].forward.forward_server[index[4]].ip[0]==127)
 	{
 	len=SNPRINTF(buf,remain_len,"null"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].forward.forward_server[index[4]].ip,strlen(pst->listen[index[1]].server[index[2]].forward.forward_server[index[4]].ip),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
+	JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].forward.forward_server[index[4]].ip,strlen(pst->listen[index[1]].website[index[2]].forward.forward_server[index[4]].ip),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"					"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\"port\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len,"%d",pst->listen[index[1]].server[index[2]].forward.forward_server[index[4]].port); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	len=SNPRINTF(buf,remain_len,"%d",pst->listen[index[1]].website[index[2]].forward.forward_server[index[4]].port); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-						if((pst->listen[index[1]].server[index[2]].forward._forward_server_count==0)?(index[4]<1000-1):(index[4]<pst->listen[index[1]].server[index[2]].forward._forward_server_count-1))
+						if((pst->listen[index[1]].website[index[2]].forward._forward_server_count==0)?(index[4]<1000-1):(index[4]<pst->listen[index[1]].website[index[2]].forward._forward_server_count-1))
 						{ len=SNPRINTF(buf,remain_len,"				} ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len; }
 						else
 						{ len=SNPRINTF(buf,remain_len,"				}\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len; }
 						}
 	len=SNPRINTF(buf,remain_len,"				]\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"			}\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-				if((pst->listen[index[1]]._server_count==0)?(index[2]<64-1):(index[2]<pst->listen[index[1]]._server_count-1))
+				if((pst->listen[index[1]]._website_count==0)?(index[2]<64-1):(index[2]<pst->listen[index[1]]._website_count-1))
 				{ len=SNPRINTF(buf,remain_len,"		} ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len; }
 				else
 				{ len=SNPRINTF(buf,remain_len,"		}\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len; }
@@ -577,121 +618,158 @@ int DSCSERIALIZE_JSON_DUP_hetao_conf( hetao_conf *pst , char *encoding , char **
 	}
 	while(1){len=SNPRINTF(buf,remain_len,"\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"		} ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	while(1){len=SNPRINTF(buf,remain_len,"		\"server\" : \n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){len=SNPRINTF(buf,remain_len,"		\"website\" : \n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"		[\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-				for( index[2] = 0 ; index[2]<pst->listen[index[1]]._server_count ; index[2]++ )
+				for( index[2] = 0 ; index[2]<pst->listen[index[1]]._website_count ; index[2]++ )
 				{
 	while(1){len=SNPRINTF(buf,remain_len,"		{\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"			");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"domain\" : ");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].domain[0]==127)
+	if(pst->listen[index[1]].website[index[2]].domain[0]==127)
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"null");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].domain,strlen(pst->listen[index[1]].server[index[2]].domain),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].domain,strlen(pst->listen[index[1]].website[index[2]].domain),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	}
 	while(1){len=SNPRINTF(buf,remain_len," ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"			");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"wwwroot\" : ");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].wwwroot[0]==127)
+	if(pst->listen[index[1]].website[index[2]].wwwroot[0]==127)
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"null");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].wwwroot,strlen(pst->listen[index[1]].server[index[2]].wwwroot),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].wwwroot,strlen(pst->listen[index[1]].website[index[2]].wwwroot),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	}
 	while(1){len=SNPRINTF(buf,remain_len," ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"			");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"index\" : ");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].index[0]==127)
+	if(pst->listen[index[1]].website[index[2]].index[0]==127)
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"null");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].index,strlen(pst->listen[index[1]].server[index[2]].index),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].index,strlen(pst->listen[index[1]].website[index[2]].index),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	}
 	while(1){len=SNPRINTF(buf,remain_len," ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"			");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"access_log\" : ");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].access_log[0]==127)
+	if(pst->listen[index[1]].website[index[2]].access_log[0]==127)
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"null");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].access_log,strlen(pst->listen[index[1]].server[index[2]].access_log),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].access_log,strlen(pst->listen[index[1]].website[index[2]].access_log),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	}
 	while(1){len=SNPRINTF(buf,remain_len," ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){len=SNPRINTF(buf,remain_len,"			\"rewrite\" : \n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){len=SNPRINTF(buf,remain_len,"			[\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+					for( index[3] = 0 ; index[3]<pst->listen[index[1]].website[index[2]]._rewrite_count ; index[3]++ )
+					{
+	while(1){len=SNPRINTF(buf,remain_len,"			{\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){len=SNPRINTF(buf,remain_len,"				");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){len=SNPRINTF(buf,remain_len,"\"pattern\" : ");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	if(pst->listen[index[1]].website[index[2]].rewrite[index[3]].pattern[0]==127)
+	{
+	while(1){len=SNPRINTF(buf,remain_len,"null");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	}
+	else
+	{
+	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].rewrite[index[3]].pattern,strlen(pst->listen[index[1]].website[index[2]].rewrite[index[3]].pattern),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	}
+	while(1){len=SNPRINTF(buf,remain_len," ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){len=SNPRINTF(buf,remain_len,"				");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){len=SNPRINTF(buf,remain_len,"\"template\" : ");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	if(pst->listen[index[1]].website[index[2]].rewrite[index[3]].template[0]==127)
+	{
+	while(1){len=SNPRINTF(buf,remain_len,"null");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	}
+	else
+	{
+	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].rewrite[index[3]].template,strlen(pst->listen[index[1]].website[index[2]].rewrite[index[3]].template),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	}
+	while(1){len=SNPRINTF(buf,remain_len,"\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+					if((pst->listen[index[1]].website[index[2]]._rewrite_count==0)?(index[3]<10-1):(index[3]<pst->listen[index[1]].website[index[2]]._rewrite_count-1))
+					{ while(1){len=SNPRINTF(buf,remain_len,"			} ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len; }
+					else
+					{ while(1){len=SNPRINTF(buf,remain_len,"			}\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len; }
+					}
+	while(1){len=SNPRINTF(buf,remain_len,"			] ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"			\"forward\" : \n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"			{\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"				");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"forward_type\" : ");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].forward.forward_type[0]==127)
+	if(pst->listen[index[1]].website[index[2]].forward.forward_type[0]==127)
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"null");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].forward.forward_type,strlen(pst->listen[index[1]].server[index[2]].forward.forward_type),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].forward.forward_type,strlen(pst->listen[index[1]].website[index[2]].forward.forward_type),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	}
 	while(1){len=SNPRINTF(buf,remain_len," ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"				");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"forward_rule\" : ");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].forward.forward_rule[0]==127)
+	if(pst->listen[index[1]].website[index[2]].forward.forward_rule[0]==127)
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"null");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].forward.forward_rule,strlen(pst->listen[index[1]].server[index[2]].forward.forward_rule),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].forward.forward_rule,strlen(pst->listen[index[1]].website[index[2]].forward.forward_rule),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	}
 	while(1){len=SNPRINTF(buf,remain_len," ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"				\"forward_server\" : \n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"				[\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-						for( index[4] = 0 ; index[4]<pst->listen[index[1]].server[index[2]].forward._forward_server_count ; index[4]++ )
+						for( index[4] = 0 ; index[4]<pst->listen[index[1]].website[index[2]].forward._forward_server_count ; index[4]++ )
 						{
 	while(1){len=SNPRINTF(buf,remain_len,"				{\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"					");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"ip\" : ");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].server[index[2]].forward.forward_server[index[4]].ip[0]==127)
+	if(pst->listen[index[1]].website[index[2]].forward.forward_server[index[4]].ip[0]==127)
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"null");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].server[index[2]].forward.forward_server[index[4]].ip,strlen(pst->listen[index[1]].server[index[2]].forward.forward_server[index[4]].ip),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].forward.forward_server[index[4]].ip,strlen(pst->listen[index[1]].website[index[2]].forward.forward_server[index[4]].ip),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	}
 	while(1){len=SNPRINTF(buf,remain_len," ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"					");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"port\" : ");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	while(1){len=SNPRINTF(buf,remain_len,"%d",pst->listen[index[1]].server[index[2]].forward.forward_server[index[4]].port);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){len=SNPRINTF(buf,remain_len,"%d",pst->listen[index[1]].website[index[2]].forward.forward_server[index[4]].port);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-						if((pst->listen[index[1]].server[index[2]].forward._forward_server_count==0)?(index[4]<1000-1):(index[4]<pst->listen[index[1]].server[index[2]].forward._forward_server_count-1))
+						if((pst->listen[index[1]].website[index[2]].forward._forward_server_count==0)?(index[4]<1000-1):(index[4]<pst->listen[index[1]].website[index[2]].forward._forward_server_count-1))
 						{ while(1){len=SNPRINTF(buf,remain_len,"				} ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len; }
 						else
 						{ while(1){len=SNPRINTF(buf,remain_len,"				}\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len; }
 						}
 	while(1){len=SNPRINTF(buf,remain_len,"				]\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"			}\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-				if((pst->listen[index[1]]._server_count==0)?(index[2]<64-1):(index[2]<pst->listen[index[1]]._server_count-1))
+				if((pst->listen[index[1]]._website_count==0)?(index[2]<64-1):(index[2]<pst->listen[index[1]]._website_count-1))
 				{ while(1){len=SNPRINTF(buf,remain_len,"		} ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len; }
 				else
 				{ while(1){len=SNPRINTF(buf,remain_len,"		}\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len; }
@@ -902,10 +980,12 @@ int CallbackOnJsonNode_hetao_conf( int type , char *jpath , int jpath_len , int 
 		{
 		if( jpath_len == 7 && strncmp( jpath , "/listen" , jpath_len ) == 0 )
 		{if(pst->_listen_count>=16)return -8;}
-			if( jpath_len == 14 && strncmp( jpath , "/listen/server" , jpath_len ) == 0 )
-			{if(pst->listen[pst->_listen_count]._server_count>=64)return -8;}
-					if( jpath_len == 37 && strncmp( jpath , "/listen/server/forward/forward_server" , jpath_len ) == 0 )
-					{if(pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].forward._forward_server_count>=1000)return -8;}
+			if( jpath_len == 15 && strncmp( jpath , "/listen/website" , jpath_len ) == 0 )
+			{if(pst->listen[pst->_listen_count]._website_count>=64)return -8;}
+				if( jpath_len == 23 && strncmp( jpath , "/listen/website/rewrite" , jpath_len ) == 0 )
+				{if(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count]._rewrite_count>=10)return -8;}
+					if( jpath_len == 38 && strncmp( jpath , "/listen/website/forward/forward_server" , jpath_len ) == 0 )
+					{if(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward._forward_server_count>=1000)return -8;}
 			if( jpath_len == 21 && strncmp( jpath , "/mime_types/mime_type" , jpath_len ) == 0 )
 			{if(pst->mime_types._mime_type_count>=256)return -8;}
 		}
@@ -913,10 +993,12 @@ int CallbackOnJsonNode_hetao_conf( int type , char *jpath , int jpath_len , int 
 		{
 		if( jpath_len == 7 && strncmp( jpath , "/listen" , jpath_len ) == 0 )
 		{pst->_listen_count++;}
-			if( jpath_len == 14 && strncmp( jpath , "/listen/server" , jpath_len ) == 0 )
-			{pst->listen[pst->_listen_count]._server_count++;}
-					if( jpath_len == 37 && strncmp( jpath , "/listen/server/forward/forward_server" , jpath_len ) == 0 )
-					{pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].forward._forward_server_count++;}
+			if( jpath_len == 15 && strncmp( jpath , "/listen/website" , jpath_len ) == 0 )
+			{pst->listen[pst->_listen_count]._website_count++;}
+				if( jpath_len == 23 && strncmp( jpath , "/listen/website/rewrite" , jpath_len ) == 0 )
+				{pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count]._rewrite_count++;}
+					if( jpath_len == 38 && strncmp( jpath , "/listen/website/forward/forward_server" , jpath_len ) == 0 )
+					{pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward._forward_server_count++;}
 			if( jpath_len == 21 && strncmp( jpath , "/mime_types/mime_type" , jpath_len ) == 0 )
 			{pst->mime_types._mime_type_count++;}
 		}
@@ -954,29 +1036,35 @@ int CallbackOnJsonNode_hetao_conf( int type , char *jpath , int jpath_len , int 
 				if( jpath_len == 32 && strncmp( jpath , "/listen/ssl/certificate_key_file" , jpath_len ) == 0 )
 				{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].ssl.certificate_key_file,len,sizeof(pst->listen[pst->_listen_count].ssl.certificate_key_file)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
 				/* domain */
-				if( jpath_len == 21 && strncmp( jpath , "/listen/server/domain" , jpath_len ) == 0 )
-				{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].domain,len,sizeof(pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].domain)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
+				if( jpath_len == 22 && strncmp( jpath , "/listen/website/domain" , jpath_len ) == 0 )
+				{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].domain,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].domain)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
 				/* wwwroot */
-				if( jpath_len == 22 && strncmp( jpath , "/listen/server/wwwroot" , jpath_len ) == 0 )
-				{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].wwwroot,len,sizeof(pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].wwwroot)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
+				if( jpath_len == 23 && strncmp( jpath , "/listen/website/wwwroot" , jpath_len ) == 0 )
+				{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].wwwroot,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].wwwroot)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
 				/* index */
-				if( jpath_len == 20 && strncmp( jpath , "/listen/server/index" , jpath_len ) == 0 )
-				{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].index,len,sizeof(pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].index)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
+				if( jpath_len == 21 && strncmp( jpath , "/listen/website/index" , jpath_len ) == 0 )
+				{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].index,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].index)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
 				/* access_log */
-				if( jpath_len == 25 && strncmp( jpath , "/listen/server/access_log" , jpath_len ) == 0 )
-				{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].access_log,len,sizeof(pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].access_log)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
+				if( jpath_len == 26 && strncmp( jpath , "/listen/website/access_log" , jpath_len ) == 0 )
+				{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].access_log,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].access_log)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
+					/* pattern */
+					if( jpath_len == 31 && strncmp( jpath , "/listen/website/rewrite/pattern" , jpath_len ) == 0 )
+					{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].rewrite[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count]._rewrite_count].pattern,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].rewrite[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count]._rewrite_count].pattern)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
+					/* template */
+					if( jpath_len == 32 && strncmp( jpath , "/listen/website/rewrite/template" , jpath_len ) == 0 )
+					{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].rewrite[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count]._rewrite_count].template,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].rewrite[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count]._rewrite_count].template)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
 					/* forward_type */
-					if( jpath_len == 35 && strncmp( jpath , "/listen/server/forward/forward_type" , jpath_len ) == 0 )
-					{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].forward.forward_type,len,sizeof(pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].forward.forward_type)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
+					if( jpath_len == 36 && strncmp( jpath , "/listen/website/forward/forward_type" , jpath_len ) == 0 )
+					{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward.forward_type,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward.forward_type)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
 					/* forward_rule */
-					if( jpath_len == 35 && strncmp( jpath , "/listen/server/forward/forward_rule" , jpath_len ) == 0 )
-					{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].forward.forward_rule,len,sizeof(pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].forward.forward_rule)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
+					if( jpath_len == 36 && strncmp( jpath , "/listen/website/forward/forward_rule" , jpath_len ) == 0 )
+					{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward.forward_rule,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward.forward_rule)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
 						/* ip */
-						if( jpath_len == 40 && strncmp( jpath , "/listen/server/forward/forward_server/ip" , jpath_len ) == 0 )
-						{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].forward.forward_server[pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].forward._forward_server_count].ip,len,sizeof(pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].forward.forward_server[pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].forward._forward_server_count].ip)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
+						if( jpath_len == 41 && strncmp( jpath , "/listen/website/forward/forward_server/ip" , jpath_len ) == 0 )
+						{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward.forward_server[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward._forward_server_count].ip,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward.forward_server[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward._forward_server_count].ip)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
 						/* port */
-						if( jpath_len == 42 && strncmp( jpath , "/listen/server/forward/forward_server/port" , jpath_len ) == 0 )
-						{NATOI(content,content_len,pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].forward.forward_server[pst->listen[pst->_listen_count].server[pst->listen[pst->_listen_count]._server_count].forward._forward_server_count].port);}
+						if( jpath_len == 43 && strncmp( jpath , "/listen/website/forward/forward_server/port" , jpath_len ) == 0 )
+						{NATOI(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward.forward_server[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward._forward_server_count].port);}
 			/* nodelay */
 			if( jpath_len == 20 && strncmp( jpath , "/tcp_options/nodelay" , jpath_len ) == 0 )
 			{NATOI(content,content_len,pst->tcp_options.nodelay);}

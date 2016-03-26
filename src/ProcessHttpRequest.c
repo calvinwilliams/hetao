@@ -166,7 +166,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 	if( STAT_DIRECTORY(p_htmlcache_session->st) )
 	{
 		/* 如果是目录，尝试所有索引文件 */
-		char	index_copy[ sizeof(p_env->p_config->listen[0].server[0].index) ] ;
+		char	index_copy[ sizeof(p_env->p_config->listen[0].website[0].index) ] ;
 		int	index_filename_len = 0 ;
 		char	*index_filename = NULL ;
 		

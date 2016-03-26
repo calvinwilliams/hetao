@@ -38,6 +38,7 @@ c_FILE		=	\
 			HttpSessionTimeoutTree.c \
 			LeastConnectionCountTree.c \
 			MimeTypeHash.c \
+			RewriteUrl.c \
 
 ###### 目标文件、安装目录配置区
 include makeinstall
@@ -49,7 +50,7 @@ CFLAGS		=	$(_CFLAGS) \
 
 ###### 链接选项
 LFLAGS		=	$(_LFLAGS) \
-			-L$(HOME)/lib \
+			-lpcre \
 			-lpthread \
 			-lssl \
 			-lz \

@@ -33,6 +33,7 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <dirent.h>
+#include "pcre.h"
 #define __USE_GNU
 #include <sched.h>
 #include <pthread.h>
@@ -139,7 +140,7 @@
 /* 网络信息结构 */
 struct NetAddress
 {
-	char			ip[ sizeof( ((hetao_conf*)0)->listen[0].server[0].domain ) + 1 ] ;
+	char			ip[ sizeof( ((hetao_conf*)0)->listen[0].website[0].domain ) + 1 ] ;
 	int			port ;
 	SOCKET			sock ;
 	struct sockaddr_in	addr ;
@@ -149,6 +150,23 @@ struct NetAddress
 struct DataSession
 {
 	char			type ;
+} ;
+
+/* 重写地址结构 */
+#define PATTERN_OVECCOUNT	30
+#define TEMPLATE_OVECCOUNT	6
+
+#define TEMPLATE_PATTERN	"(\\([0-9]+\\))"
+
+struct RewriteUrl
+{
+	char			pattern[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].pattern ) ] ;
+	char			template[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].template ) ] ;
+	int			template_len ;
+	
+	pcre			*pattern_re ;
+	
+	struct list_head	rewriteurl_node ;
 } ;
 
 /* 转发服务器结构 */
@@ -170,17 +188,19 @@ struct ForwardServer
 
 struct VirtualHost
 {
-	char			domain[ sizeof( ((hetao_conf*)0)->listen[0].server[0].domain ) ] ;
-	char			wwwroot[ sizeof( ((hetao_conf*)0)->listen[0].server[0].wwwroot ) ] ;
-	char			index[ sizeof( ((hetao_conf*)0)->listen[0].server[0].index ) ] ;
-	char			access_log[ sizeof( ((hetao_conf*)0)->listen[0].server[0].access_log ) ] ;
+	char			domain[ sizeof( ((hetao_conf*)0)->listen[0].website[0].domain ) ] ;
+	char			wwwroot[ sizeof( ((hetao_conf*)0)->listen[0].website[0].wwwroot ) ] ;
+	char			index[ sizeof( ((hetao_conf*)0)->listen[0].website[0].index ) ] ;
+	char			access_log[ sizeof( ((hetao_conf*)0)->listen[0].website[0].access_log ) ] ;
 	
 	int			domain_len ;
 	int			access_log_fd ;
 	
-	char			forward_type[ sizeof( ((hetao_conf*)0)->listen[0].server[0].forward.forward_type ) ] ;
+	struct RewriteUrl	rewrite_url_list ;
+	
+	char			forward_type[ sizeof( ((hetao_conf*)0)->listen[0].website[0].forward.forward_type ) ] ;
 	int			forward_type_len ;
-	char			forward_rule[ sizeof( ((hetao_conf*)0)->listen[0].server[0].forward.forward_rule ) ] ;
+	char			forward_rule[ sizeof( ((hetao_conf*)0)->listen[0].website[0].forward.forward_rule ) ] ;
 	struct ForwardServer	roundrobin_list ;
 	struct rb_root		leastconnection_rbtree ;
 	
@@ -299,6 +319,8 @@ struct HetaoEnv
 	struct ListenSession		listen_session_list ;
 	int				listen_session_count ;
 	
+	pcre				*template_re ;
+	
 	int				htmlcache_inotify_fd ;
 	struct HtmlCacheSession		htmlcache_session ;
 	struct HtmlCacheSession		htmlcache_session_list ;
@@ -334,6 +356,8 @@ void RemoveHtmlCacheWdTreeNode( struct HetaoEnv *p_server , struct HtmlCacheSess
 int AddHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_server , struct HtmlCacheSession *p_htmlcache_session );
 struct HtmlCacheSession *QueryHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_server , char *pathfilename );
 void RemoveHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_server , struct HtmlCacheSession *p_htmlcache_session );
+
+int RegexReplaceString( pcre *pattern_re , char *url , int url_len , pcre *template_re , char *new_url , int *p_new_url_len , int new_url_size );
 
 int AddHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
 void RemoveHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );

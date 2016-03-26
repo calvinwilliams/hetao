@@ -23,12 +23,17 @@ STRUCT	hetao_conf
 			STRING	256	certificate_key_file
 		}
 		
-		STRUCT	server	ARRAY	64
+		STRUCT	website	ARRAY	64
 		{
 			STRING	256	domain
 			STRING	1024	wwwroot
 			STRING	1024	index
 			STRING	256	access_log
+			STRUCT	rewrite	ARRAY	10
+			{
+				STRING	256	pattern
+				STRING	256	template
+			}
 			STRUCT	forward
 			{
 				STRING	16	forward_type

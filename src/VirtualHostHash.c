@@ -37,6 +37,8 @@ void CleanVirtualHostHash( struct ListenSession *p_listen_session )
 	struct hlist_head	*p_hlist_head = NULL ;
 	struct hlist_node	*curr = NULL , *next = NULL ;
 	struct VirtualHost	*p_virtualhost = NULL ;
+	struct RewriteUrl	*p_rewrite_url = NULL ;
+	struct RewriteUrl	*p_next_rewrite_url = NULL ;
 	
 	for( i = 0 , p_hlist_head = p_listen_session->virtualhost_hash ; i < p_listen_session->virtualhost_hashsize ; i++ , p_hlist_head++ )
 	{
@@ -44,6 +46,10 @@ void CleanVirtualHostHash( struct ListenSession *p_listen_session )
 		{
 			hlist_del( curr );
 			p_virtualhost = container_of(curr,struct VirtualHost,virtualhost_node) ;
+			list_for_each_entry_safe( p_rewrite_url , p_next_rewrite_url , & (p_virtualhost->rewrite_url_list.rewriteurl_node) , rewriteurl_node )
+			{
+				free( p_rewrite_url->pattern_re );
+			}
 			free( p_virtualhost );
 		}
 	}
