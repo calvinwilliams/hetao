@@ -7,6 +7,8 @@ STRUCT	hetao_conf
 	STRING	256	error_log
 	STRING	6	log_level
 	
+	STRING	64	user
+	
 	STRUCT	limits
 	{
 		INT	4	max_http_session_count

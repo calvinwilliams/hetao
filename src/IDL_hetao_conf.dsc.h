@@ -91,6 +91,7 @@ typedef struct
 	int	accept_mutex ;
 	char	error_log[ 256 + 1 ] ;
 	char	log_level[ 6 + 1 ] ;
+	char	user[ 64 + 1 ] ;
 	struct
 	{
 		int	max_http_session_count ;

@@ -21,6 +21,7 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 	PREFIX_DSCLOG_hetao_conf "hetao_conf.accept_mutex[%d]" NEWLINE_DSCLOG_hetao_conf , pst->accept_mutex );
 	PREFIX_DSCLOG_hetao_conf "hetao_conf.error_log[%s]" NEWLINE_DSCLOG_hetao_conf , pst->error_log );
 	PREFIX_DSCLOG_hetao_conf "hetao_conf.log_level[%s]" NEWLINE_DSCLOG_hetao_conf , pst->log_level );
+	PREFIX_DSCLOG_hetao_conf "hetao_conf.user[%s]" NEWLINE_DSCLOG_hetao_conf , pst->user );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.limits.max_http_session_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->limits.max_http_session_count );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.limits.max_file_cache[%d]" NEWLINE_DSCLOG_hetao_conf , pst->limits.max_file_cache );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf._listen_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->_listen_count );

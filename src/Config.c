@@ -155,7 +155,7 @@ int LoadConfig( char *config_pathfilename , struct HetaoEnv *p_env )
 	free( buf );
 	if( nret )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_hetao_conf failed[%d][%d] , errno[%d]errline[%d]" , nret , DSCGetErrorLine_hetao_conf() , errno , DSCGetErrorLine_hetao_conf() );
+		ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_hetao_conf failed[%d][%d] , errno[%d]" , nret , DSCGetErrorLine_hetao_conf() , errno );
 		return -1;
 	}
 	
@@ -175,6 +175,17 @@ int LoadConfig( char *config_pathfilename , struct HetaoEnv *p_env )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "log_level[%s] invalid" , p_env->p_config->log_level );
 		return nret;
+	}
+	
+	/* 检查用户名 */
+	if( p_env->p_config->user[0] )
+	{
+		p_env->pwd = getpwnam( p_env->p_config->user ) ;
+		if( p_env->pwd == NULL )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "user[%s] not found" , p_env->p_config->user );
+			return nret;
+		}
 	}
 	
 	/* 展开日志文件名中的环境变量 */

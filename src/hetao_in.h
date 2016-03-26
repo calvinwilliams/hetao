@@ -33,6 +33,7 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <dirent.h>
+#include <pwd.h>
 #include "pcre.h"
 #define __USE_GNU
 #include <sched.h>
@@ -308,6 +309,8 @@ struct HetaoEnv
 	char				config_pathfilename[ 256 + 1 ] ;
 	hetao_conf			*p_config ;
 	int				log_level ;
+	
+	struct passwd			*pwd ;
 	
 	char				init_ssl_env_flag ;
 	
