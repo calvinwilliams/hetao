@@ -42,9 +42,18 @@ c_FILE		=	\
 			RewriteUrl.c \
 
 ###### 目标文件、安装目录配置区
-include makeinstall
-BIN		=	hetao
-BININST		=	$(_BININST)
+NOCLEAN_DIRINST_NOCOVER=	/var/hetao
+NOCLEAN_DIRINST2_NOCOVER=	/var/hetao/log
+BIN			=	hetao
+BININST			=	/usr/local/bin
+NOCLEAN_OBJ		=	../bin/hetao.sh
+NOCLEAN_OBJINST		=	/usr/local/bin
+NOCLEAN_OBJ_NOCOVER	=	../conf/hetao.conf
+NOCLEAN_OBJINST_NOCOVER	=	/etc/hetao
+NOCLEAN_OBJ2_NOCOVER	=	../certs/*
+NOCLEAN_OBJINST2_NOCOVER=	/etc/hetao/certs
+NOCLEAN_OBJ3_NOCOVER	=	../www/*
+NOCLEAN_OBJINST3_NOCOVER=	/var/hetao/www
 
 ###### 编译选项
 CFLAGS		=	$(_CFLAGS) \
@@ -63,18 +72,28 @@ CLEAN_ADDITION	=
 #@ make_all
 #@ make_clean
 #@ make_install
+#@ make_install_NOCLEAN_DIRINST_NOCOVER
+#@ make_install_NOCLEAN_DIRINST2_NOCOVER
 #@ make_install_BININST
-#@ make_install_LIBINST
-#@ make_install_HDERINST
-#@ make_install_DFTHDERINST
+#@ make_install_NOCLEAN_OBJINST
+#@ make_install_NOCLEAN_OBJINST_NOCOVER
+#@ make_install_NOCLEAN_OBJINST2_NOCOVER
+#@ make_install_NOCLEAN_OBJINST3_NOCOVER
 #@ make_uninstall
 #@ make_uninstall_BININST
-#@ make_uninstall_LIBINST
-#@ make_uninstall_HDERINST
-#@ make_uninstall_DFTHDERINST
+#@ make_uninstall_NOCLEAN_OBJINST
 include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 
 ###### 目标文件依赖关系
 hetao		:	$(c_FILE_o) $(c_FILE2_o)
 	$(CC) -o $@ $(c_FILE_o) $(c_FILE2_o) $(LFLAGS)
+	@echo "INSTALL CONFIG :"
+	@echo "	$(MKDIR) $(NOCLEAN_DIRINST_NOCOVER)"
+	@echo "	$(MKDIR) $(NOCLEAN_DIRINST2_NOCOVER)"
+	@echo "	$(BIN) -> $(BININST)"
+	@echo "	$(NOCLEAN_OBJ) -> $(NOCLEAN_OBJINST)"
+	@echo "	$(NOCLEAN_OBJ_NOCOVER) -> $(NOCLEAN_OBJINST_NOCOVER)"
+	@echo "	$(NOCLEAN_OBJ2_NOCOVER) -> $(NOCLEAN_OBJINST2_NOCOVER)"
+	@echo "	$(NOCLEAN_OBJ3_NOCOVER) -> $(NOCLEAN_OBJINST3_NOCOVER)"
+	@echo "Execute the command to install : sudo make -f makefile.$(MKTPLOS) install"
 

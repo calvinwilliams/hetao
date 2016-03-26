@@ -67,7 +67,7 @@ int OnReceivingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 			return 1;
 		}
 		
-		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer" );
+		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer [%d]bytes" , GetHttpBufferLength(b) );
 		
 		SetHttpSessionUnused_02( p_env , p_http_session );
 		

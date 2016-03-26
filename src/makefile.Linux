@@ -64,9 +64,18 @@ c_FILE		=	\
 			RewriteUrl.c \
 
 ###### 目标文件、安装目录配置区
-include makeinstall
-BIN		=	hetao
-BININST		=	$(_BININST)
+NOCLEAN_DIRINST_NOCOVER=	/var/hetao
+NOCLEAN_DIRINST2_NOCOVER=	/var/hetao/log
+BIN			=	hetao
+BININST			=	/usr/local/bin
+NOCLEAN_OBJ		=	../bin/hetao.sh
+NOCLEAN_OBJINST		=	/usr/local/bin
+NOCLEAN_OBJ_NOCOVER	=	../conf/hetao.conf
+NOCLEAN_OBJINST_NOCOVER	=	/etc/hetao
+NOCLEAN_OBJ2_NOCOVER	=	../certs/*
+NOCLEAN_OBJINST2_NOCOVER=	/etc/hetao/certs
+NOCLEAN_OBJ3_NOCOVER	=	../www/*
+NOCLEAN_OBJINST3_NOCOVER=	/var/hetao/www
 
 ###### 编译选项
 CFLAGS		=	$(_CFLAGS) \
@@ -83,12 +92,12 @@ CLEAN_ADDITION	=
 
 ###### 加载mktpl模板库
 # 最终目标列表
-all	:	$(OBJ) $(OBJ2) $(LIB) $(LIB2) $(SQL) $(NOCLEAN_OBJ) $(NOINST_OBJ) $(BIN) $(BIN2)
+all	:	$(OBJ) $(OBJ2) $(LIB) $(LIB2) $(SQL) $(NOINST_OBJ) $(BIN) $(BIN2)
 
 # 文件系统宏
 CD		=	cd
 RM		=	rm -f
-CP		=	cp -f
+CP		=	cp -rf
 MV		=	mv -f
 MKDIR		=	mkdir -p
 
@@ -111,97 +120,127 @@ DFTHDER		=	$(csm_FILE_DFTHDER) $(cui_FILE_DFTHDER) $(dtd_FILE_DFTHDER) $(prt_FIL
 .PHONY:install
 install		:	all
 
-ifneq ($(strip $(BIN)),)
+ifneq ($(strip $(NOCLEAN_DIRINST_NOCOVER)),)
+	@if [ -d "$(NOCLEAN_DIRINST_NOCOVER)" ] ; then \
+		echo $(NOCLEAN_DIRINST_NOCOVER) EXIST !!! ; \
+	else \
+		echo $(MKDIR) $(NOCLEAN_DIRINST_NOCOVER) ; \
+		$(MKDIR) $(NOCLEAN_DIRINST_NOCOVER) ; \
+	fi ;
+endif
+
+ifneq ($(strip $(NOCLEAN_DIRINST2_NOCOVER)),)
+	@if [ -d "$(NOCLEAN_DIRINST2_NOCOVER)" ] ; then \
+		echo $(NOCLEAN_DIRINST2_NOCOVER) EXIST !!! ; \
+	else \
+		echo $(MKDIR) $(NOCLEAN_DIRINST2_NOCOVER) ; \
+		$(MKDIR) $(NOCLEAN_DIRINST2_NOCOVER) ; \
+	fi ;
+endif
+
 ifneq ($(strip $(BININST)),)
 	@if [ ! -d "$(BININST)" ] ; then \
 		echo $(MKDIR) $(BININST) ; \
 		$(MKDIR) $(BININST) ; \
-	fi ; \
-	for FILE in `echo $(BIN)` ; do \
-		echo $(CP) $$FILE $(BININST)/ ; \
-		$(RM) $(BININST)/$$FILE ; \
-		$(CP) $$FILE $(BININST)/ ; \
+	fi
+ifneq ($(strip $(BIN)),)
+	@for FILE in `echo $(BIN)` ; do \
+		if [ -f $(BININST)/$$FILE ] ; then \
+			$(RM) $(BININST)/$$FILE ; \
+		fi ; \
+		if [ -f $$FILE ] ; then \
+			echo $(CP) $$FILE $(BININST)/ ; \
+			$(CP) $$FILE $(BININST)/ ; \
+		fi ; \
 	done
 endif
 endif
-ifneq ($(strip $(BIN2)),)
 ifneq ($(strip $(BININST2)),)
 	@if [ ! -d "$(BININST2)" ] ; then \
 		echo $(MKDIR) $(BININST2) ; \
 		$(MKDIR) $(BININST2) ; \
-	fi ; \
-	for FILE in `echo $(BIN2)` ; do \
-		echo $(CP) $$FILE $(BININST2)/ ; \
-		$(RM) $(BININST2)/$$FILE ; \
-		$(CP) $$FILE $(BININST2)/ ; \
+	fi
+ifneq ($(strip $(BIN2)),)
+	@for FILE in `echo $(BIN2)` ; do \
+		if [ -f $(BININST2)/$$FILE ] ; then \
+			$(RM) $(BININST2)/$$FILE ; \
+		fi ; \
+		if [ -f $$FILE ] ; then \
+			echo $(CP) $$FILE $(BININST2)/ ; \
+			$(CP) $$FILE $(BININST2)/ ; \
+		fi ; \
 	done
 endif
 endif
 
-ifneq ($(strip $(LIB)),)
-ifneq ($(strip $(LIBINST)),)
-	@if [ ! -d "$(LIBINST)" ] ; then \
-		echo $(MKDIR) $(LIBINST) ; \
-		$(MKDIR) $(LIBINST) ; \
-	fi ; \
-	for FILE in `echo $(LIB)` ; do \
-		echo $(CP) $$FILE $(LIBINST)/ ; \
-		$(RM) $(LIBINST)/$$FILE ; \
-		$(CP) $$FILE $(LIBINST)/ ; \
-	done
-endif
-endif
-ifneq ($(strip $(LIB2)),)
-ifneq ($(strip $(LIBINST2)),)
-	@if [ ! -d "$(LIBINST2)" ] ; then \
-		echo $(MKDIR) $(LIBINST2) ; \
-		$(MKDIR) $(LIBINST2) ; \
-	fi ; \
-	for FILE in `echo $(LIB2)` ; do \
-		echo $(CP) $$FILE $(LIBINST2)/ ; \
-		$(RM) $(LIBINST2)/$$FILE ; \
-		$(CP) $$FILE $(LIBINST2)/ ; \
+ifneq ($(strip $(NOCLEAN_OBJINST)),)
+	@if [ ! -d "$(NOCLEAN_OBJINST)" ] ; then \
+		echo $(MKDIR) $(NOCLEAN_OBJINST) ; \
+		$(MKDIR) $(NOCLEAN_OBJINST) ; \
+	fi ;
+ifneq ($(strip $(NOCLEAN_OBJ)),)
+	@for FILE in `echo $(NOCLEAN_OBJ)` ; do \
+		if [ -e $(NOCLEAN_OBJINST)/$$FILE ] ; then \
+			$(RM) $(NOCLEAN_OBJINST)/$$FILE ; \
+		fi ; \
+		if [ -f $$FILE ] ; then \
+			echo $(CP) $$FILE $(NOCLEAN_OBJINST)/ ; \
+			$(CP) $$FILE $(NOCLEAN_OBJINST)/ ; \
+		fi ; \
 	done
 endif
 endif
 
-ifneq ($(strip $(HDER)),)
-ifneq ($(strip $(HDERINST)),)
-	@if [ ! -d "$(HDERINST)" ] ; then \
-		echo $(MKDIR) $(HDERINST) ; \
-		$(MKDIR) $(HDERINST) ; \
-	fi ; \
-	for FILE in `echo $(HDER)` ; do \
-		echo $(CP) $$FILE $(HDERINST)/ ; \
-		$(RM) $(HDERINST)/$$FILE ; \
-		$(CP) $$FILE $(HDERINST)/ ; \
-	done
-endif
-endif
-ifneq ($(strip $(HDER2)),)
-ifneq ($(strip $(HDERINST2)),)
-	@if [ ! -d "$(HDERINST2)" ] ; then \
-		echo $(MKDIR) $(HDERINST2) ; \
-		$(MKDIR) $(HDERINST2) ; \
-	fi ; \
-	for FILE in `echo $(HDER2)` ; do \
-		echo $(CP) $$FILE $(HDERINST2)/ ; \
-		$(RM) $(HDERINST2)/$$FILE ; \
-		$(CP) $$FILE $(HDERINST2)/ ; \
+ifneq ($(strip $(NOCLEAN_OBJINST_NOCOVER)),)
+	@if [ ! -d "$(NOCLEAN_OBJINST_NOCOVER)" ] ; then \
+		echo $(MKDIR) $(NOCLEAN_OBJINST_NOCOVER) ; \
+		$(MKDIR) $(NOCLEAN_OBJINST_NOCOVER) ; \
+	fi ;
+ifneq ($(strip $(NOCLEAN_OBJ_NOCOVER)),)
+	@for FILE in `echo $(NOCLEAN_OBJ_NOCOVER)` ; do \
+		FILE2=`basename $$FILE` ; \
+		if [ -e $(NOCLEAN_OBJINST_NOCOVER)/$$FILE2 ] ; then \
+			echo $(NOCLEAN_OBJINST_NOCOVER)/$$FILE2 EXIST !!! ; \
+		else \
+			echo $(CP) $$FILE $(NOCLEAN_OBJINST_NOCOVER)/ ; \
+			$(CP) $$FILE $(NOCLEAN_OBJINST_NOCOVER)/ ; \
+		fi ; \
 	done
 endif
 endif
 
-ifneq ($(strip $(DFTHDER)),)
-ifneq ($(strip $(DFTHDERINST)),)
-	@if [ ! -d "$(DFTHDERINST)" ] ; then \
-		echo $(MKDIR) $(DFTHDERINST) ; \
-		$(MKDIR) $(DFTHDERINST) ; \
-	fi ; \
-	for FILE in `echo $(DFTHDER)` ; do \
-		echo $(CP) $$FILE $(DFTHDERINST)/ ; \
-		$(RM) $(DFTHDERINST)/$$FILE ; \
-		$(CP) $$FILE $(DFTHDERINST)/ ; \
+ifneq ($(strip $(NOCLEAN_OBJINST2_NOCOVER)),)
+	@if [ ! -d "$(NOCLEAN_OBJINST2_NOCOVER)" ] ; then \
+		echo $(MKDIR) $(NOCLEAN_OBJINST2_NOCOVER) ; \
+		$(MKDIR) $(NOCLEAN_OBJINST2_NOCOVER) ; \
+	fi ;
+ifneq ($(strip $(NOCLEAN_OBJ2_NOCOVER)),)
+	@for FILE in `echo $(NOCLEAN_OBJ2_NOCOVER)` ; do \
+		FILE2=`basename $$FILE` ; \
+		if [ -e $(NOCLEAN_OBJINST2_NOCOVER)/$$FILE2 ] ; then \
+			echo $(NOCLEAN_OBJINST2_NOCOVER)/$$FILE2 EXIST !!! ; \
+		else \
+			echo $(CP) $$FILE $(NOCLEAN_OBJINST2_NOCOVER)/ ; \
+			$(CP) $$FILE $(NOCLEAN_OBJINST2_NOCOVER)/ ; \
+		fi ; \
+	done
+endif
+endif
+
+ifneq ($(strip $(NOCLEAN_OBJINST3_NOCOVER)),)
+	@if [ ! -d "$(NOCLEAN_OBJINST3_NOCOVER)" ] ; then \
+		echo $(MKDIR) $(NOCLEAN_OBJINST3_NOCOVER) ; \
+		$(MKDIR) $(NOCLEAN_OBJINST3_NOCOVER) ; \
+	fi ;
+ifneq ($(strip $(NOCLEAN_OBJ3_NOCOVER)),)
+	@for FILE in `echo $(NOCLEAN_OBJ3_NOCOVER)` ; do \
+		FILE3=`basename $$FILE` ; \
+		if [ -e $(NOCLEAN_OBJINST3_NOCOVER)/$$FILE3 ] ; then \
+			echo $(NOCLEAN_OBJINST3_NOCOVER)/$$FILE3 EXIST !!! ; \
+		else \
+			echo $(CP) $$FILE $(NOCLEAN_OBJINST3_NOCOVER)/ ; \
+			$(CP) $$FILE $(NOCLEAN_OBJINST3_NOCOVER)/ ; \
+		fi ; \
 	done
 endif
 endif
@@ -217,59 +256,31 @@ uninstall		:
 ifneq ($(strip $(BIN)),)
 ifneq ($(strip $(BININST)),)
 	@for FILE in `echo $(BIN)` ; do \
-		echo $(RM) $(BININST)/$$FILE ; \
-		$(RM) $(BININST)/$$FILE ; \
+		if [ -f $(BININST)/$$FILE ] ; then \
+			echo $(RM) $(BININST)/$$FILE ; \
+			$(RM) $(BININST)/$$FILE ; \
+		fi ; \
 	done
 endif
 endif
 ifneq ($(strip $(BIN2)),)
 ifneq ($(strip $(BININST2)),)
 	@for FILE in `echo $(BIN2)` ; do \
-		echo $(RM) $(BININST2)/$$FILE ; \
-		$(RM) $(BININST2)/$$FILE ; \
+		if [ -f $(BININST2)/$$FILE ] ; then \
+			echo $(RM) $(BININST2)/$$FILE ; \
+			$(RM) $(BININST2)/$$FILE ; \
+		fi ; \
 	done
 endif
 endif
 
-ifneq ($(strip $(LIB)),)
-ifneq ($(strip $(LIBINST)),)
-	@for FILE in `echo $(LIB)` ; do \
-		echo $(RM) $(LIBINST)/$$FILE ; \
-		$(RM) $(LIBINST)/$$FILE ; \
-	done
-endif
-endif
-ifneq ($(strip $(LIB2)),)
-ifneq ($(strip $(LIBINST2)),)
-	@for FILE in `echo $(LIB2)` ; do \
-		echo $(RM) $(LIBINST2)/$$FILE ; \
-		$(RM) $(LIBINST2)/$$FILE ; \
-	done
-endif
-endif
-
-ifneq ($(strip $(HDER)),)
-ifneq ($(strip $(HDERINST)),)
-	@for FILE in `echo $(HDER)` ; do \
-		echo $(RM) $(HDERINST)/$$FILE ; \
-		$(RM) $(HDERINST)/$$FILE ; \
-	done
-endif
-endif
-ifneq ($(strip $(HDER2)),)
-ifneq ($(strip $(HDERINST2)),)
-	@for FILE in `echo $(HDER2)` ; do \
-		echo $(RM) $(HDERINST2)/$$FILE ; \
-		$(RM) $(HDERINST2)/$$FILE ; \
-	done
-endif
-endif
-
-ifneq ($(strip $(DFTHDER)),)
-ifneq ($(strip $(DFTHDERINST)),)
-	@for FILE in `echo $(DFTHDER)` ; do \
-		echo $(RM) $(DFTHDERINST)/$$FILE ; \
-		$(RM) $(DFTHDERINST)/$$FILE ; \
+ifneq ($(strip $(NOCLEAN_OBJ)),)
+ifneq ($(strip $(NOCLEAN_OBJINST)),)
+	@for FILE in `echo $(NOCLEAN_OBJ)` ; do \
+		if [ -f $(NOCLEAN_OBJINST)/$$FILE ] ; then \
+			echo $(RM) $(NOCLEAN_OBJINST)/$$FILE ; \
+			$(RM) $(NOCLEAN_OBJINST)/$$FILE ; \
+		fi ; \
 	done
 endif
 endif
@@ -278,4 +289,13 @@ endif
 ###### 目标文件依赖关系
 hetao		:	$(c_FILE_o) $(c_FILE2_o)
 	$(CC) -o $@ $(c_FILE_o) $(c_FILE2_o) $(LFLAGS)
+	@echo "INSTALL CONFIG :"
+	@echo "	$(MKDIR) $(NOCLEAN_DIRINST_NOCOVER)"
+	@echo "	$(MKDIR) $(NOCLEAN_DIRINST2_NOCOVER)"
+	@echo "	$(BIN) -> $(BININST)"
+	@echo "	$(NOCLEAN_OBJ) -> $(NOCLEAN_OBJINST)"
+	@echo "	$(NOCLEAN_OBJ_NOCOVER) -> $(NOCLEAN_OBJINST_NOCOVER)"
+	@echo "	$(NOCLEAN_OBJ2_NOCOVER) -> $(NOCLEAN_OBJINST2_NOCOVER)"
+	@echo "	$(NOCLEAN_OBJ3_NOCOVER) -> $(NOCLEAN_OBJINST3_NOCOVER)"
+	@echo "Execute the command to install : sudo make -f makefile.$(MKTPLOS) install"
 

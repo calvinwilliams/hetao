@@ -10,8 +10,8 @@
 
 struct HetaoEnv	*g_p_env = NULL ;
 
-char	__HETAO_VERSION_0_6_0[] = "0.6.0" ;
-char	*__HETAO_VERSION = __HETAO_VERSION_0_6_0 ;
+char	__HETAO_VERSION_0_7_0[] = "0.7.0" ;
+char	*__HETAO_VERSION = __HETAO_VERSION_0_7_0 ;
 
 static void usage()
 {
@@ -26,6 +26,8 @@ int main( int argc , char *argv[] )
 	struct HetaoEnv	*p_env = NULL ;
 	
 	int			nret = 0 ;
+	
+	umask(0);
 	
 	if( argc == 1 + 1 )
 	{

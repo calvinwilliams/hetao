@@ -1,3 +1,8 @@
+0.7.0		2016-09-10	calvin
+		* Support running as other user
+		* Fixed a fatal problem with fasterhttp
+		* Support compile and install to system folder directly
+
 0.6.0		2016-09-07	calvin
 		* Add 'mimetype.compress_enable' in configure
 		* Add 'limits.max_file_cache' in configure
