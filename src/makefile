@@ -99,7 +99,7 @@ hetaocheck	:	$(c_FILE2_o)
 
 hetao		:	$(c_FILE_o)
 	$(CC) -o $@ $(c_FILE_o) $(LFLAGS)
-	@echo "	=== INSTALL CONFIG ==============="
+	@echo "	=== INSTALL CONFIG ========= OTHER OBJECT DIRECTORIES BY EDITING makefile$(MAKEFILE_POSTFIX)"
 	@echo "	= $(MKDIR) $(NOCLEAN_DIRINST_NOCOVER)"
 	@echo "	= $(MKDIR) $(NOCLEAN_DIRINST2_NOCOVER)"
 	@echo "	= $(BIN) -> $(BININST)"
@@ -107,6 +107,6 @@ hetao		:	$(c_FILE_o)
 	@echo "	= $(NOCLEAN_OBJ_NOCOVER) -> $(NOCLEAN_OBJINST_NOCOVER)"
 	@echo "	= $(NOCLEAN_OBJ2_NOCOVER) -> $(NOCLEAN_OBJINST2_NOCOVER)"
 	@echo "	= $(NOCLEAN_OBJ3_NOCOVER) -> $(NOCLEAN_OBJINST3_NOCOVER)"
-	@echo "	=== EXECUTE THE COMMAND TO INSTALL ==="
+	@echo "	=== EXECUTE FOLLOWING COMMAND TO INSTALL ========="
 	@echo "	sudo make -f makefile.$(MKTPLOS) install"
 
