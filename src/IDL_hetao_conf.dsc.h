@@ -124,6 +124,11 @@ typedef struct
 				char	forward_rule[ 1 + 1 ] ;
 				struct
 				{
+					char	certificate_file[ 256 + 1 ] ;
+					char	certificate_key_file[ 256 + 1 ] ;
+				} ssl ;
+				struct
+				{
 					char	ip[ 15 + 1 ] ;
 					int	port ;
 				} forward_server [ 1000 ] ;

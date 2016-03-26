@@ -1,6 +1,8 @@
 0.6.0		2016-09-07	calvin
 		* Add 'mimetype.compress_enable' in configure
 		* Add 'limits.max_file_cache' in configure
+		* Support HTTP convert to HTTPS on reverse proxy
+		*** Configuration file format is not compatible between 0.5.0 and 0.6.0 ***
 
 0.5.0		2016-09-06	calvin
 		* Support rewrite

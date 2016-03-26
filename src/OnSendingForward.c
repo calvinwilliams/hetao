@@ -15,7 +15,7 @@ int OnSendingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_sessio
 	int			nret = 0 ;
 	
 	/* 发一把HTTP请求 */
-	nret = SendHttpRequestNonblock( p_http_session->forward_sock , NULL , p_http_session->forward_http ) ;
+	nret = SendHttpRequestNonblock( p_http_session->forward_sock , p_http_session->forward_ssl , p_http_session->forward_http ) ;
 	if( nret == FASTERHTTP_INFO_TCP_SEND_WOULDBLOCK )
 	{
 		/* 没发完 */

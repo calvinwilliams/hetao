@@ -45,6 +45,8 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 				}
 				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.forward_type[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.forward_type );
 				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.forward_rule[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.forward_rule );
+					PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.ssl.certificate_file[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.ssl.certificate_file );
+					PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.ssl.certificate_key_file[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.ssl.certificate_key_file );
 					PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward._forward_server_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward._forward_server_count );
 					for( index[4] = 0 ; index[4] < pst->listen[index[1]].website[index[2]].forward._forward_server_count ; index[4]++ )
 					{

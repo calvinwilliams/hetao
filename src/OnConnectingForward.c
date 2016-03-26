@@ -123,6 +123,28 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 	{
 		DebugLog( __FILE__ , __LINE__ , "connect[%s:%d] ok" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
 		
+		/* SSL握手 */
+		if( p_http_session->p_virtualhost->forward_ssl_ctx )
+		{
+			p_http_session->forward_ssl = SSL_new( p_http_session->p_virtualhost->forward_ssl_ctx ) ;
+			if( p_http_session->forward_ssl == NULL )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "SSL_new failed , errno[%d]" , errno );
+				SetHttpSessionUnused_05( p_env , p_http_session );
+				return HTTP_INTERNAL_SERVER_ERROR;
+			}
+			
+			SSL_set_fd( p_http_session->forward_ssl , p_http_session->forward_sock );
+			
+			nret = SSL_connect( p_http_session->forward_ssl ) ;
+			if( nret == -1 )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "SSL_connect failed , errno[%d]" , errno );
+				SetHttpSessionUnused_05( p_env , p_http_session );
+				return HTTP_INTERNAL_SERVER_ERROR;
+			}
+		}
+		
 		/* 复制HTTP请求 */
 		request_base = GetHttpBufferBase( GetHttpRequestBuffer(p_http_session->http) , & request_len ) ;
 		forward_b = GetHttpRequestBuffer( p_http_session->forward_http ) ;
@@ -245,6 +267,30 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
         }
 	
 	DebugLog( __FILE__ , __LINE__ , "connect2[%s:%d] ok" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
+	
+	/* SSL握手 */
+	if( p_http_session->p_virtualhost->forward_ssl_ctx )
+	{
+		p_http_session->forward_ssl = SSL_new( p_http_session->p_virtualhost->forward_ssl_ctx ) ;
+		if( p_http_session->forward_ssl == NULL )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "SSL_new failed , errno[%d]" , errno );
+			SetHttpSessionUnused_05( p_env , p_http_session );
+			return 1;
+		}
+		
+		SSL_set_fd( p_http_session->forward_ssl , p_http_session->forward_sock );
+		
+		SetHttpBlock( p_http_session->forward_sock );
+		nret = SSL_connect( p_http_session->forward_ssl ) ;
+		SetHttpNonblock( p_http_session->forward_sock );
+		if( nret == -1 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "SSL_connect failed , errno[%d]" , errno );
+			SetHttpSessionUnused_05( p_env , p_http_session );
+			return 1;
+		}
+	}
 	
 	/* 复制HTTP请求 */
 	request_base = GetHttpBufferBase( GetHttpRequestBuffer(p_http_session->http) , & request_len ) ;

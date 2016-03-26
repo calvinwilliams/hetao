@@ -228,6 +228,20 @@ int LoadConfig( char *config_pathfilename , struct HetaoEnv *p_env )
 			
 			if( p_env->p_config->listen[k].website[i].forward.forward_rule[0] )
 			{
+				nret = StringExpandEnvval( p_env->p_config->listen[k].website[i].forward.ssl.certificate_file , sizeof(p_env->p_config->listen[k].website[i].forward.ssl.certificate_file) ) ;
+				if( nret )
+					return nret;
+				
+				if( p_env->p_config->listen[k].website[i].forward.ssl.certificate_file[0] )
+				{
+					nret = AccessFileExist( p_env->p_config->listen[k].website[i].forward.ssl.certificate_file ) ;
+					if( nret != 1 )
+					{
+						ErrorLog( __FILE__ , __LINE__ , "ssl.certificate_file[%s] not exist" , p_env->p_config->listen[k].website[i].forward.ssl.certificate_file , nret );
+						return -1;
+					}
+				}
+				
 				if( STRCMP( p_env->p_config->listen[k].website[i].forward.forward_rule , != , FORWARD_RULE_ROUNDROBIN )
 					&& STRCMP( p_env->p_config->listen[k].website[i].forward.forward_rule , != , FORWARD_RULE_LEASTCONNECTION )
 				)

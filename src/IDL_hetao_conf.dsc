@@ -17,13 +17,11 @@ STRUCT	hetao_conf
 	{
 		STRING	15	ip
 		INT	4	port
-		
 		STRUCT	ssl
 		{
 			STRING	256	certificate_file
 			STRING	256	certificate_key_file
 		}
-		
 		STRUCT	website	ARRAY	64
 		{
 			STRING	256	domain
@@ -39,6 +37,11 @@ STRUCT	hetao_conf
 			{
 				STRING	16	forward_type
 				STRING	1	forward_rule
+				STRUCT	ssl
+				{
+					STRING	256	certificate_file
+					STRING	256	certificate_key_file
+				}
 				STRUCT	forward_server	ARRAY	1000
 				{
 					STRING	15	ip

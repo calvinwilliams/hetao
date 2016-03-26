@@ -33,7 +33,8 @@ extern "C" {
 
 char *strcasestr(const char *haystack, const char *needle);
 
-#include <openssl/ssl.h>
+#include "openssl/ssl.h"
+#include "openssl/err.h"
 
 #include <zlib.h>
 

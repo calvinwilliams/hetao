@@ -184,9 +184,13 @@ int InitServerEnvirment( struct HetaoEnv *p_env )
 		/* 创建SSL环境 */
 		if( p_env->p_config->listen[k].ssl.certificate_file[0] )
 		{
-			SSL_library_init();
-			OpenSSL_add_ssl_algorithms();
-			SSL_load_error_strings();
+			if( p_env->init_ssl_flag == 0 )
+			{
+				SSL_library_init();
+				OpenSSL_add_ssl_algorithms();
+				SSL_load_error_strings();
+				p_env->init_ssl_flag = 1 ;
+			}
 			
 			p_listen_session->ssl_ctx = SSL_CTX_new( SSLv23_method() ) ;
 			if( p_listen_session->ssl_ctx == NULL )
@@ -195,13 +199,15 @@ int InitServerEnvirment( struct HetaoEnv *p_env )
 				return -1;
 			}
 			
-			SSL_CTX_set_verify( p_listen_session->ssl_ctx , SSL_VERIFY_PEER , NULL );
-			
 			nret = SSL_CTX_use_certificate_file( p_listen_session->ssl_ctx , p_env->p_config->listen[k].ssl.certificate_file , SSL_FILETYPE_PEM ) ;
 			if( nret <= 0 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file failed , errno[%d]" , errno );
 				return -1;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file[%s] ok" , p_env->p_config->listen[k].ssl.certificate_file );
 			}
 			
 			nret = SSL_CTX_use_PrivateKey_file( p_listen_session->ssl_ctx , p_env->p_config->listen[k].ssl.certificate_key_file , SSL_FILETYPE_PEM ) ;
@@ -209,6 +215,10 @@ int InitServerEnvirment( struct HetaoEnv *p_env )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_PrivateKey_file failed , errno[%d]" , errno );
 				return -1;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "SSL_CTX_use_PrivateKey_file[%s] ok" , p_env->p_config->listen[k].ssl.certificate_key_file );
 			}
 		}
 		
@@ -260,7 +270,7 @@ int InitServerEnvirment( struct HetaoEnv *p_env )
 				DebugLog( __FILE__ , __LINE__ , "create template pattern[%s]" , TEMPLATE_PATTERN );
 			}	
 			
-			for( j = 0 ; j < p_env->p_config->listen[k].website[i]._rewrite_count ; i++ )
+			for( j = 0 ; j < p_env->p_config->listen[k].website[i]._rewrite_count ; j++ )
 			{
 				if( p_env->p_config->listen[k].website[i].rewrite[j].pattern[0] == '\0' || p_env->p_config->listen[k].website[i].rewrite[j].template[0] == '\0' )
 				{
@@ -295,13 +305,43 @@ int InitServerEnvirment( struct HetaoEnv *p_env )
 			strncpy( p_virtualhost->forward_type , p_env->p_config->listen[k].website[i].forward.forward_type , sizeof(p_virtualhost->forward_type)-1 );
 			p_virtualhost->forward_type_len = strlen(p_virtualhost->forward_type) ;
 			strncpy( p_virtualhost->forward_rule , p_env->p_config->listen[k].website[i].forward.forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
+			
+			if( p_env->p_config->listen[k].website[i].forward.ssl.certificate_file[0] )
+			{
+				if( p_env->init_ssl_flag == 0 )
+				{
+					SSL_library_init();
+					OpenSSL_add_ssl_algorithms();
+					SSL_load_error_strings();
+					p_env->init_ssl_flag = 1 ;
+				}
+				
+				p_virtualhost->forward_ssl_ctx = SSL_CTX_new( SSLv23_method() ) ;
+				if( p_virtualhost->forward_ssl_ctx == NULL )
+				{
+					ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_new failed , errno[%d]" , errno );
+					return -1;
+				}
+				
+				nret = SSL_CTX_use_certificate_file( p_virtualhost->forward_ssl_ctx , p_env->p_config->listen[k].website[i].forward.ssl.certificate_file , SSL_FILETYPE_PEM ) ;
+				if( nret <= 0 )
+				{
+					ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file failed , errno[%d]" , errno );
+					return -1;
+				}
+				else
+				{
+					DebugLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file[%s] ok" , p_env->p_config->listen[k].website[i].forward.ssl.certificate_file );
+				}
+			}
+			
+			INIT_LIST_HEAD( & (p_virtualhost->roundrobin_list.roundrobin_node) );
+			
 			if( p_virtualhost->forward_rule[0] && p_env->p_config->listen[k].website[i].forward._forward_server_count > 0 )
 			{
 				struct ForwardServer	*p_forward_server = NULL ;
 				
-				INIT_LIST_HEAD( & (p_virtualhost->roundrobin_list.roundrobin_node) );
-				
-				for( j = 0 ; j < p_env->p_config->listen[k].website[i].forward._forward_server_count ; i++ )
+				for( j = 0 ; j < p_env->p_config->listen[k].website[i].forward._forward_server_count ; j++ )
 				{
 					p_forward_server = (struct ForwardServer *)malloc( sizeof(struct ForwardServer) ) ;
 					if( p_forward_server == NULL )

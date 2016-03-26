@@ -50,6 +50,11 @@ void CleanVirtualHostHash( struct ListenSession *p_listen_session )
 			{
 				free( p_rewrite_url->pattern_re );
 			}
+			if( p_virtualhost->forward_ssl_ctx )
+			{
+				SSL_CTX_free( p_virtualhost->forward_ssl_ctx );
+				p_virtualhost->forward_ssl_ctx = NULL ;
+			}
 			free( p_virtualhost );
 		}
 	}

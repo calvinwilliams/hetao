@@ -446,7 +446,11 @@ void *WorkerThread( void *pv )
 						epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_listen_session->netaddr.sock , NULL );
 						close( p_listen_session->netaddr.sock );
 						
-						SSL_CTX_free( p_listen_session->ssl_ctx );
+						if( p_listen_session->ssl_ctx )
+						{
+							SSL_CTX_free( p_listen_session->ssl_ctx );
+							p_listen_session->ssl_ctx = NULL ;
+						}
 					}
 					
 					/* 屏蔽所有后续侦听事件 */
