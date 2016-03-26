@@ -78,6 +78,7 @@ int InitServerEnvirment( struct HetaoEnv *p_env )
 			strncpy( p_mimetype->type , p_type , sizeof(p_mimetype->type)-1 );
 			p_mimetype->type_len = strlen(p_mimetype->type) ;
 			strncpy( p_mimetype->mime , p_env->p_config->mime_types.mime_type[i].mime , sizeof(p_mimetype->mime)-1 );
+			p_mimetype->compress_enable = p_env->p_config->mime_types.mime_type[i].compress_enable ;
 			
 			nret = PushMimeTypeHashNode( p_env , p_mimetype ) ;
 			if( nret )

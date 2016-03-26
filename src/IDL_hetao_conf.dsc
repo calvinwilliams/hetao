@@ -10,6 +10,7 @@ STRUCT	hetao_conf
 	STRUCT	limits
 	{
 		INT	4	max_http_session_count
+		INT	4	max_file_cache
 	}
 	
 	STRUCT	listen	ARRAY	16
@@ -78,6 +79,7 @@ STRUCT	hetao_conf
 		{
 			STRING	50	type
 			STRING	100	mime
+			CHAR	1	compress_enable
 		}
 	}
 }

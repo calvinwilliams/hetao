@@ -94,6 +94,7 @@ typedef struct
 	struct
 	{
 		int	max_http_session_count ;
+		int	max_file_cache ;
 	} limits ;
 	struct
 	{
@@ -163,6 +164,7 @@ typedef struct
 		{
 			char	type[ 50 + 1 ] ;
 			char	mime[ 100 + 1 ] ;
+			char	compress_enable ;
 		} mime_type [ 256 ] ;
 		int	_mime_type_count ;
 		int	_mime_type_size ;

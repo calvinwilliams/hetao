@@ -1,3 +1,7 @@
+0.6.0		2016-09-07	calvin
+		* 在流类型配置mimetype中增加是否压缩选项compress_enable
+		* 在限制配置limits中增加最大缓存文件大小max_file_cache
+
 0.5.0		2016-09-06	calvin
 		* 加入rewrite支持
 		*** 0.4.0与0.5.0配置文件格式不兼容 ***

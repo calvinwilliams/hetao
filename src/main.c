@@ -10,8 +10,8 @@
 
 struct HetaoEnv	*g_p_env = NULL ;
 
-char	__HETAO_VERSION_0_5_0[] = "0.5.0" ;
-char	*__HETAO_VERSION = __HETAO_VERSION_0_5_0 ;
+char	__HETAO_VERSION_0_6_0[] = "0.6.0" ;
+char	*__HETAO_VERSION = __HETAO_VERSION_0_6_0 ;
 
 static void usage()
 {

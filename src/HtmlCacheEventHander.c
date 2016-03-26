@@ -45,7 +45,7 @@ int HtmlCacheEventHander( struct HetaoEnv *p_env )
 			DebugLog( __FILE__ , __LINE__ , "inotify_rm_watch[%s] ok , wd[%d]" , p_htmlcache_session->pathfilename , p_htmlcache_session->wd );
 			list_del( & (p_htmlcache_session->list) );
 			p_env->htmlcache_session_count--;
-			FreeHtmlCacheSession( p_htmlcache_session );
+			FreeHtmlCacheSession( p_htmlcache_session , 1 );
 		}
 		
 		npro += sizeof(struct inotify_event) + p_event->len ;
