@@ -78,7 +78,7 @@ int OnSendingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session
 			
 			ResetHttpEnv(p_http_session->http);
 			
-			UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->p_config->http_options.timeout );
+			UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->http_options__timeout );
 			
 			memset( & event , 0x00 , sizeof(struct epoll_event) );
 			event.events = EPOLLIN | EPOLLERR ;

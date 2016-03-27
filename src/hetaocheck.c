@@ -17,8 +17,8 @@ static void usage()
 
 int main( int argc , char *argv[] )
 {
-	struct HetaoEnv		server ;
 	struct HetaoEnv		*p_env = NULL ;
+	hetao_conf		*p_conf = NULL ;
 	
 	int			nret = 0 ;
 	
@@ -26,9 +26,28 @@ int main( int argc , char *argv[] )
 	
 	if( argc == 1 + 1 )
 	{
-		p_env = & server ;
-		g_p_env = p_env ;
+		/* 申请环境结构内存 */
+		p_env = (struct HetaoEnv *)malloc( sizeof(struct HetaoEnv) ) ;
+		if( p_env == NULL )
+		{
+			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
+				printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
+			return 1;
+		}
 		memset( p_env , 0x00 , sizeof(struct HetaoEnv) );
+		g_p_env = p_env ;
+		p_env->argv = argv ;
+		
+		/* 申请配置结构内存 */
+		p_conf = (hetao_conf *)malloc( sizeof(hetao_conf) ) ;
+		if( p_conf == NULL )
+		{
+			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
+				printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
+			free( p_env );
+			return 1;
+		}
+		memset( p_conf , 0x00 , sizeof(hetao_conf) );
 		
 		/* 设置缺省主日志 */
 		SetLogFile( "#" );
@@ -39,15 +58,8 @@ int main( int argc , char *argv[] )
 		
 		/* 装载配置 */
 		strncpy( p_env->config_pathfilename , argv[1] , sizeof(p_env->config_pathfilename)-1 );
-		p_env->p_config = (hetao_conf *)malloc( sizeof(hetao_conf) ) ;
-		if( p_env->p_config == NULL )
-		{
-			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
-				printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
-			return 1;
-		}
-		memset( p_env->p_config , 0x00 , sizeof(hetao_conf) );
-		nret = LoadConfig( p_env->config_pathfilename , p_env ) ;
+		nret = LoadConfig( p_env->config_pathfilename , p_conf , p_env ) ;
+		free( p_conf );
 		if( nret )
 		{
 			printf( "FAILED[%d]\n" , nret );
@@ -57,7 +69,7 @@ int main( int argc , char *argv[] )
 			printf( "OK\n" );
 		}
 		
-		free( p_env->p_config );
+		free( p_env );
 		
 		/* 关闭主日志 */
 		CloseLogFile();

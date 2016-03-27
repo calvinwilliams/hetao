@@ -100,8 +100,8 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 		
 		/* 设置TCP选项 */
 		SetHttpNonblock( p_http_session->netaddr.sock );
-		SetHttpNodelay( p_http_session->netaddr.sock , p_env->p_config->tcp_options.nodelay );
-		SetHttpNoLinger( p_http_session->netaddr.sock , p_env->p_config->tcp_options.nolinger );
+		SetHttpNodelay( p_http_session->netaddr.sock , p_env->tcp_options__nodelay );
+		SetHttpLinger( p_http_session->netaddr.sock , p_env->tcp_options__nolinger );
 		
 		/* 注册epoll读事件 */
 		memset( & event , 0x00 , sizeof(struct epoll_event) );
@@ -121,7 +121,7 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 		
 		/* 马上收一把 */
 		/*
-		if( p_env->p_config->worker_processes == 1 )
+		if( p_env->worker_processes == 1 )
 		{
 			nret = OnReceivingSocket( p_env , p_http_session ) ;
 			if( nret > 0 )

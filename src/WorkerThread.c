@@ -30,7 +30,7 @@ void *WorkerThread( void *pv )
 	InfoLog( __FILE__ , __LINE__ , "--- worker[%d] begin ---" , p_env->process_info_index );
 	
 	/* 如果需要吧绑定CPU，绑定之 */
-	if( p_env->p_config->cpu_affinity )
+	if( p_env->cpu_affinity )
 	{
 		BindCpuAffinity( p_env->process_info_index );
 	}
@@ -87,7 +87,7 @@ void *WorkerThread( void *pv )
 	}
 	
 	/* 如果配置了ACCEPT锁，或者是第一个工作进程，注册侦听端口事件 */
-	if( p_env->p_config->accept_mutex == 0 || p_env->p_this_process_info == p_env->process_info_array )
+	if( p_env->accept_mutex == 0 || p_env->p_this_process_info == p_env->process_info_array )
 	{
 		list_for_each( p_curr , & (p_env->listen_session_list.list) )
 		{
@@ -180,12 +180,12 @@ void *WorkerThread( void *pv )
 					}
 					
 					/* 如果打开了ACCEPT锁，或者工作进程数量大于一个 */
-					if( p_env->p_config->accept_mutex == 1 && p_env->p_config->worker_processes > 1 )
+					if( p_env->accept_mutex == 1 && p_env->worker_processes > 1 )
 					{
 						/* 选择最近处理事件最少的工作进程 */
 						p_process_info_with_min_balance = p_env->process_info_array ;
 						DebugLog( __FILE__ , __LINE__ , "process[%d] epoll_nfds[%d]" , 0 , p_process_info_with_min_balance->epoll_nfds );
-						for( j = 1 , p_process_info = p_env->process_info_array + 1 ; j < p_env->p_config->worker_processes ; j++ , p_process_info++ )
+						for( j = 1 , p_process_info = p_env->process_info_array + 1 ; j < p_env->worker_processes ; j++ , p_process_info++ )
 						{
 							DebugLog( __FILE__ , __LINE__ , "process[%d] epoll_nfds[%d]" , j , p_process_info->epoll_nfds );
 							if( p_process_info->epoll_nfds < p_process_info_with_min_balance->epoll_nfds )

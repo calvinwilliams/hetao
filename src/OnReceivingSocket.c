@@ -55,7 +55,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		
 		DebugLog( __FILE__ , __LINE__ , "ReceiveHttpRequestNonblock done" );
 		
-		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->p_config->http_options.timeout );
+		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->http_options__timeout );
 		
 		b = GetHttpRequestBuffer(p_http_session->http) ;
 		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpRequestBuffer [%d]bytes" , GetHttpBufferLength(b) );

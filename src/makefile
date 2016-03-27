@@ -18,7 +18,7 @@ c_FILE		=	\
 			Util.c \
 			Config.c \
 			Envirment.c \
-			main.c \
+			hetao.c \
 			MonitorProcess.c \
 			WorkerProcess.c \
 			WorkerThread.c \

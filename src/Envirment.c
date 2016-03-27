@@ -8,7 +8,7 @@
 
 #include "hetao_in.h"
 
-int InitEnvirment( struct HetaoEnv *p_env )
+int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf )
 {
 	struct NetAddress	*old_netaddr_array = NULL ;
 	int			old_netaddr_array_count ;
@@ -16,7 +16,7 @@ int InitEnvirment( struct HetaoEnv *p_env )
 	int			nret = 0 ;
 	
 	/* 创建共享内存给工作进程组使用 */
-	p_env->process_info_shmid = shmget( IPC_PRIVATE , sizeof(struct ProcessInfo) * p_env->p_config->worker_processes , IPC_CREAT | 0600 ) ;
+	p_env->process_info_shmid = shmget( IPC_PRIVATE , sizeof(struct ProcessInfo) * p_conf->worker_processes , IPC_CREAT | 0600 ) ;
 	if( p_env->process_info_shmid == -1 )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "shmget failed , errno[%d]" , errno );
@@ -35,12 +35,12 @@ int InitEnvirment( struct HetaoEnv *p_env )
 	}
 	else
 	{
-		DebugLog( __FILE__ , __LINE__ , "shmat[%ld] ok , [%ld]bytes" , p_env->process_info_shmid , sizeof(struct ProcessInfo) * p_env->p_config->worker_processes );
+		DebugLog( __FILE__ , __LINE__ , "shmat[%ld] ok , [%ld]bytes" , p_env->process_info_shmid , sizeof(struct ProcessInfo) * p_conf->worker_processes );
 	}
-	memset( p_env->process_info_array , 0x00 , sizeof(struct ProcessInfo) * p_env->p_config->worker_processes );
+	memset( p_env->process_info_array , 0x00 , sizeof(struct ProcessInfo) * p_conf->worker_processes );
 	
 	/* 创建、注册流类型哈希表 */
-	nret = InitMimeTypeHash( p_env ) ;
+	nret = InitMimeTypeHash( p_env , p_conf ) ;
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "InitMimeTypeHash failed[%d]" , nret );
@@ -61,7 +61,7 @@ int InitEnvirment( struct HetaoEnv *p_env )
 	}
 	
 	/* 创建所有侦听会话 */
-	nret = InitListenEnvirment( p_env , old_netaddr_array , old_netaddr_array_count ) ;
+	nret = InitListenEnvirment( p_env , p_conf , old_netaddr_array , old_netaddr_array_count ) ;
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "InitListenEnvirment failed[%d] , errno[%d]" , nret , errno );
@@ -105,7 +105,7 @@ void CleanEnvirment( struct HetaoEnv *p_env )
 		DestroyHttpEnv( p_http_session->http );
 	}
 	
-	for( i = 0 ; i < p_env->p_config->worker_processes ; i++ )
+	for( i = 0 ; i < p_env->worker_processes ; i++ )
 	{
 		DebugLog( __FILE__ , __LINE__ , "[%d]close epoll_fd #%d#" , i , p_env->process_info_array[i].epoll_fd );
 		close( p_env->process_info_array[i].epoll_fd );
@@ -135,8 +135,6 @@ void CleanEnvirment( struct HetaoEnv *p_env )
 	shmctl( p_env->process_info_shmid , IPC_RMID , NULL );
 	
 	CleanMimeTypeHash( p_env );
-	
-	free( p_env->p_config );
 	
 	return;
 }

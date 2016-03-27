@@ -1,0 +1,38 @@
+#################################################
+# for basic
+
+export OSNAME=`uname -a|awk '{print $1}'`
+export HOSTNAME=`hostname`
+export USERNAME=$LOGNAME
+export PS1='[$USERNAME@$HOSTNAME $PWD] '
+
+set -o vi
+
+# export LC_ALL=en_US
+# export LANG=en_US
+export LC_ALL=zh_CN.gb18030
+export LANG=zh_CN.gb18030
+
+alias l='ls -l'
+alias ll='ls -lF'
+alias lf='ls -F'
+alias lrt='ls -lrt'
+
+alias rm='rm -i'
+alias mv='mv -i'
+alias cp='cp -i'
+
+export PATH=.:/root/setup/httpd-2.2.17/httpd-2.2.17/support:$PATH:/usr/local/bin
+export PATH=$PATH:$HOME/shbin:$HOME/bin:$HOME/exsh:$HOME/exbin
+
+if [ x"$OSNAME" = x"Linux" ] ; then
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/lib:/usr/lib:/usr/local/lib:$HOME/exlib:$HOME/lib
+elif [ x"$OSNAME" = x"AIX" ] ; then
+        export LIBPATH=$LIBPATH:/usr/local/lib
+        export LIBPATH=$LIBPATH:/lib:/usr/lib:/usr/local/lib:$HOME/exlib:$HOME/lib
+        export OBJECT_MODE=64
+fi
+
+ulimit -c unlimited
+

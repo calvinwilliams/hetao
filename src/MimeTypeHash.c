@@ -8,7 +8,7 @@
 
 #include "hetao_in.h"
 
-int InitMimeTypeHash( struct HetaoEnv *p_env )
+int InitMimeTypeHash( struct HetaoEnv *p_env , hetao_conf *p_config )
 {
 	int			i ;
 	
@@ -17,7 +17,7 @@ int InitMimeTypeHash( struct HetaoEnv *p_env )
 	
 	int			nret = 0 ;
 	
-	p_env->mimetype_hashsize = p_env->p_config->mime_types._mime_type_count * 2 ;
+	p_env->mimetype_hashsize = p_config->mime_types._mime_type_count * 2 ;
 	p_env->mimetype_hash = (struct hlist_head *)malloc( sizeof(struct hlist_head) * p_env->mimetype_hashsize ) ;
 	if( p_env->mimetype_hash == NULL )
 	{
@@ -31,9 +31,9 @@ int InitMimeTypeHash( struct HetaoEnv *p_env )
 		INIT_HLIST_HEAD( p_env->mimetype_hash+i );
 	}
 	
-	for( i = 0 ; i < p_env->p_config->mime_types._mime_type_count ; i++ )
+	for( i = 0 ; i < p_config->mime_types._mime_type_count ; i++ )
 	{
-		p_type = strtok( p_env->p_config->mime_types.mime_type[i].type , " \r" ) ;
+		p_type = strtok( p_config->mime_types.mime_type[i].type , " \r" ) ;
 		while( p_type )
 		{
 			p_mimetype = (struct MimeType *)malloc( sizeof(struct MimeType) ) ;
@@ -46,8 +46,8 @@ int InitMimeTypeHash( struct HetaoEnv *p_env )
 			
 			strncpy( p_mimetype->type , p_type , sizeof(p_mimetype->type)-1 );
 			p_mimetype->type_len = strlen(p_mimetype->type) ;
-			strncpy( p_mimetype->mime , p_env->p_config->mime_types.mime_type[i].mime , sizeof(p_mimetype->mime)-1 );
-			p_mimetype->compress_enable = p_env->p_config->mime_types.mime_type[i].compress_enable ;
+			strncpy( p_mimetype->mime , p_config->mime_types.mime_type[i].mime , sizeof(p_mimetype->mime)-1 );
+			p_mimetype->compress_enable = p_config->mime_types.mime_type[i].compress_enable ;
 			
 			nret = PushMimeTypeHashNode( p_env , p_mimetype ) ;
 			if( nret )

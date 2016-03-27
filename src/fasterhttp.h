@@ -482,7 +482,7 @@ _WINDLL_FUNC int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct 
 		setsockopt( _sock_ , IPPROTO_TCP , TCP_NODELAY , (void*) & onoff , sizeof(int) ); \
 	}
 
-#define SetHttpNoLinger(_sock_,_linger_) \
+#define SetHttpLinger(_sock_,_linger_) \
 	{ \
 		struct linger   lg; \
 		if( _linger_ >= 0 ) \

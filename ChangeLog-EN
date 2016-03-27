@@ -1,3 +1,6 @@
+0.7.1		2016-09-12	calvin
+		* Optimize memory , drops to 30%
+
 0.7.0		2016-09-10	calvin
 		* Support running as other user
 		* Fixed a fatal problem with fasterhttp
