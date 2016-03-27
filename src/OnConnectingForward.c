@@ -213,15 +213,31 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 		
 		p_http_session->p_forward_server->timestamp_to_valid = GETSECONDSTAMP + p_env->http_options__forward_disable ;
 		
-		/* 选择转发服务端 */
-		nret = SelectForwardAddress( p_env , p_http_session ) ;
-		if( nret == HTTP_OK )
+		while(1)
 		{
-			/* 连接转发服务端 */
-			nret = ConnectForwardServer( p_env , p_http_session ) ;
+			/* 选择转发服务端 */
+			nret = SelectForwardAddress( p_env , p_http_session ) ;
 			if( nret == HTTP_OK )
 			{
-				return 0;
+				/* 连接转发服务端 */
+				nret = ConnectForwardServer( p_env , p_http_session ) ;
+				if( nret == HTTP_OK )
+				{
+					return 0;
+				}
+				else
+				{
+					ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , errno );
+					
+					/* 格式化响应头和体，用出错状态码 */
+					nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
+					if( nret )
+					{
+						ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
+					}
+					
+					break;
+				}
 			}
 			else
 			{
@@ -232,20 +248,9 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 				if( nret )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
-					return 1;
 				}
-			}
-		}
-		else
-		{
-			ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , errno );
-			
-			/* 格式化响应头和体，用出错状态码 */
-			nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
-			if( nret )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
-				return 1;
+				
+				break;
 			}
 		}
 		

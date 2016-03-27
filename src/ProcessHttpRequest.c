@@ -59,6 +59,8 @@ static int CompressData( char *html_content , int html_content_len , int compres
 
 int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_session , char *pathname , char *filename , int filename_len )
 {
+	struct epoll_event	event ;
+	
 	struct MimeType		*p_mimetype = NULL ;
 	
 	char			pathfilename[ 1024 + 1 ] ;
@@ -74,12 +76,55 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 	
 	int			nret = 0 ;
 	
-	/* 查询流类型 */
-	p_mimetype = QueryMimeTypeHashNode( p_env , p_http_session->http_uri.ext_filename_base , p_http_session->http_uri.ext_filename_len ) ;
-	if( p_mimetype == NULL )
+	/* 分解URI */
+	memset( & (p_http_session->http_uri) , 0x00 , sizeof(struct HttpUri) );
+	nret = SplitHttpUri( pathname , filename , filename_len , & (p_http_session->http_uri) ) ;
+	if( nret )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "QueryMimeTypeHashNode[%.*s] failed[%d]" , p_http_session->http_uri.ext_filename_len , p_http_session->http_uri.ext_filename_base , nret );
-		return HTTP_FORBIDDEN;
+		ErrorLog( __FILE__ , __LINE__ , "SplitHttpUri[%s][%.*s] failed[%d] , errno[%d]" , pathname , filename_len , filename , nret , errno );
+		return HTTP_NOT_FOUND;
+	}
+	
+	/* 如果文件类型为转发后端服务器 */
+	if( p_http_session->p_virtualhost->forward_rule[0]
+		&& p_http_session->http_uri.ext_filename_len == p_http_session->p_virtualhost->forward_type_len
+		&& MEMCMP( p_http_session->http_uri.ext_filename_base , == , p_http_session->p_virtualhost->forward_type , p_http_session->http_uri.ext_filename_len ) )
+	{
+		while(1)
+		{
+			/* 选择转发服务端 */
+			nret = SelectForwardAddress( p_env , p_http_session ) ;
+			if( nret == HTTP_OK )
+			{
+				/* 连接转发服务端 */
+				nret = ConnectForwardServer( p_env , p_http_session ) ;
+				if( nret == HTTP_OK )
+				{
+					/* 暂禁原连接事件 */
+					memset( & event , 0x00 , sizeof(struct epoll_event) );
+					event.events = EPOLLRDHUP | EPOLLERR ;
+					event.data.ptr = p_http_session ;
+					nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
+					if( nret == -1 )
+					{
+						ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
+						return -1;
+					}
+					
+					return 0;
+				}
+				else
+				{
+					ErrorLog( __FILE__ , __LINE__ , "ConnectForwardServer failed[%d] , errno[%d]" , nret , errno );
+					return HTTP_SERVICE_UNAVAILABLE;
+				}
+			}
+			else
+			{
+				ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , errno );
+				return HTTP_SERVICE_UNAVAILABLE;
+			}
+		}
 	}
 	
 	/* 组装URL */
@@ -178,9 +223,11 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 		while( index_filename )
 		{
 			index_filename_len = strlen(index_filename) ;
-			nret = ProcessHttpRequest( p_env , p_http_session , pathfilename , index_filename , index_filename_len ) ;
+			nret = ProcessHttpRequest( p_env , p_http_session , pathname , index_filename , index_filename_len ) ;
 			if( nret == HTTP_OK )
-				break;
+				return HTTP_OK;
+			else if( nret == 0 )
+				return 0;
 			
 			index_filename = strtok( NULL , "," ) ;
 		}
@@ -192,6 +239,22 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 	}
 	else
 	{
+		/* 先格式化响应头首行，用成功状态码 */
+		nret = FormatHttpResponseStartLine( HTTP_OK , p_http_session->http , 0 ) ;
+		if( nret )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
+			return HTTP_INTERNAL_SERVER_ERROR;
+		}
+		
+		/* 查询流类型 */
+		p_mimetype = QueryMimeTypeHashNode( p_env , p_http_session->http_uri.ext_filename_base , p_http_session->http_uri.ext_filename_len ) ;
+		if( p_mimetype == NULL )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "QueryMimeTypeHashNode[%.*s] failed[%d]" , p_http_session->http_uri.ext_filename_len , p_http_session->http_uri.ext_filename_base , nret );
+			return HTTP_FORBIDDEN;
+		}
+		
 		/* 解析浏览器可以接受的压缩算法 */
 		b = GetHttpResponseBuffer(p_http_session->http) ;
 		token_base = QueryHttpHeaderPtr( p_http_session->http , HTTP_HEADER_ACCEPTENCODING , NULL ) ;

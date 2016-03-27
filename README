@@ -1,4 +1,5 @@
-hetao是一款国人原创研发的开放源代码的C语言实现的支持高并发、超高性能Web服务器，使用高性能HTTP解析器fasterhttp作为其解析核心，在开启Keep-Alive和gzip压缩时性能比nginx约快4倍。
+hetao是一款国人原创研发的开源的C语言实现的支持高并发、超高性能Web服务器，使用高性能HTTP解析器fasterhttp作为其解析核心。
+hetao在开启Keep-Alive和gzip压缩时（现代浏览器默认开启）性能比nginx约快3倍。
 
 hetao功能：
 * 支持HTTP/1.0、HTTP/1.1
@@ -9,13 +10,244 @@ hetao功能：
 * 支持自定义缺省index文件
 * 支持自适应Keep-Alive
 * 支持自适应gzip、deflate压缩
-* 支持工作进程绑定CPU
-* 支持工作进程崩溃后，管理进程自动重启工作进程
+* 支持HTTPS
+* 支持反向代理负载均衡（目前支持轮询、最少连接数算法），支持HTTP与HTTPS互转
+* 支持rewrite
 * 支持优雅重启/重载配置，重启期间完全不中断对外服务
-* 支持反向代理负载均衡（目前支持轮询、最少连接数算法）
+* 支持工作进程绑定CPU
+* 支持进程崩溃后自动重启
 （以上应该就是一个Web服务器的主要功能了吧）
 
 压测结论：
-在开启Keep-Alive和gzip压缩、中型文件（约3.3KB）的场景下，hetao比nginx足足快了近4倍 ^_^
+在开启Keep-Alive和gzip压缩、中型文件（约3.3KB）的场景下，hetao比nginx足足快了近3倍 ^_^
 
-see doc/*
+$ ab2 -kc 1000 -n 50000 -H "Accept-Encoding: gzip" http://192.168.6.111:9527/press.html
+This is ApacheBench, Version 2.3 <$Revision: 655654 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 192.168.6.111 (be patient)
+Completed 10000 requests
+Completed 20000 requests
+Completed 30000 requests
+Completed 40000 requests
+Completed 50000 requests
+Completed 60000 requests
+Completed 70000 requests
+Completed 80000 requests
+Completed 90000 requests
+Completed 100000 requests
+Finished 100000 requests
+
+
+Server Software:        hetao/0.2.0
+Server Hostname:        192.168.6.111
+Server Port:            9527
+
+Document Path:          /press.html
+Document Length:        281 bytes
+
+Concurrency Level:      1000
+Time taken for tests:   6.923 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Keep-Alive requests:    100000
+Total transferred:      41709990 bytes
+HTML transferred:       28242186 bytes
+Requests per second:    14445.19 [#/sec] (mean)
+Time per request:       69.227 [ms] (mean)
+Time per request:       0.069 [ms] (mean, across all concurrent requests)
+Transfer rate:          5883.87 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0   13 198.9      0    3080
+Processing:     1   31 102.2     15    3456
+Waiting:        0   31 102.2     15    3456
+Total:          1   44 242.5     15    3479
+
+Percentage of the requests served within a certain time (ms)
+  50%     15
+  66%     31
+  75%     36
+  80%     43
+  90%     64
+  95%     85
+  98%    108
+  99%    126
+ 100%   3479 (longest request)
+
+$ ab2 -kc 1000 -n 50000 -H "Accept-Encoding: gzip" http://192.168.6.111:9528/press.html
+This is ApacheBench, Version 2.3 <$Revision: 655654 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 192.168.6.111 (be patient)
+Completed 10000 requests
+Completed 20000 requests
+Completed 30000 requests
+Completed 40000 requests
+Completed 50000 requests
+Completed 60000 requests
+Completed 70000 requests
+Completed 80000 requests
+Completed 90000 requests
+Completed 100000 requests
+Finished 100000 requests
+
+
+Server Software:        nginx/1.9.13
+Server Hostname:        192.168.6.111
+Server Port:            9528
+
+Document Path:          /press.html
+Document Length:        293 bytes
+
+Concurrency Level:      1000
+Time taken for tests:   23.928 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Keep-Alive requests:    99004
+Total transferred:      54195020 bytes
+HTML transferred:       29300000 bytes
+Requests per second:    4179.19 [#/sec] (mean)
+Time per request:       239.281 [ms] (mean)
+Time per request:       0.239 [ms] (mean, across all concurrent requests)
+Transfer rate:          2211.83 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0   23 268.2      0    3167
+Processing:     1  127 904.6     75   20671
+Waiting:        0  127 904.6     75   20670
+Total:          1  150 1058.7     75   23814
+
+Percentage of the requests served within a certain time (ms)
+  50%     75
+  66%     86
+  75%     87
+  80%     87
+  90%     92
+  95%     96
+  98%     96
+  99%   2365
+ 100%  23814 (longest request)
+
+$ ab2 -kc 1000 -n 50000 -H "Accept-Encoding: gzip" http://192.168.6.111:9529/press.html
+This is ApacheBench, Version 2.3 <$Revision: 655654 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 192.168.6.111 (be patient)
+Completed 10000 requests
+Completed 20000 requests
+Completed 30000 requests
+Completed 40000 requests
+Completed 50000 requests
+Completed 60000 requests
+Completed 70000 requests
+Completed 80000 requests
+Completed 90000 requests
+Completed 100000 requests
+Finished 100000 requests
+
+
+Server Software:        Apache/2.2.14
+Server Hostname:        192.168.6.111
+Server Port:            9529
+
+Document Path:          /press.html
+Document Length:        281 bytes
+
+Concurrency Level:      1000
+Time taken for tests:   39.800 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Keep-Alive requests:    99119
+Total transferred:      65363814 bytes
+HTML transferred:       28101124 bytes
+Requests per second:    2512.58 [#/sec] (mean)
+Time per request:       397.998 [ms] (mean)
+Time per request:       0.398 [ms] (mean, across all concurrent requests)
+Transfer rate:          1603.83 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    1  48.4      0    3001
+Processing:     1   97 774.0      2   25875
+Waiting:        0   97 773.8      2   25875
+Total:          1   98 780.3      2   25897
+
+Percentage of the requests served within a certain time (ms)
+  50%      2
+  66%      3
+  75%      3
+  80%      4
+  90%      6
+  95%     82
+  98%   1398
+  99%   2352
+ 100%  25897 (longest request)
+
+$ ab2 -kc 1000 -n 50000 -H "Accept-Encoding: gzip" http://192.168.6.111:9530/press.html
+This is ApacheBench, Version 2.3 <$Revision: 655654 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 192.168.6.111 (be patient)
+Completed 10000 requests
+Completed 20000 requests
+Completed 30000 requests
+Completed 40000 requests
+Completed 50000 requests
+Completed 60000 requests
+Completed 70000 requests
+Completed 80000 requests
+Completed 90000 requests
+Completed 100000 requests
+Finished 100000 requests
+
+
+Server Software:        Tengine/2.1.2
+Server Hostname:        192.168.6.111
+Server Port:            9530
+
+Document Path:          /press.html
+Document Length:        293 bytes
+
+Concurrency Level:      1000
+Time taken for tests:   25.203 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Keep-Alive requests:    99027
+Total transferred:      51895135 bytes
+HTML transferred:       29300000 bytes
+Requests per second:    3967.81 [#/sec] (mean)
+Time per request:       252.028 [ms] (mean)
+Time per request:       0.252 [ms] (mean, across all concurrent requests)
+Transfer rate:          2010.84 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0   16 233.6      0   21003
+Processing:     1   91 485.5     33   21267
+Waiting:        1   91 485.5     33   21267
+Total:          1  107 637.0     33   24392
+
+Percentage of the requests served within a certain time (ms)
+  50%     33
+  66%    101
+  75%    112
+  80%    112
+  90%    132
+  95%    182
+  98%    213
+  99%    337
+ 100%  24392 (longest request)
+
+...see doc/* for detail
+
