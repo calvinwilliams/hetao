@@ -264,6 +264,8 @@ struct HttpSession
 	
 	int			timeout_timestamp ;
 	struct rb_node		timeout_rbnode ;
+	int			elapse_timestamp ;
+	struct rb_node		elapse_rbnode ;
 	
 	struct list_head	list ;
 } ;
@@ -318,6 +320,7 @@ struct HetaoEnv
 	int				tcp_options__nodelay ;
 	int				tcp_options__nolinger ;
 	int				http_options__timeout ;
+	int				http_options__elapse ;
 	int				http_options__compress_on ;
 	int				http_options__forward_disable ;
 	
@@ -350,7 +353,8 @@ struct HetaoEnv
 	int				http_session_used_count ;
 	struct HttpSession		http_session_unused_list ;
 	int				http_session_unused_count ;
-	struct rb_root			http_session_rbtree_used ;
+	struct rb_root			http_session_timeout_rbtree_used ;
+	struct rb_root			http_session_elapse_rbtree_used ;
 } ;
 
 extern struct HetaoEnv		*g_p_env ;
@@ -374,6 +378,11 @@ int AddHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSessio
 void RemoveHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
 int UpdateHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session , int timeout_timestamp );
 struct HttpSession *GetExpireHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server );
+
+int AddHttpSessionElapseTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+void RemoveHttpSessionElapseTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+int UpdateHttpSessionElapseTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session , int elapse_timestamp );
+struct HttpSession *GetExpireHttpSessionElapseTreeNode( struct HetaoEnv *p_server );
 
 int AddHtmlCacheWdTreeNode( struct HetaoEnv *p_server , struct HtmlCacheSession *p_htmlcache_session );
 struct HtmlCacheSession *QueryHtmlCacheWdTreeNode( struct HetaoEnv *p_server , int wd );

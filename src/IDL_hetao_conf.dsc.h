@@ -151,6 +151,7 @@ typedef struct
 	{
 		int	compress_on ;
 		int	timeout ;
+		int	elapse ;
 		int	forward_disable ;
 	} http_options ;
 	struct

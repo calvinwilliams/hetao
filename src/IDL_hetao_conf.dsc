@@ -63,6 +63,7 @@ STRUCT	hetao_conf
 	{
 		INT	4	compress_on
 		INT	4	timeout
+		INT	4	elapse
 		INT	4	forward_disable
 	}
 	

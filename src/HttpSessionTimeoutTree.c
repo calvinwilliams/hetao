@@ -14,7 +14,7 @@ int AddHttpSessionTimeoutTreeNode( struct HetaoEnv *p_env , struct HttpSession *
         struct rb_node		*p_parent = NULL ;
         struct HttpSession	*p = NULL ;
 	
-	pp_new_node = & (p_env->http_session_rbtree_used.rb_node) ;
+	pp_new_node = & (p_env->http_session_timeout_rbtree_used.rb_node) ;
         while( *pp_new_node )
         {
                 p = container_of( *pp_new_node , struct HttpSession , timeout_rbnode ) ;
@@ -30,14 +30,14 @@ int AddHttpSessionTimeoutTreeNode( struct HetaoEnv *p_env , struct HttpSession *
         }
 	
         rb_link_node( & (p_http_session->timeout_rbnode) , p_parent , pp_new_node );
-        rb_insert_color( & (p_http_session->timeout_rbnode) , &(p_env->http_session_rbtree_used) );
+        rb_insert_color( & (p_http_session->timeout_rbnode) , &(p_env->http_session_timeout_rbtree_used) );
 	
 	return 0;
 }
 
 void RemoveHttpSessionTimeoutTreeNode( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
-	rb_erase( & (p_http_session->timeout_rbnode) , &(p_env->http_session_rbtree_used) );
+	rb_erase( & (p_http_session->timeout_rbnode) , & (p_env->http_session_timeout_rbtree_used) );
 	return;
 }
 
@@ -58,7 +58,7 @@ struct HttpSession *GetExpireHttpSessionTimeoutTreeNode( struct HetaoEnv *p_env 
 	struct rb_node		*p_curr = NULL ;
 	struct HttpSession	*p_http_session = NULL ;
 	
-	p_curr = rb_first( & (p_env->http_session_rbtree_used) ); 
+	p_curr = rb_first( & (p_env->http_session_timeout_rbtree_used) ); 
 	if (p_curr == NULL)
 		return NULL;
 	

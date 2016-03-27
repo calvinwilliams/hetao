@@ -93,6 +93,16 @@ struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_env )
 		return NULL;
 	}
 	
+	p_http_session->elapse_timestamp = GETSECONDSTAMP + p_env->http_options__elapse ;
+	nret = AddHttpSessionElapseTreeNode( p_env , p_http_session ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "AddHttpSessionElapseTreeNode failed , errno[%d]" , errno );
+		RemoveHttpSessionTimeoutTreeNode( p_env , p_http_session );
+		list_add_tail( & (p_http_session->list) , & (p_env->http_session_unused_list.list) );
+		return NULL;
+	}
+	
 	/* 调整计数器 */
 	p_env->http_session_used_count++;
 	p_env->http_session_unused_count--;
@@ -130,6 +140,7 @@ void SetHttpSessionUnused( struct HetaoEnv *p_env , struct HttpSession *p_http_s
 	
 	/* 把当前工作HTTP通讯会话移到空闲HTTP通讯会话链表中 */
 	RemoveHttpSessionTimeoutTreeNode( p_env , p_http_session );
+	RemoveHttpSessionElapseTreeNode( p_env , p_http_session );
 	list_add_tail( & (p_http_session->list) , & (p_env->http_session_unused_list.list) );
 	
 	p_env->http_session_used_count--;
@@ -170,7 +181,7 @@ int ReallocHttpSessionChanged( struct HetaoEnv *p_env , struct HtmlCacheSession 
 	
 	int			nret = 0 ;
 	
-	p_curr = rb_first( & (p_env->http_session_rbtree_used) ) ;
+	p_curr = rb_first( & (p_env->http_session_timeout_rbtree_used) ) ;
 	while( p_curr )
 	{
 		p_http_session = rb_entry( p_curr , struct HttpSession , timeout_rbnode );
