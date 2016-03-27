@@ -303,12 +303,16 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 					
 					if( GetHttpHeader_METHOD(p_http_session->http) == HTTP_METHOD_GET_N )
 					{
+						/*
 						nret = MemcatHttpBuffer( b , p_htmlcache_session->html_gzip_content , p_htmlcache_session->html_gzip_content_len ) ;
 						if( nret )
 						{
 							ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , errno );
 							return HTTP_INTERNAL_SERVER_ERROR;
 						}
+						*/
+						SetHttpBufferPtr( p_http_session->http_buf , p_htmlcache_session->html_gzip_content_len+1 , p_htmlcache_session->html_gzip_content );
+						AppendHttpBuffer( p_http_session->http , p_http_session->http_buf );
 					}
 					
 					break;
@@ -353,12 +357,16 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 					
 					if( GetHttpHeader_METHOD(p_http_session->http) == HTTP_METHOD_GET_N )
 					{
+						/*
 						nret = MemcatHttpBuffer( b , p_htmlcache_session->html_deflate_content , p_htmlcache_session->html_deflate_content_len ) ;
 						if( nret )
 						{
 							ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , errno );
 							return HTTP_INTERNAL_SERVER_ERROR;
 						}
+						*/
+						SetHttpBufferPtr( p_http_session->http_buf , p_htmlcache_session->html_deflate_content_len+1 , p_htmlcache_session->html_deflate_content );
+						AppendHttpBuffer( p_http_session->http , p_http_session->http_buf );
 					}
 					
 					break;
@@ -385,12 +393,16 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 			
 			if( GetHttpHeader_METHOD(p_http_session->http) == HTTP_METHOD_GET_N )
 			{
+				/*
 				nret = MemcatHttpBuffer( b , p_htmlcache_session->html_content , p_htmlcache_session->html_content_len ) ;
 				if( nret )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , errno );
 					return HTTP_INTERNAL_SERVER_ERROR;
 				}
+				*/
+				SetHttpBufferPtr( p_http_session->http_buf , p_htmlcache_session->html_content_len+1 , p_htmlcache_session->html_content );
+				AppendHttpBuffer( p_http_session->http , p_http_session->http_buf );
 			}
 		}
 	}

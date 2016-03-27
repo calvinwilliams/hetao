@@ -42,6 +42,12 @@ int IncreaseHttpSessions( struct HetaoEnv *p_env , int http_session_incre_count 
 			return -1;
 		}
 		SetHttpTimeout( p_http_session->http , -1 );
+		p_http_session->http_buf = AllocHttpBuffer2( 0 , NULL ) ;
+		if( p_http_session->http_buf == NULL )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "AllocHttpBuffer2 failed , errno[%d]" , errno );
+			return -1;
+		}
 		p_http_session->forward_http = CreateHttpEnv() ;
 		if( p_http_session->forward_http == NULL )
 		{
@@ -153,4 +159,49 @@ void SetHttpSessionUnused_02( struct HetaoEnv *p_env , struct HttpSession *p_htt
 	p_http_session->forward_flags = 0 ;
 	
 	return;
+}
+
+int ReallocHttpSessionChanged( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session )
+{
+	struct rb_node		*p_curr = NULL ;
+	struct HttpSession	*p_http_session = NULL ;
+	struct HttpBuffer	*p_append_buffer = NULL ;
+	char			*base = NULL ;
+	
+	int			nret = 0 ;
+	
+	p_curr = rb_first( & (p_env->http_session_rbtree_used) ) ;
+	while( p_curr )
+	{
+		p_http_session = rb_entry( p_curr , struct HttpSession , timeout_rbnode );
+		
+		p_append_buffer = GetHttpAppendBuffer( p_http_session->http ) ;
+		if( p_append_buffer )
+		{
+			base = GetHttpBufferBase(p_append_buffer,NULL) ;
+			
+			if( base == p_htmlcache_session->html_gzip_content )
+			{
+				nret = DuplicateHttpBufferPtr( p_append_buffer ) ;
+				if( nret < 0 )
+					return -1;
+			}
+			else if( base == p_htmlcache_session->html_deflate_content )
+			{
+				nret = DuplicateHttpBufferPtr( p_append_buffer ) ;
+				if( nret < 0 )
+					return -2;
+			}
+			else if( base == p_htmlcache_session->html_content )
+			{
+				nret = DuplicateHttpBufferPtr( p_append_buffer ) ;
+				if( nret < 0 )
+					return -3;
+			}
+		}
+		
+		p_curr = rb_next( p_curr ) ;
+	}
+	
+	return 0;
 }

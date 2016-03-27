@@ -1,3 +1,6 @@
+0.7.3		2016-09-17	calvin
+		* Avoid copy between file cache and response buffer , improve performance
+
 0.7.2		2016-09-13	calvin
 		* Fixed a bug about processing directory index files and forward file type
 		* Optimize fasterhttp performance
