@@ -351,6 +351,7 @@ _WINDLL_FUNC void *GetParserCustomPtrData( struct HttpEnv *e );
 /* global properties */
 _WINDLL_FUNC void ResetAllHttpStatus();
 _WINDLL_FUNC void SetHttpStatus( int status_code , char *status_code_s , char *status_text );
+_WINDLL_FUNC void GetHttpStatus( int status_code , char **pp_status_code_s , char **pp_status_text );
 
 /* http client advance api */
 _WINDLL_FUNC int RequestHttp( SOCKET sock , SSL *ssl , struct HttpEnv *e );
