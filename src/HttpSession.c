@@ -41,14 +41,14 @@ int IncreaseHttpSessions( struct HetaoEnv *p_env , int http_session_incre_count 
 			ErrorLog( __FILE__ , __LINE__ , "CreateHttpEnv failed , errno[%d]" , errno );
 			return -1;
 		}
-		SetHttpTimeout( p_http_session->http , p_env->http_options__timeout );
+		SetHttpTimeout( p_http_session->http , -1 );
 		p_http_session->forward_http = CreateHttpEnv() ;
 		if( p_http_session->forward_http == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "CreateHttpEnv failed , errno[%d]" , errno );
 			return -1;
 		}
-		SetHttpTimeout( p_http_session->forward_http , p_env->http_options__timeout );
+		SetHttpTimeout( p_http_session->forward_http , -1 );
 		
 		list_add_tail( & (p_http_session->list) , & (p_env->http_session_unused_list.list) );
 		DebugLog( __FILE__ , __LINE__ , "init http session[%p] http env[%p]" , p_http_session , p_http_session->http );

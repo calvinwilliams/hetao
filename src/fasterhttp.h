@@ -377,7 +377,7 @@ _WINDLL_FUNC int ReceiveHttpResponseNonblock( SOCKET sock , SSL *ssl , struct Ht
 _WINDLL_FUNC int ReceiveHttpRequestNonblock( SOCKET sock , SSL *ssl , struct HttpEnv *e );
 _WINDLL_FUNC int SendHttpResponseNonblock( SOCKET sock , SSL *ssl , struct HttpEnv *e );
 
-/* http test api */
+/* http parse api */
 _WINDLL_FUNC int ParseHttpResponse( struct HttpEnv *e );
 _WINDLL_FUNC int ParseHttpRequest( struct HttpEnv *e );
 
@@ -426,22 +426,6 @@ _WINDLL_FUNC int MemcatHttpBuffer( struct HttpBuffer *b , char *base , int len )
 _WINDLL_FUNC int StrcatHttpBufferFromFile( struct HttpBuffer *b , char *pathfilename , int *p_filesize );
 
 /* util */
-struct HttpUri
-{
-	char				*dirname_base ;
-	int				dirname_len ;
-	char				*filename_base ;
-	int				filename_len ;
-	char				*main_filename_base ;
-	int				main_filename_len ;
-	char				*ext_filename_base ;
-	int				ext_filename_len ;
-	char				*param_base ;
-	int				param_len ;
-} ;
-
-_WINDLL_FUNC int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct HttpUri *p_httpuri );
-
 #define SetHttpReuseAddr(_sock_) \
 	{ \
 		int	onoff = 1 ; \
@@ -507,6 +491,22 @@ _WINDLL_FUNC int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct 
 	}
 
 _WINDLL_FUNC char *TokenHttpHeaderValue( char *str , char **pp_token , int *p_token_len );
+
+struct HttpUri
+{
+	char				*dirname_base ;
+	int				dirname_len ;
+	char				*filename_base ;
+	int				filename_len ;
+	char				*main_filename_base ;
+	int				main_filename_len ;
+	char				*ext_filename_base ;
+	int				ext_filename_len ;
+	char				*param_base ;
+	int				param_len ;
+} ;
+
+_WINDLL_FUNC int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct HttpUri *p_httpuri );
 
 #ifdef __cplusplus
 }
