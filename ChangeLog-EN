@@ -1,3 +1,7 @@
+0.8.0		2016-09-19	calvin
+		* Add connections limit per ip
+		*** Configuration file format is not compatible between 0.7.4 and 0.8.0 ***
+
 0.7.4		2016-09-18	calvin
 		* The timeout is divided into active timeout and cumulative elapse
 		*** Configuration file format is not compatible between 0.7.3 and 0.7.4 ***

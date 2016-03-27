@@ -88,6 +88,14 @@ int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf )
 		return nret;
 	}
 	
+	/* 创建IP限制哈希表 */
+	nret = InitIpLimitsHash( p_env ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "InitIpLimitsHash failed[%d]" , nret );
+		return -1;
+	}
+	
 	return 0;
 }
 
@@ -135,6 +143,8 @@ void CleanEnvirment( struct HetaoEnv *p_env )
 	shmctl( p_env->process_info_shmid , IPC_RMID , NULL );
 	
 	CleanMimeTypeHash( p_env );
+	
+	CleanIpLimitsHash( p_env );
 	
 	return;
 }

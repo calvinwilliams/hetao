@@ -41,6 +41,7 @@ c_FILE		=	\
 			LeastConnectionCountTree.c \
 			MimeTypeHash.c \
 			RewriteUrl.c \
+			IpLimitsHash.c \
 
 c_FILE2		=	\
 			LOGC.c \

@@ -65,11 +65,23 @@ int IncreaseHttpSessions( struct HetaoEnv *p_env , int http_session_incre_count 
 	return 0;
 }
 
-struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_env )
+struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_env , unsigned int ip )
 {
 	struct HttpSession	*p_http_session = NULL ;
 	
 	int			nret = 0 ;
+	
+	/* 检查是否达到IP连接数限制 */
+	if( p_env->limits__max_connections_per_ip != -1 )
+	{
+		/* 增加IP连接数计数器 */
+		nret = IncreaseIpLimitsHashNode( p_env , ip ) ;
+		if( nret )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "IncreaseIpLimitsHashNode failed[%d]" , nret );
+			return NULL;
+		}
+	}
 	
 	if( p_env->http_session_unused_count == 0 )
 	{
@@ -113,6 +125,8 @@ struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_env )
 
 void SetHttpSessionUnused( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
+	int		nret = 0 ;
+	
 	DebugLog( __FILE__ , __LINE__ , "reset http session[%p] http env[%p]" , p_http_session , p_http_session->http );
 	
 	/* 清理HTTP通讯会话 */
@@ -139,6 +153,14 @@ void SetHttpSessionUnused( struct HetaoEnv *p_env , struct HttpSession *p_http_s
 	}
 	
 	/* 把当前工作HTTP通讯会话移到空闲HTTP通讯会话链表中 */
+	if( p_env->limits__max_connections_per_ip != -1 )
+	{
+		nret = DecreaseIpLimitsHashNode( p_env , (unsigned int)(p_http_session->netaddr.addr.sin_addr.s_addr) ) ;
+		if( nret )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "DecreaseIpLimitsHashNode failed[%d]" , nret );
+		}
+	}
 	RemoveHttpSessionTimeoutTreeNode( p_env , p_http_session );
 	RemoveHttpSessionElapseTreeNode( p_env , p_http_session );
 	list_add_tail( & (p_http_session->list) , & (p_env->http_session_unused_list.list) );
