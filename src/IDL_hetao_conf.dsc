@@ -13,6 +13,7 @@ STRUCT	hetao_conf
 	{
 		INT	4	max_http_session_count
 		INT	4	max_file_cache
+		INT	4	max_connections_per_ip
 	}
 	
 	STRUCT	listen	ARRAY	16

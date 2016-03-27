@@ -396,6 +396,7 @@ int LoadConfig( char *config_pathfilename , hetao_conf *p_config , struct HetaoE
 	p_env->accept_mutex = p_config->accept_mutex ;
 	p_env->limits__max_http_session_count = p_config->limits.max_http_session_count ;
 	p_env->limits__max_file_cache = p_config->limits.max_file_cache ;
+	p_env->limits__max_connections_per_ip = p_config->limits.max_connections_per_ip ;
 	p_env->tcp_options__nodelay = p_config->tcp_options.nodelay ;
 	p_env->tcp_options__nolinger = p_config->tcp_options.nolinger ;
 	p_env->http_options__timeout = p_config->http_options.timeout ;

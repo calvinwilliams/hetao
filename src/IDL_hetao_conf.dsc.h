@@ -96,6 +96,7 @@ typedef struct
 	{
 		int	max_http_session_count ;
 		int	max_file_cache ;
+		int	max_connections_per_ip ;
 	} limits ;
 	struct
 	{

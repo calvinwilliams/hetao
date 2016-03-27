@@ -317,6 +317,7 @@ struct HetaoEnv
 	int				accept_mutex ;
 	int				limits__max_http_session_count ;
 	int				limits__max_file_cache ;
+	int				limits__max_connections_per_ip ;
 	int				tcp_options__nodelay ;
 	int				tcp_options__nolinger ;
 	int				http_options__timeout ;

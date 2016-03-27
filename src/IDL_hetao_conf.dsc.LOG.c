@@ -24,6 +24,7 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 	PREFIX_DSCLOG_hetao_conf "hetao_conf.user[%s]" NEWLINE_DSCLOG_hetao_conf , pst->user );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.limits.max_http_session_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->limits.max_http_session_count );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.limits.max_file_cache[%d]" NEWLINE_DSCLOG_hetao_conf , pst->limits.max_file_cache );
+		PREFIX_DSCLOG_hetao_conf "hetao_conf.limits.max_connections_per_ip[%d]" NEWLINE_DSCLOG_hetao_conf , pst->limits.max_connections_per_ip );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf._listen_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->_listen_count );
 		for( index[1] = 0 ; index[1] < pst->_listen_count ; index[1]++ )
 		{
