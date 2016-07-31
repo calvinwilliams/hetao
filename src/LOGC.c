@@ -34,6 +34,8 @@ static int OpenLogFile()
 {
 	CloseLogFile();
 	
+	if( g_log_pathfilename[0] == '#' )
+		return 0;
 	if( g_log_pathfilename[0] == '\0' )
 		return -1;
 	
@@ -173,17 +175,20 @@ int WriteLogBaseV( int log_level , char *c_filename , long c_fileline , char *fo
 	OFFSET_BUFPTR( log_buffer , log_bufptr , len , log_buflen , log_buf_remain_len );
 	
 	/* 输出行日志 */
-	if( g_file_fd == -1 )
+	if( g_log_pathfilename[0] != '#' )
 	{
-		nret = OpenLogFile() ;
-		if( nret )
-			return nret;
+		if( g_file_fd == -1 )
+		{
+			nret = OpenLogFile() ;
+			if( nret )
+				return nret;
+		}
 		
 		WRITE( g_file_fd , log_buffer , log_buflen );
 	}
 	else
 	{
-		WRITE( g_file_fd , log_buffer , log_buflen );
+		WRITE( 1 , log_buffer , log_buflen );
 	}
 	
 	return 0;
@@ -376,17 +381,20 @@ int WriteHexLogBaseV( int log_level , char *c_filename , long c_fileline , char 
 	}
 	
 	/* 输出十六进制块日志 */
-	if( g_file_fd == -1 )
+	if( g_log_pathfilename[0] != '#' )
 	{
-		nret = OpenLogFile() ;
-		if( nret )
-			return nret;
+		if( g_file_fd == -1 )
+		{
+			nret = OpenLogFile() ;
+			if( nret )
+				return nret;
+		}
 		
 		WRITE( g_file_fd , hexlog_buffer , hexlog_buflen );
 	}
 	else
 	{
-		WRITE( g_file_fd , hexlog_buffer , hexlog_buflen );
+		WRITE( 1 , hexlog_buffer , hexlog_buflen );
 	}
 	
 	return 0;

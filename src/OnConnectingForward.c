@@ -8,7 +8,7 @@
 
 #include "hetao_in.h"
 
-int SelectForwardAddress( struct HetaoServer *p_server , struct HttpSession *p_http_session )
+int SelectForwardAddress( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
 	/* 轮询算法 */
 	if( p_http_session->p_virtualhost->forward_rule[0] == FORWARD_RULE_ROUNDROBIN[0] )
@@ -64,7 +64,7 @@ int SelectForwardAddress( struct HetaoServer *p_server , struct HttpSession *p_h
 	}
 }
 
-int ConnectForwardServer( struct HetaoServer *p_server , struct HttpSession *p_http_session )
+int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
 	struct epoll_event	event ;
 	
@@ -85,8 +85,8 @@ int ConnectForwardServer( struct HetaoServer *p_server , struct HttpSession *p_h
 	}
 	
 	SetHttpNonblock( p_http_session->forward_sock );
-	SetHttpNodelay( p_http_session->forward_sock , p_server->p_config->tcp_options.nodelay );
-	SetHttpNoLinger( p_http_session->forward_sock , p_server->p_config->tcp_options.nolinger );
+	SetHttpNodelay( p_http_session->forward_sock , p_env->p_config->tcp_options.nodelay );
+	SetHttpNoLinger( p_http_session->forward_sock , p_env->p_config->tcp_options.nolinger );
 	
 	p_http_session->forward_flags |= HTTPSESSION_FLAGS_CONNECTING ;
 	p_http_session->p_forward_server->connection_count++;
@@ -105,11 +105,11 @@ int ConnectForwardServer( struct HetaoServer *p_server , struct HttpSession *p_h
 			memset( & event , 0x00 , sizeof(struct epoll_event) );
 			event.events = EPOLLOUT | EPOLLERR ;
 			event.data.ptr = p_http_session ;
-			nret = epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_ADD , p_http_session->forward_sock , & event ) ;
+			nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_ADD , p_http_session->forward_sock , & event ) ;
 			if( nret == -1 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
-				SetHttpSessionUnused_05( p_server , p_http_session );
+				SetHttpSessionUnused_05( p_env , p_http_session );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
 		}
@@ -130,7 +130,7 @@ int ConnectForwardServer( struct HetaoServer *p_server , struct HttpSession *p_h
 		if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , errno );
-			SetHttpSessionUnused_05( p_server , p_http_session );
+			SetHttpSessionUnused_05( p_env , p_http_session );
 			return HTTP_INTERNAL_SERVER_ERROR;
 		}
 		
@@ -138,11 +138,11 @@ int ConnectForwardServer( struct HetaoServer *p_server , struct HttpSession *p_h
 		memset( & event , 0x00 , sizeof(struct epoll_event) );
 		event.events = EPOLLOUT | EPOLLERR ;
 		event.data.ptr = p_http_session ;
-		nret = epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_ADD , p_http_session->forward_sock , & event ) ;
+		nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_ADD , p_http_session->forward_sock , & event ) ;
 		if( nret == -1 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
-			SetHttpSessionUnused_05( p_server , p_http_session );
+			SetHttpSessionUnused_05( p_env , p_http_session );
 			return HTTP_INTERNAL_SERVER_ERROR;
 		}
 		
@@ -152,7 +152,7 @@ int ConnectForwardServer( struct HetaoServer *p_server , struct HttpSession *p_h
 	return HTTP_OK;
 }
 
-int OnConnectingForward( struct HetaoServer *p_server , struct HttpSession *p_http_session )
+int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
 #if ( defined __linux ) || ( defined __unix )
 	int			error , code ;
@@ -186,17 +186,17 @@ int OnConnectingForward( struct HetaoServer *p_server , struct HttpSession *p_ht
         {
 		ErrorLog( __FILE__ , __LINE__ , "connect[%s:%d] failed , errno[%d]" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port , errno );
 		
-		epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->forward_sock , NULL );
-		SetHttpSessionUnused_02( p_server , p_http_session );
+		epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->forward_sock , NULL );
+		SetHttpSessionUnused_02( p_env , p_http_session );
 		
-		p_http_session->p_forward_server->timestamp_to_valid = GETSECONDSTAMP + p_server->p_config->http_options.forward_disable ;
+		p_http_session->p_forward_server->timestamp_to_valid = GETSECONDSTAMP + p_env->p_config->http_options.forward_disable ;
 		
 		/* 选择转发服务端 */
-		nret = SelectForwardAddress( p_server , p_http_session ) ;
+		nret = SelectForwardAddress( p_env , p_http_session ) ;
 		if( nret == HTTP_OK )
 		{
 			/* 连接转发服务端 */
-			nret = ConnectForwardServer( p_server , p_http_session ) ;
+			nret = ConnectForwardServer( p_env , p_http_session ) ;
 			if( nret == HTTP_OK )
 			{
 				return 0;
@@ -234,7 +234,7 @@ int OnConnectingForward( struct HetaoServer *p_server , struct HttpSession *p_ht
 		memset( & event , 0x00 , sizeof(struct epoll_event) );
 		event.events = EPOLLOUT | EPOLLERR ;
 		event.data.ptr = p_http_session ;
-		nret = epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
+		nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
 		if( nret == -1 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
@@ -253,7 +253,7 @@ int OnConnectingForward( struct HetaoServer *p_server , struct HttpSession *p_ht
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
-		SetHttpSessionUnused_05( p_server , p_http_session );
+		SetHttpSessionUnused_05( p_env , p_http_session );
 		return 1;
 	}
 	
@@ -261,11 +261,11 @@ int OnConnectingForward( struct HetaoServer *p_server , struct HttpSession *p_ht
 	memset( & event , 0x00 , sizeof(struct epoll_event) );
 	event.events = EPOLLOUT | EPOLLERR ;
 	event.data.ptr = p_http_session ;
-	nret = epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->forward_sock , & event ) ;
+	nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->forward_sock , & event ) ;
 	if( nret == -1 )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
-		SetHttpSessionUnused_05( p_server , p_http_session );
+		SetHttpSessionUnused_05( p_env , p_http_session );
 		return -1;
 	}
 	

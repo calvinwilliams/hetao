@@ -91,6 +91,7 @@ void SetLogFile( char *format , ... );
 void CloseLogFile();
 void SetLogLevel( int log_level );
 
+extern TLS char			g_log_pathfilename[ MAXLEN_FILENAME + 1 ] ;
 extern TLS int			g_log_level ;
 extern TLS int			g_file_fd ;
 

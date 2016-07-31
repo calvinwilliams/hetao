@@ -8,7 +8,7 @@
 
 #include "hetao_in.h"
 
-int OnSendingSocket( struct HetaoServer *p_server , struct HttpSession *p_http_session )
+int OnSendingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
 	struct epoll_event	event ;
 	
@@ -78,12 +78,12 @@ int OnSendingSocket( struct HetaoServer *p_server , struct HttpSession *p_http_s
 			
 			ResetHttpEnv(p_http_session->http);
 			
-			UpdateHttpSessionTimeoutTreeNode( p_server , p_http_session , GETSECONDSTAMP + p_server->p_config->http_options.timeout );
+			UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->p_config->http_options.timeout );
 			
 			memset( & event , 0x00 , sizeof(struct epoll_event) );
 			event.events = EPOLLIN | EPOLLERR ;
 			event.data.ptr = p_http_session ;
-			nret = epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
+			nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
 			if( nret == 1 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );

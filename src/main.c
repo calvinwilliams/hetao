@@ -8,7 +8,7 @@
 
 #include "hetao_in.h"
 
-struct HetaoServer	*g_p_server = NULL ;
+struct HetaoEnv	*g_p_env = NULL ;
 
 char	__HETAO_VERSION_0_3_0[] = "0.3.0" ;
 char	*__HETAO_VERSION = __HETAO_VERSION_0_3_0 ;
@@ -22,8 +22,8 @@ static void usage()
 
 int main( int argc , char *argv[] )
 {
-	struct HetaoServer	server ;
-	struct HetaoServer	*p_server = NULL ;
+	struct HetaoEnv	server ;
+	struct HetaoEnv	*p_env = NULL ;
 	
 	int			nret = 0 ;
 	
@@ -32,29 +32,32 @@ int main( int argc , char *argv[] )
 		/* 重置所有HTTP状态码、描述为缺省 */
 		ResetAllHttpStatus();
 		
-		p_server = & server ;
-		g_p_server = p_server ;
-		memset( p_server , 0x00 , sizeof(struct HetaoServer) );
-		p_server->argv = argv ;
+		p_env = & server ;
+		g_p_env = p_env ;
+		memset( p_env , 0x00 , sizeof(struct HetaoEnv) );
+		p_env->argv = argv ;
 		
 		/* 设置缺省主日志 */
-		SetLogFile( "%s/log/error.log" , getenv("HOME") );
+		if( getenv( HETAO_LOG_PATHFILENAME ) == NULL )
+			SetLogFile( "#" );
+		else
+			SetLogFile( getenv(HETAO_LOG_PATHFILENAME) );
 		SetLogLevel( LOGLEVEL_ERROR );
 		SETPID
 		SETTID
 		UPDATEDATETIMECACHEFIRST
 		
 		/* 装载配置 */
-		strncpy( p_server->config_pathfilename , argv[1] , sizeof(p_server->config_pathfilename)-1 );
-		p_server->p_config = (hetao_conf *)malloc( sizeof(hetao_conf) ) ;
-		if( p_server->p_config == NULL )
+		strncpy( p_env->config_pathfilename , argv[1] , sizeof(p_env->config_pathfilename)-1 );
+		p_env->p_config = (hetao_conf *)malloc( sizeof(hetao_conf) ) ;
+		if( p_env->p_config == NULL )
 		{
 			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
 				printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
 			return 1;
 		}
-		memset( p_server->p_config , 0x00 , sizeof(hetao_conf) );
-		nret = LoadConfig( p_server->config_pathfilename , p_server ) ;
+		memset( p_env->p_config , 0x00 , sizeof(hetao_conf) );
+		nret = LoadConfig( p_env->config_pathfilename , p_env ) ;
 		if( nret )
 		{
 			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
@@ -65,8 +68,8 @@ int main( int argc , char *argv[] )
 		/* 重新设置主日志 */
 		CloseLogFile();
 		
-		SetLogFile( p_server->p_config->error_log );
-		SetLogLevel( p_server->log_level );
+		SetLogFile( p_env->p_config->error_log );
+		SetLogLevel( p_env->log_level );
 		SETPID
 		SETTID
 		UPDATEDATETIMECACHEFIRST
@@ -74,7 +77,7 @@ int main( int argc , char *argv[] )
 		SetHttpCloseExec( g_file_fd );
 		
 		/* 初始化服务器环境 */
-		nret = InitServerEnvirment( p_server ) ;
+		nret = InitServerEnvirment( p_env ) ;
 		if( nret )
 		{
 			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
@@ -82,9 +85,9 @@ int main( int argc , char *argv[] )
 			return -nret;
 		}
 		
-		return -BindDaemonServer( & MonitorProcess , p_server );
+		return -BindDaemonServer( & MonitorProcess , p_env );
 		/*
-		return -MonitorProcess( p_server );
+		return -MonitorProcess( p_env );
 		*/
 	}
 	else

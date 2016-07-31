@@ -1,3 +1,6 @@
+v0.4.0		2016-09-03	calvin
+		* Adjust hierarchical relationship for 'listen - server - forward' in configure , adjust code architecture synchronously
+
 v0.3.0		2016-09-01	calvin
 		* Support HTTPS
 

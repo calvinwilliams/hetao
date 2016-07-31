@@ -98,37 +98,12 @@ typedef struct
 	struct
 	{
 		char	ip[ 15 + 1 ] ;
-		char	port[ 256 + 1 ] ;
-	} listen ;
-	struct
-	{
-		char	certificate_file[ 256 + 1 ] ;
-		char	certificate_key_file[ 256 + 1 ] ;
-	} ssl ;
-	struct
-	{
-		char	domain[ 256 + 1 ] ;
-		char	wwwroot[ 1024 + 1 ] ;
-		char	index[ 1024 + 1 ] ;
-		char	access_log[ 256 + 1 ] ;
+		int	port ;
 		struct
 		{
-			char	forward_type[ 16 + 1 ] ;
-			char	forward_rule[ 1 + 1 ] ;
-			struct
-			{
-				struct
-				{
-					char	ip[ 15 + 1 ] ;
-					int	port ;
-				} forward_server [ 1000 ] ;
-				int	_forward_server_count ;
-				int	_forward_server_size ;
-			} forward_servers ;
-		} forward ;
-	} server ;
-	struct
-	{
+			char	certificate_file[ 256 + 1 ] ;
+			char	certificate_key_file[ 256 + 1 ] ;
+		} ssl ;
 		struct
 		{
 			char	domain[ 256 + 1 ] ;
@@ -141,19 +116,18 @@ typedef struct
 				char	forward_rule[ 1 + 1 ] ;
 				struct
 				{
-					struct
-					{
-						char	ip[ 15 + 1 ] ;
-						int	port ;
-					} forward_server [ 1000 ] ;
-					int	_forward_server_count ;
-					int	_forward_server_size ;
-				} forward_servers ;
+					char	ip[ 15 + 1 ] ;
+					int	port ;
+				} forward_server [ 1000 ] ;
+				int	_forward_server_count ;
+				int	_forward_server_size ;
 			} forward ;
 		} server [ 64 ] ;
 		int	_server_count ;
 		int	_server_size ;
-	} servers ;
+	} listen [ 16 ] ;
+	int	_listen_count ;
+	int	_listen_size ;
 	struct
 	{
 		int	nodelay ;
