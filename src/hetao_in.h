@@ -253,6 +253,7 @@ struct HtmlCacheSession
 	struct rb_node		htmlcache_pathfilename_rbnode ;
 	
 	struct stat		st ;
+	
 	char			*html_content ;
 	int			html_content_len ;
 	char			*html_gzip_content ;

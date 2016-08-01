@@ -160,7 +160,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 	else
 	{
 		/* 击中缓存 */
-		DebugLog( __FILE__ , __LINE__ , "Html[%s] cache hited , [%d]bytes" , pathfilename , p_htmlcache_session->html_content_len );
+		DebugLog( __FILE__ , __LINE__ , "html[%s] cache hited , [%d]bytes" , pathfilename , p_htmlcache_session->html_content_len );
 	}
 	
 	if( STAT_DIRECTORY(p_htmlcache_session->st) )
@@ -218,7 +218,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 					}
 					else
 					{
-						DebugLog( __FILE__ , __LINE__ , "Gzip[%s] cache hited , [%d]bytes" , pathfilename , p_htmlcache_session->html_gzip_content_len );
+						DebugLog( __FILE__ , __LINE__ , "gzip[%s] cache hited , [%d]bytes" , pathfilename , p_htmlcache_session->html_gzip_content_len );
 					}
 					
 					/* 组织HTTP响应 */
@@ -268,7 +268,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 					}
 					else
 					{
-						DebugLog( __FILE__ , __LINE__ , "Deflate[%s] cache hited , [%d]bytes" , pathfilename , p_htmlcache_session->html_deflate_content_len );
+						DebugLog( __FILE__ , __LINE__ , "deflate[%s] cache hited , [%d]bytes" , pathfilename , p_htmlcache_session->html_deflate_content_len );
 					}
 					
 					/* 组织HTTP响应 */
