@@ -124,6 +124,7 @@ void SetHttpSessionUnused_05( struct HetaoServer *p_server , struct HttpSession 
 
 void SetHttpSessionUnused_02( struct HetaoServer *p_server , struct HttpSession *p_http_session )
 {
+	epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->forward_sock , NULL ) ;
 	p_http_session->p_forward_server->connection_count--;
 	close( p_http_session->forward_sock );
 	ResetHttpEnv( p_http_session->forward_http );

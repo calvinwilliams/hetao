@@ -57,11 +57,6 @@ int OnReceivingForward( struct HetaoServer *p_server , struct HttpSession *p_htt
 		/* 收满一个HTTP响应 */
 		DebugLog( __FILE__ , __LINE__ , "ReceiveHttpResponseNonblock done" );
 		
-		epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->forward_sock , NULL ) ;
-		close( p_http_session->forward_sock );
-		
-		p_http_session->forward_flags = 0 ;
-		
 		/* 复制HTTP响应 */
 		response_base = GetHttpBufferBase( GetHttpResponseBuffer(p_http_session->forward_http) , & response_len ) ;
 		b = GetHttpResponseBuffer(p_http_session->http) ;
@@ -73,6 +68,8 @@ int OnReceivingForward( struct HetaoServer *p_server , struct HttpSession *p_htt
 		}
 		
 		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer" );
+		
+		SetHttpSessionUnused_02( p_server , p_http_session );
 		
 		/* 恢复原连接事件 */
 		memset( & event , 0x00 , sizeof(struct epoll_event) );

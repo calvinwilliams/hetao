@@ -101,8 +101,6 @@
 
 #include "IDL_hetao_conf.dsc.h"
 
-#include "hetao.h"
-
 #define HETAO_LISTEN_SOCKFDS			"HETAO_LISTEN_SOCKFDS"	/* 环境变量名，用于优雅重启时传给下一辈侦听信息 */
 
 #define MAX_EPOLL_EVENTS			10000	/* 每次从epoll取回事件数量 */

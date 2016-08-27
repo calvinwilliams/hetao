@@ -22,6 +22,9 @@ case $1 in
 			exit 1
 		fi
 		hetao ~/etc/hetao.conf
+		if [ $? -ne 0 ] ; then
+			exit 1
+		fi
 		while [ 1 ] ; do
 			sleep 1
 			PID=`ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk '{if($3=="1")print $2}'`
@@ -34,6 +37,9 @@ case $1 in
 		;;
 	stop)
 		hetao.do status
+		if [ $? -ne 0 ] ; then
+			exit 1
+		fi
 		PID=`ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk '{if($3=="1")print $2}'`
 		if [ x"$PID" = x"" ] ; then
 			echo "*** WARN : hetao not existed"
@@ -59,6 +65,9 @@ case $1 in
 		;;
 	restart_graceful)
 		hetao.do status
+		if [ $? -ne 0 ] ; then
+			exit 1
+		fi
 		PID=`ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk '{if($3=="1")print $2}'`
 		if [ x"$PID" = x"" ] ; then
 			echo "*** WARN : hetao not existed"
@@ -83,9 +92,15 @@ case $1 in
 		done
 		echo "old hetao pid[$PID] end ok"
 		hetao.do status
+		if [ $? -ne 0 ] ; then
+			exit 1
+		fi
 		;;
 	relog)
 		hetao.do status
+		if [ $? -ne 0 ] ; then
+			exit 1
+		fi
 		PID=`ps -ef | grep -w hetao | grep -v "hetao.do" | grep -v grep | awk '{if($3=="1")print $2}'`
 		if [ x"$PID" = x"" ] ; then
 			echo "*** WARN : hetao not existed"
