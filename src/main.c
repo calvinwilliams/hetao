@@ -10,8 +10,8 @@
 
 struct HetaoServer	*g_p_server = NULL ;
 
-char	__HETAO_VERSION_0_1_0[] = "0.1.0" ;
-char	*__HETAO_VERSION = __HETAO_VERSION_0_1_0 ;
+char	__HETAO_VERSION_0_2_0[] = "0.2.0" ;
+char	*__HETAO_VERSION = __HETAO_VERSION_0_2_0 ;
 
 static void usage()
 {
