@@ -57,6 +57,9 @@ c_FILE		=	\
 			Util.c \
 			MimeTypeHash.c \
 			ProcessHttpRequest.c \
+			OnConnectingForward.c \
+			OnSendingForward.c \
+			OnReceivingForward.c \
 
 ###### 目标文件、安装目录配置区
 include makeinstall
