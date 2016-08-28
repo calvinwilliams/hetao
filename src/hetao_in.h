@@ -181,7 +181,7 @@ struct ForwardServer
 } ;
 
 /* 虚拟主机结构 */
-#define FORWARD_RULE_ROUNDROBIN			"B"
+#define FORWARD_RULE_ROUNDROBIN			"R"
 #define FORWARD_RULE_LEASTCONNECTION		"L"
 
 struct VirtualHost
