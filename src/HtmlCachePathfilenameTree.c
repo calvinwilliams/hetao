@@ -8,14 +8,14 @@
 
 #include "hetao_in.h"
 
-int AddHtmlCachePathfilenameTreeNode( struct HetaoServer *p_server , struct HtmlCacheSession *p_htmlcache_session )
+int AddHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session )
 {
         struct rb_node		**pp_new_node = NULL ;
         struct rb_node		*p_parent = NULL ;
         struct HtmlCacheSession	*p = NULL ;
 	int			result ;
 	
-	pp_new_node = & (p_server->htmlcache_pathfilename_rbtree.rb_node) ;
+	pp_new_node = & (p_env->htmlcache_pathfilename_rbtree.rb_node) ;
         while( *pp_new_node )
         {
                 p = container_of( *pp_new_node , struct HtmlCacheSession , htmlcache_pathfilename_rbnode ) ;
@@ -32,14 +32,14 @@ int AddHtmlCachePathfilenameTreeNode( struct HetaoServer *p_server , struct Html
         }
 	
         rb_link_node( & (p_htmlcache_session->htmlcache_pathfilename_rbnode) , p_parent , pp_new_node );
-        rb_insert_color( & (p_htmlcache_session->htmlcache_pathfilename_rbnode) , &(p_server->htmlcache_pathfilename_rbtree) );
+        rb_insert_color( & (p_htmlcache_session->htmlcache_pathfilename_rbnode) , &(p_env->htmlcache_pathfilename_rbtree) );
 	
 	return 0;
 }
 
-struct HtmlCacheSession *QueryHtmlCachePathfilenameTreeNode( struct HetaoServer *p_server , char *pathfilename )
+struct HtmlCacheSession *QueryHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , char *pathfilename )
 {
-	struct rb_node		*node = p_server->htmlcache_pathfilename_rbtree.rb_node ;
+	struct rb_node		*node = p_env->htmlcache_pathfilename_rbtree.rb_node ;
 	struct HtmlCacheSession	*p = NULL ;
 	int			result ;
 
@@ -59,9 +59,9 @@ struct HtmlCacheSession *QueryHtmlCachePathfilenameTreeNode( struct HetaoServer 
 	return NULL;
 }
 
-void RemoveHtmlCachePathfilenameTreeNode( struct HetaoServer *p_server , struct HtmlCacheSession *p_htmlcache_session )
+void RemoveHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session )
 {
-	rb_erase( & (p_htmlcache_session->htmlcache_pathfilename_rbnode) , & (p_server->htmlcache_pathfilename_rbtree) );
+	rb_erase( & (p_htmlcache_session->htmlcache_pathfilename_rbnode) , & (p_env->htmlcache_pathfilename_rbtree) );
 	return;
 }
 

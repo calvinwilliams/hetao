@@ -8,13 +8,13 @@
 
 #include "hetao_in.h"
 
-int AddHtmlCacheWdTreeNode( struct HetaoServer *p_server , struct HtmlCacheSession *p_htmlcache_session )
+int AddHtmlCacheWdTreeNode( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session )
 {
         struct rb_node		**pp_new_node = NULL ;
         struct rb_node		*p_parent = NULL ;
         struct HtmlCacheSession	*p = NULL ;
 	
-	pp_new_node = & (p_server->htmlcache_wd_rbtree.rb_node) ;
+	pp_new_node = & (p_env->htmlcache_wd_rbtree.rb_node) ;
         while( *pp_new_node )
         {
                 p = container_of( *pp_new_node , struct HtmlCacheSession , htmlcache_wd_rbnode ) ;
@@ -30,14 +30,14 @@ int AddHtmlCacheWdTreeNode( struct HetaoServer *p_server , struct HtmlCacheSessi
         }
 	
         rb_link_node( & (p_htmlcache_session->htmlcache_wd_rbnode) , p_parent , pp_new_node );
-        rb_insert_color( & (p_htmlcache_session->htmlcache_wd_rbnode) , &(p_server->htmlcache_wd_rbtree) );
+        rb_insert_color( & (p_htmlcache_session->htmlcache_wd_rbnode) , &(p_env->htmlcache_wd_rbtree) );
 	
 	return 0;
 }
 
-struct HtmlCacheSession *QueryHtmlCacheWdTreeNode( struct HetaoServer *p_server , int wd )
+struct HtmlCacheSession *QueryHtmlCacheWdTreeNode( struct HetaoEnv *p_env , int wd )
 {
-	struct rb_node		*node = p_server->htmlcache_wd_rbtree.rb_node ;
+	struct rb_node		*node = p_env->htmlcache_wd_rbtree.rb_node ;
 	struct HtmlCacheSession	*p = NULL ;
 
 	while( node )
@@ -54,9 +54,9 @@ struct HtmlCacheSession *QueryHtmlCacheWdTreeNode( struct HetaoServer *p_server 
 	return NULL;
 }
 
-void RemoveHtmlCacheWdTreeNode( struct HetaoServer *p_server , struct HtmlCacheSession *p_htmlcache_session )
+void RemoveHtmlCacheWdTreeNode( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session )
 {
-	rb_erase( & (p_htmlcache_session->htmlcache_wd_rbnode) , & (p_server->htmlcache_wd_rbtree) );
+	rb_erase( & (p_htmlcache_session->htmlcache_wd_rbnode) , & (p_env->htmlcache_wd_rbtree) );
 	return;
 }
 

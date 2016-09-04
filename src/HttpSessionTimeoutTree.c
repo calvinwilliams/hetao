@@ -8,13 +8,13 @@
 
 #include "hetao_in.h"
 
-int AddHttpSessionTimeoutTreeNode( struct HetaoServer *p_server , struct HttpSession *p_http_session )
+int AddHttpSessionTimeoutTreeNode( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
         struct rb_node		**pp_new_node = NULL ;
         struct rb_node		*p_parent = NULL ;
         struct HttpSession	*p = NULL ;
 	
-	pp_new_node = & (p_server->http_session_rbtree_used.rb_node) ;
+	pp_new_node = & (p_env->http_session_rbtree_used.rb_node) ;
         while( *pp_new_node )
         {
                 p = container_of( *pp_new_node , struct HttpSession , timeout_rbnode ) ;
@@ -30,35 +30,35 @@ int AddHttpSessionTimeoutTreeNode( struct HetaoServer *p_server , struct HttpSes
         }
 	
         rb_link_node( & (p_http_session->timeout_rbnode) , p_parent , pp_new_node );
-        rb_insert_color( & (p_http_session->timeout_rbnode) , &(p_server->http_session_rbtree_used) );
+        rb_insert_color( & (p_http_session->timeout_rbnode) , &(p_env->http_session_rbtree_used) );
 	
 	return 0;
 }
 
-void RemoveHttpSessionTimeoutTreeNode( struct HetaoServer *p_server , struct HttpSession *p_http_session )
+void RemoveHttpSessionTimeoutTreeNode( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
-	rb_erase( & (p_http_session->timeout_rbnode) , &(p_server->http_session_rbtree_used) );
+	rb_erase( & (p_http_session->timeout_rbnode) , &(p_env->http_session_rbtree_used) );
 	return;
 }
 
-int UpdateHttpSessionTimeoutTreeNode( struct HetaoServer *p_server , struct HttpSession *p_http_session , int timeout_timestamp )
+int UpdateHttpSessionTimeoutTreeNode( struct HetaoEnv *p_env , struct HttpSession *p_http_session , int timeout_timestamp )
 {
 	int		nret = 0 ;
 	
-	RemoveHttpSessionTimeoutTreeNode( p_server , p_http_session );
+	RemoveHttpSessionTimeoutTreeNode( p_env , p_http_session );
 	
 	p_http_session->timeout_timestamp = timeout_timestamp ;
-	nret = AddHttpSessionTimeoutTreeNode( p_server , p_http_session ) ;
+	nret = AddHttpSessionTimeoutTreeNode( p_env , p_http_session ) ;
 	
 	return nret;
 }
 
-struct HttpSession *GetExpireHttpSessionTimeoutTreeNode( struct HetaoServer *p_server )
+struct HttpSession *GetExpireHttpSessionTimeoutTreeNode( struct HetaoEnv *p_env )
 {
 	struct rb_node		*p_curr = NULL ;
 	struct HttpSession	*p_http_session = NULL ;
 	
-	p_curr = rb_first( & (p_server->http_session_rbtree_used) ); 
+	p_curr = rb_first( & (p_env->http_session_rbtree_used) ); 
 	if (p_curr == NULL)
 		return NULL;
 	

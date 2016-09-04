@@ -1,6 +1,13 @@
-V0.2.0		2016-08-27	calvin
+0.4.0		2016-09-03	calvin
+		* Adjust hierarchical relationship for 'listen - server - forward' in configure , adjust code architecture synchronously
+		*** Configuration file format is not compatible between 0.3.0 and 0.4.0 ***
+
+0.3.0		2016-09-01	calvin
+		* Support HTTPS
+
+0.2.0		2016-08-27	calvin
 		* Add reverse proxy with round-robin rule and least-connections
 
-V0.1.0		2016-08-17	calvin
+0.1.0		2016-08-17	calvin
 		* Create hetao v0.1.0 from htmlserver v1.0.0
 

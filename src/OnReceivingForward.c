@@ -8,7 +8,7 @@
 
 #include "hetao_in.h"
 
-int OnReceivingForward( struct HetaoServer *p_server , struct HttpSession *p_http_session )
+int OnReceivingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
 	struct HttpBuffer	*b = NULL ;
 	char			*response_base = NULL ;
@@ -30,12 +30,12 @@ int OnReceivingForward( struct HetaoServer *p_server , struct HttpSession *p_htt
 		/* 接收报错了 */
 		if( nret == FASTERHTTP_ERROR_TCP_CLOSE )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "accepted socket closed detected" );
+			ErrorLog( __FILE__ , __LINE__ , "http socket closed detected" );
 			return 1;
 		}
 		else if( nret == FASTERHTTP_INFO_TCP_CLOSE )
 		{
-			InfoLog( __FILE__ , __LINE__ , "accepted socket closed detected" );
+			InfoLog( __FILE__ , __LINE__ , "http socket closed detected" );
 			return 1;
 		}
 		else
@@ -69,13 +69,13 @@ int OnReceivingForward( struct HetaoServer *p_server , struct HttpSession *p_htt
 		
 		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer" );
 		
-		SetHttpSessionUnused_02( p_server , p_http_session );
+		SetHttpSessionUnused_02( p_env , p_http_session );
 		
 		/* 恢复原连接事件 */
 		memset( & event , 0x00 , sizeof(struct epoll_event) );
 		event.events = EPOLLOUT | EPOLLERR ;
 		event.data.ptr = p_http_session ;
-		nret = epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
+		nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
 		if( nret == -1 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );

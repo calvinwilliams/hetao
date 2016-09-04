@@ -340,6 +340,23 @@ int StrcatvHttpBuffer( struct HttpBuffer *b , char *format , va_list valist )
 	return 0;
 }
 
+int MemcatHttpBuffer( struct HttpBuffer *b , char *base , int len )
+{
+	int		nret = 0 ;
+	
+	while( (b->fill_ptr-b->base) + len > b->buf_size-1 )
+	{
+		nret = ReallocHttpBuffer( b , -1 ) ;
+		if( nret )
+			return nret;
+	}
+	
+	memcpy( b->fill_ptr , base , len );
+	b->fill_ptr += len ;
+	
+	return 0;
+}
+
 int StrcatHttpBufferFromFile( struct HttpBuffer *b , char *pathfilename , int *p_filesize )
 {
 	int		filesize = -1 ;
@@ -386,23 +403,6 @@ int StrcatHttpBufferFromFile( struct HttpBuffer *b , char *pathfilename , int *p
 	
 	if( p_filesize )
 		(*p_filesize) = filesize ;
-	
-	return 0;
-}
-
-int MemcatHttpBuffer( struct HttpBuffer *b , char *base , int len )
-{
-	int		nret = 0 ;
-	
-	while( (b->fill_ptr-b->base) + len > b->buf_size-1 )
-	{
-		nret = ReallocHttpBuffer( b , -1 ) ;
-		if( nret )
-			return nret;
-	}
-	
-	memcpy( b->fill_ptr , base , len );
-	b->fill_ptr += len ;
 	
 	return 0;
 }

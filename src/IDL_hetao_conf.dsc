@@ -12,34 +12,17 @@ STRUCT	hetao_conf
 		INT	4	max_http_session_count
 	}
 	
-	STRUCT	listen
+	STRUCT	listen	ARRAY	16
 	{
 		STRING	15	ip
-		STRING	256	port
-	}
-	
-	STRUCT	server
-	{
-		STRING	256	domain
-		STRING	1024	wwwroot
-		STRING	1024	index
-		STRING	256	access_log
-		STRUCT	forward
+		INT	4	port
+		
+		STRUCT	ssl
 		{
-			STRING	16	forward_type
-			STRING	1	forward_rule
-			STRUCT	forward_servers
-			{
-				STRUCT	forward_server	ARRAY	1000
-				{
-					STRING	15	ip
-					INT	4	port
-				}
-			}
+			STRING	256	certificate_file
+			STRING	256	certificate_key_file
 		}
-	}
-	STRUCT	servers
-	{
+		
 		STRUCT	server	ARRAY	64
 		{
 			STRING	256	domain
@@ -50,13 +33,10 @@ STRUCT	hetao_conf
 			{
 				STRING	16	forward_type
 				STRING	1	forward_rule
-				STRUCT	forward_servers
+				STRUCT	forward_server	ARRAY	1000
 				{
-					STRUCT	forward_server	ARRAY	1000
-					{
-						STRING	15	ip
-						INT	4	port
-					}
+					STRING	15	ip
+					INT	4	port
 				}
 			}
 		}

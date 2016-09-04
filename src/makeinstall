@@ -5,7 +5,7 @@ _BINBASE	=	$(HOME)/bin
 _CFLAGS		=	-I. -I$(_HDERBASE)
 _LFLAGS		=	-L. -L$(_LIBBASE)
 
-_HDERINST	=	$(_HDERBASE)/htmlserver
+_HDERINST	=	$(_HDERBASE)/hetao
 _LIBINST	=	$(_LIBBASE)
 _BININST	=	$(_BINBASE)
 

@@ -8,7 +8,7 @@
 
 #include "hetao_in.h"
 
-int OnSendingForward( struct HetaoServer *p_server , struct HttpSession *p_http_session )
+int OnSendingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
 	struct epoll_event	event ;
 	
@@ -35,7 +35,7 @@ int OnSendingForward( struct HetaoServer *p_server , struct HttpSession *p_http_
 		memset( & event , 0x00 , sizeof(struct epoll_event) );
 		event.events = EPOLLIN | EPOLLERR ;
 		event.data.ptr = p_http_session ;
-		nret = epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->forward_sock , & event ) ;
+		nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->forward_sock , & event ) ;
 		if( nret == 1 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );

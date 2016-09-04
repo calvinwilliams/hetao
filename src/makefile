@@ -8,12 +8,15 @@
 ###### 源文件配置区
 #@ c_FILE
 c_FILE		=	\
-			IDL_hetao_conf.dsc.c \
 			LOGC.c \
 			rbtree.c \
 			list.c \
 			fasterjson.c \
 			fasterhttp.c \
+			IDL_hetao_conf.dsc.c \
+			Util.c \
+			Config.c \
+			Envirment.c \
 			main.c \
 			MonitorProcess.c \
 			WorkerProcess.c \
@@ -22,22 +25,19 @@ c_FILE		=	\
 			OnAcceptingSocket.c \
 			OnReceivingSocket.c \
 			OnSendingSocket.c \
-			Envirment.c \
-			Config.c \
 			VirtualHostHash.c \
+			ProcessHttpRequest.c \
+			OnConnectingForward.c \
+			OnSendingForward.c \
+			OnReceivingForward.c \
+			HttpSession.c \
 			HtmlCacheSession.c \
 			HtmlCacheEventHander.c \
 			HtmlCacheWdTree.c \
 			HtmlCachePathfilenameTree.c \
 			HttpSessionTimeoutTree.c \
-			HttpSession.c \
 			LeastConnectionCountTree.c \
-			Util.c \
 			MimeTypeHash.c \
-			ProcessHttpRequest.c \
-			OnConnectingForward.c \
-			OnSendingForward.c \
-			OnReceivingForward.c \
 
 ###### 目标文件、安装目录配置区
 include makeinstall
@@ -51,8 +51,8 @@ CFLAGS		=	$(_CFLAGS) \
 LFLAGS		=	$(_LFLAGS) \
 			-L$(HOME)/lib \
 			-lpthread \
-			-lz \
 			-lssl \
+			-lz \
 
 ###### 额外宏定义区
 CLEAN_ADDITION	=

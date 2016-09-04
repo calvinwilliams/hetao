@@ -8,14 +8,14 @@
 
 #include "hetao_in.h"
 
-int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http_session )
+int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
 	struct epoll_event	event ;
 	
 	int			nret = 0 ;
 	
 	/* 收一把HTTP请求 */
-	nret = ReceiveHttpRequestNonblock( p_http_session->netaddr.sock , NULL , p_http_session->http ) ;
+	nret = ReceiveHttpRequestNonblock( p_http_session->netaddr.sock , p_http_session->ssl , p_http_session->http ) ;
 	if( nret == FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER )
 	{
 		/* 没收完整 */
@@ -26,26 +26,18 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 		/* 接收报错了 */
 		if( nret == FASTERHTTP_ERROR_TCP_CLOSE )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "accepted socket closed detected" );
+			ErrorLog( __FILE__ , __LINE__ , "http socket closed detected" );
 			return 1;
 		}
 		else if( nret == FASTERHTTP_INFO_TCP_CLOSE )
 		{
-			InfoLog( __FILE__ , __LINE__ , "accepted socket closed detected" );
+			InfoLog( __FILE__ , __LINE__ , "http socket closed detected" );
 			return 1;
 		}
 		else
 		{
 			ErrorLog( __FILE__ , __LINE__ , "ReceiveHttpRequestNonblock failed[%d] , errno[%d]" , nret , errno );
-			
-			nret = FormatHttpResponseStartLine( abs(nret)/100 , p_http_session->http , 1 ) ;
-			if( nret )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
-				return 1;
-			}
-			
-			return 0;
+			return 1;
 		}
 	}
 	else
@@ -58,7 +50,7 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 		
 		DebugLog( __FILE__ , __LINE__ , "ReceiveHttpRequestNonblock done" );
 		
-		UpdateHttpSessionTimeoutTreeNode( p_server , p_http_session , GETSECONDSTAMP + p_server->p_config->http_options.timeout );
+		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->p_config->http_options.timeout );
 		
 		b = GetHttpRequestBuffer(p_http_session->http) ;
 		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpRequestBuffer" );
@@ -67,10 +59,10 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 		host = QueryHttpHeaderPtr( p_http_session->http , "Host" , & host_len ) ;
 		if( host == NULL )
 			host = "" , host_len = 0 ;
-		p_http_session->p_virtualhost = QueryVirtualHostHashNode( p_server , host , host_len ) ;
-		if( p_http_session->p_virtualhost == NULL && p_server->p_virtualhost_default )
+		p_http_session->p_virtualhost = QueryVirtualHostHashNode( p_http_session->p_listen_session , host , host_len ) ;
+		if( p_http_session->p_virtualhost == NULL && p_http_session->p_listen_session->p_virtualhost_default )
 		{
-			p_http_session->p_virtualhost = p_server->p_virtualhost_default ;
+			p_http_session->p_virtualhost = p_http_session->p_listen_session->p_virtualhost_default ;
 		}
 		
 		/* 分解URI */
@@ -88,7 +80,7 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 			DebugLog( __FILE__ , __LINE__ , "QueryVirtualHostHashNode[%.*s] ok , wwwroot[%s]" , host_len , host , p_http_session->p_virtualhost->wwwroot );
 			
 			if( p_http_session->p_virtualhost->forward_rule[0] == 0
-				|| p_server->virtualhost_count <= 0
+				|| p_http_session->p_listen_session->virtualhost_count <= 0
 				|| p_http_session->http_uri.ext_filename_len != p_http_session->p_virtualhost->forward_type_len
 				|| MEMCMP( p_http_session->http_uri.ext_filename_base , != , p_http_session->p_virtualhost->forward_type , p_http_session->http_uri.ext_filename_len ) )
 			{
@@ -101,7 +93,7 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 				}
 				
 				/* 处理HTTP请求 */
-				nret = ProcessHttpRequest( p_server , p_http_session , p_http_session->p_virtualhost->wwwroot , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , GetHttpHeaderLen_URI(p_http_session->http) ) ;
+				nret = ProcessHttpRequest( p_env , p_http_session , p_http_session->p_virtualhost->wwwroot , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , GetHttpHeaderLen_URI(p_http_session->http) ) ;
 				if( nret != HTTP_OK )
 				{
 					/* 格式化响应头和体，用出错状态码 */
@@ -120,18 +112,18 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 			else
 			{
 				/* 选择转发服务端 */
-				nret = SelectForwardAddress( p_server , p_http_session ) ;
+				nret = SelectForwardAddress( p_env , p_http_session ) ;
 				if( nret == HTTP_OK )
 				{
 					/* 连接转发服务端 */
-					nret = ConnectForwardServer( p_server , p_http_session ) ;
+					nret = ConnectForwardServer( p_env , p_http_session ) ;
 					if( nret == HTTP_OK )
 					{
 						/* 暂禁原连接事件 */
 						memset( & event , 0x00 , sizeof(struct epoll_event) );
 						event.events = EPOLLRDHUP | EPOLLERR ;
 						event.data.ptr = p_http_session ;
-						nret = epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
+						nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
 						if( nret == -1 )
 						{
 							ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
@@ -187,7 +179,7 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 		memset( & event , 0x00 , sizeof(struct epoll_event) );
 		event.events = EPOLLOUT | EPOLLERR ;
 		event.data.ptr = p_http_session ;
-		nret = epoll_ctl( p_server->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
+		nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
 		if( nret == -1 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
@@ -196,9 +188,9 @@ int OnReceivingSocket( struct HetaoServer *p_server , struct HttpSession *p_http
 		
 		/* 直接来一发 */
 		/*
-		if( p_server->p_config->worker_processes == 1 )
+		if( p_env->p_config->worker_processes == 1 )
 		{
-			nret = OnSendingSocket( p_server , p_http_session ) ;
+			nret = OnSendingSocket( p_env , p_http_session ) ;
 			if( nret > 0 )
 			{
 				DebugLog( __FILE__ , __LINE__ , "OnSendingSocket done[%d]" , nret );

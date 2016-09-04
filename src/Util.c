@@ -64,6 +64,18 @@ int AccessDirectoryExist( char *pathdirname )
 		return 0;
 }
 
+/* 检查文件存在 */
+int AccessFileExist( char *pathfilename )
+{
+	int		nret = 0 ;
+	
+	nret = _ACCESS( pathfilename , _ACCESS_MODE ) ;
+	if( nret == -1 )
+		return -1;
+	
+	return 1;
+}
+
 /* 当前进程绑定CPU */
 int BindCpuAffinity( int processor_no )
 {

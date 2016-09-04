@@ -57,7 +57,7 @@ static int CompressData( char *html_content , int html_content_len , int compres
 	return 0;
 }
 
-int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_http_session , char *pathname , char *filename , int filename_len )
+int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_session , char *pathname , char *filename , int filename_len )
 {
 	struct MimeType		*p_mimetype = NULL ;
 	
@@ -75,7 +75,7 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 	int			nret = 0 ;
 	
 	/* 查询流类型 */
-	p_mimetype = QueryMimeTypeHashNode( p_server , p_http_session->http_uri.ext_filename_base , p_http_session->http_uri.ext_filename_len ) ;
+	p_mimetype = QueryMimeTypeHashNode( p_env , p_http_session->http_uri.ext_filename_base , p_http_session->http_uri.ext_filename_len ) ;
 	if( p_mimetype == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "QueryMimeTypeHashNode[%.*s] failed[%d]" , p_http_session->http_uri.ext_filename_len , p_http_session->http_uri.ext_filename_base , nret );
@@ -93,7 +93,7 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 	pathfilename_len = strlen(pathfilename) ;
 	
 	/* 查询网页缓存 */
-	p_htmlcache_session = QueryHtmlCachePathfilenameTreeNode( p_server , pathfilename ) ;
+	p_htmlcache_session = QueryHtmlCachePathfilenameTreeNode( p_env , pathfilename ) ;
 	p_bak = p_htmlcache_session ;
 	if( p_htmlcache_session == NULL )
 	{
@@ -160,25 +160,25 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 	else
 	{
 		/* 击中缓存 */
-		DebugLog( __FILE__ , __LINE__ , "Html[%s] cache hited , [%d]bytes" , pathfilename , p_htmlcache_session->html_content_len );
+		DebugLog( __FILE__ , __LINE__ , "html[%s] cache hited , [%d]bytes" , pathfilename , p_htmlcache_session->html_content_len );
 	}
 	
 	if( STAT_DIRECTORY(p_htmlcache_session->st) )
 	{
 		/* 如果是目录，尝试所有索引文件 */
-		char	index_copy[ sizeof(p_server->p_config->server.index) ] ;
+		char	index_copy[ sizeof(p_env->p_config->listen[0].server[0].index) ] ;
 		int	index_filename_len = 0 ;
 		char	*index_filename = NULL ;
 		
-		if( p_server->p_config->server.index[0] == '\0' )
+		if( p_http_session->p_virtualhost->index[0] == '\0' )
 			return HTTP_NOT_FOUND;
 		
-		strcpy( index_copy , p_server->p_config->server.index );
+		strcpy( index_copy , p_http_session->p_virtualhost->index );
 		index_filename = strtok( index_copy , "," ) ;
 		while( index_filename )
 		{
 			index_filename_len = strlen(index_filename) ;
-			nret = ProcessHttpRequest( p_server , p_http_session , pathfilename , index_filename , index_filename_len ) ;
+			nret = ProcessHttpRequest( p_env , p_http_session , pathfilename , index_filename , index_filename_len ) ;
 			if( nret == HTTP_OK )
 				break;
 			
@@ -186,7 +186,7 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 		}
 		if( index_filename == NULL )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "wwwroot[%s] dirname[%.*s] index[%s] failed , errno[%d]" , p_server->p_config->server.wwwroot , index_filename_len , index_filename , p_server->p_config->server.index , errno );
+			ErrorLog( __FILE__ , __LINE__ , "wwwroot[%s] dirname[%.*s] index[%s] failed , errno[%d]" , p_http_session->p_virtualhost->wwwroot , index_filename_len , index_filename , p_http_session->p_virtualhost->index , errno );
 			return HTTP_NOT_FOUND;
 		}
 	}
@@ -195,7 +195,7 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 		/* 解析浏览器可以接受的压缩算法 */
 		b = GetHttpResponseBuffer(p_http_session->http) ;
 		token_base = QueryHttpHeaderPtr( p_http_session->http , HTTP_HEADER_ACCEPTENCODING , NULL ) ;
-		while( token_base && p_server->p_config->http_options.compress_on )
+		while( token_base && p_env->p_config->http_options.compress_on )
 		{
 			token_base = TokenHttpHeaderValue( token_base , & p_compress_algorithm , & compress_algorithm_len ) ;
 			if( p_compress_algorithm )
@@ -218,7 +218,7 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 					}
 					else
 					{
-						DebugLog( __FILE__ , __LINE__ , "Gzip[%s] cache hited , [%d]bytes" , pathfilename , p_htmlcache_session->html_gzip_content_len );
+						DebugLog( __FILE__ , __LINE__ , "gzip[%s] cache hited , [%d]bytes" , pathfilename , p_htmlcache_session->html_gzip_content_len );
 					}
 					
 					/* 组织HTTP响应 */
@@ -268,7 +268,7 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 					}
 					else
 					{
-						DebugLog( __FILE__ , __LINE__ , "Deflate[%s] cache hited , [%d]bytes" , pathfilename , p_htmlcache_session->html_deflate_content_len );
+						DebugLog( __FILE__ , __LINE__ , "deflate[%s] cache hited , [%d]bytes" , pathfilename , p_htmlcache_session->html_deflate_content_len );
 					}
 					
 					/* 组织HTTP响应 */
@@ -343,7 +343,7 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 		}
 		memcpy( p_htmlcache_session , & htmlcache_session , sizeof(struct HtmlCacheSession) );
 		
-		p_htmlcache_session->wd = inotify_add_watch( p_server->htmlcache_inotify_fd , p_htmlcache_session->pathfilename , IN_MODIFY | IN_CLOSE_WRITE | IN_DELETE_SELF | IN_MOVE_SELF ) ; 
+		p_htmlcache_session->wd = inotify_add_watch( p_env->htmlcache_inotify_fd , p_htmlcache_session->pathfilename , IN_MODIFY | IN_CLOSE_WRITE | IN_DELETE_SELF | IN_MOVE_SELF ) ; 
 		if( p_htmlcache_session->wd == -1 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "inotify_add_watch[%s] failed , errno[%d]" , p_htmlcache_session->pathfilename , errno );
@@ -355,21 +355,21 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 			DebugLog( __FILE__ , __LINE__ , "inotify_add_watch[%s] ok , wd[%d]" , p_htmlcache_session->pathfilename , p_htmlcache_session->wd );
 		}
 		
-		nret = AddHtmlCacheWdTreeNode( p_server , p_htmlcache_session ) ;
+		nret = AddHtmlCacheWdTreeNode( p_env , p_htmlcache_session ) ;
 		if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "AddHtmlCacheWdTreeNode failed , errno[%d]" , errno );
-			inotify_rm_watch( p_server->htmlcache_inotify_fd , p_htmlcache_session->wd );
+			inotify_rm_watch( p_env->htmlcache_inotify_fd , p_htmlcache_session->wd );
 			FreeHtmlCacheSession( p_htmlcache_session );
 			return HTTP_INTERNAL_SERVER_ERROR;
 		}
 		
-		nret = AddHtmlCachePathfilenameTreeNode( p_server , p_htmlcache_session ) ;
+		nret = AddHtmlCachePathfilenameTreeNode( p_env , p_htmlcache_session ) ;
 		if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "AddHtmlCachePathfilenameTreeNode[%.*s] failed , errno[%d]" , p_htmlcache_session->pathfilename_len , p_htmlcache_session->pathfilename , errno );
-			RemoveHtmlCacheWdTreeNode( p_server , p_htmlcache_session );
-			inotify_rm_watch( p_server->htmlcache_inotify_fd , p_htmlcache_session->wd );
+			RemoveHtmlCacheWdTreeNode( p_env , p_htmlcache_session );
+			inotify_rm_watch( p_env->htmlcache_inotify_fd , p_htmlcache_session->wd );
 			FreeHtmlCacheSession( p_htmlcache_session );
 			return HTTP_INTERNAL_SERVER_ERROR;
 		}
@@ -378,8 +378,8 @@ int ProcessHttpRequest( struct HetaoServer *p_server , struct HttpSession *p_htt
 			DebugLog( __FILE__ , __LINE__ , "AddHtmlCachePathfilenameTreeNode[%.*s] ok" , p_htmlcache_session->pathfilename_len , p_htmlcache_session->pathfilename );
 		}
 		
-		list_add( & (p_htmlcache_session->list) , & (p_server->htmlcache_session_list.list) );
-		p_server->htmlcache_session_count++;
+		list_add( & (p_htmlcache_session->list) , & (p_env->htmlcache_session_list.list) );
+		p_env->htmlcache_session_count++;
 	}
 	
 	return HTTP_OK;
