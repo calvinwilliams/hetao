@@ -1,5 +1,6 @@
 0.5.0		2016-09-06	calvin
 		* Support rewrite
+		*** Configuration file format is not compatible between 0.4.0 and 0.5.0 ***
 
 0.4.0		2016-09-03	calvin
 		* Adjust hierarchical relationship for 'listen - server - forward' in configure , adjust code architecture synchronously
