@@ -112,6 +112,13 @@ typedef struct
 			char	access_log[ 256 + 1 ] ;
 			struct
 			{
+				char	pattern[ 256 + 1 ] ;
+				char	template[ 256 + 1 ] ;
+			} rewrite [ 10 ] ;
+			int	_rewrite_count ;
+			int	_rewrite_size ;
+			struct
+			{
 				char	forward_type[ 16 + 1 ] ;
 				char	forward_rule[ 1 + 1 ] ;
 				struct
@@ -122,9 +129,9 @@ typedef struct
 				int	_forward_server_count ;
 				int	_forward_server_size ;
 			} forward ;
-		} server [ 64 ] ;
-		int	_server_count ;
-		int	_server_size ;
+		} website [ 64 ] ;
+		int	_website_count ;
+		int	_website_size ;
 	} listen [ 16 ] ;
 	int	_listen_count ;
 	int	_listen_size ;

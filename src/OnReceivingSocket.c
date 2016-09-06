@@ -46,6 +46,11 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		char			*host = NULL ;
 		int			host_len ;
 		
+		struct RewriteUrl	*p_rewrite_url = NULL ;
+		char			*p_url = NULL ;
+		char			url[ 4096 + 1 ] ;
+		int			url_len ;
+		
 		struct HttpBuffer	*b = NULL ;
 		
 		DebugLog( __FILE__ , __LINE__ , "ReceiveHttpRequestNonblock done" );
@@ -65,9 +70,47 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 			p_http_session->p_virtualhost = p_http_session->p_listen_session->p_virtualhost_default ;
 		}
 		
+		/* REWRITE */
+		if( p_env->template_re == NULL )
+		{
+			p_url = GetHttpHeaderPtr_URI(p_http_session->http,NULL) ;
+			url_len = GetHttpHeaderLen_URI(p_http_session->http) ;
+		}
+		else
+		{
+			p_url = NULL ;
+			list_for_each_entry( p_rewrite_url , & (p_http_session->p_virtualhost->rewrite_url_list.rewriteurl_node) , rewriteurl_node )
+			{
+				strcpy( url , p_rewrite_url->template );
+				url_len = p_rewrite_url->template_len ;
+				
+				nret = RegexReplaceString( p_rewrite_url->pattern_re , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , GetHttpHeaderLen_URI(p_http_session->http) , p_env->template_re , url , & url_len , sizeof(url) ) ;
+				if( nret == 0 )
+				{
+					DebugLog( __FILE__ , __LINE__ , "RegexReplaceString[%.*s][%s][%s] ok[%.*s]" , GetHttpHeaderLen_URI(p_http_session->http) , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , p_rewrite_url->pattern , p_rewrite_url->template , url_len , url );
+					p_url = url ;
+					break;
+				}
+				else if( nret == -1 )
+				{
+					ErrorLog( __FILE__ , __LINE__ , "RegexReplaceString[%.*s][%s][%s] failed[%d] , errno[%d]" , GetHttpHeaderLen_URI(p_http_session->http) , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , p_rewrite_url->pattern , p_rewrite_url->template , nret , errno );
+					return HTTP_BAD_REQUEST;
+				}
+				else
+				{
+					DebugLog( __FILE__ , __LINE__ , "RegexReplaceString[%.*s][%s][%s] continue" , GetHttpHeaderLen_URI(p_http_session->http) , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , p_rewrite_url->pattern , p_rewrite_url->template );
+				}
+			}
+			if( p_url == NULL )
+			{
+				p_url = GetHttpHeaderPtr_URI(p_http_session->http,NULL) ;
+				url_len = GetHttpHeaderLen_URI(p_http_session->http) ;
+			}
+		}
+		
 		/* 分解URI */
 		memset( & (p_http_session->http_uri) , 0x00 , sizeof(struct HttpUri) );
-		nret = SplitHttpUri( p_http_session->p_virtualhost->wwwroot , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , GetHttpHeaderLen_URI(p_http_session->http) , & (p_http_session->http_uri) ) ;
+		nret = SplitHttpUri( p_http_session->p_virtualhost->wwwroot , p_url , url_len , & (p_http_session->http_uri) ) ;
 		if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "SplitHttpUri failed[%d] , errno[%d]" , nret , errno );
@@ -93,7 +136,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 				}
 				
 				/* 处理HTTP请求 */
-				nret = ProcessHttpRequest( p_env , p_http_session , p_http_session->p_virtualhost->wwwroot , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , GetHttpHeaderLen_URI(p_http_session->http) ) ;
+				nret = ProcessHttpRequest( p_env , p_http_session , p_http_session->p_virtualhost->wwwroot , p_url , url_len ) ;
 				if( nret != HTTP_OK )
 				{
 					/* 格式化响应头和体，用出错状态码 */

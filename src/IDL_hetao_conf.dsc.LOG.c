@@ -29,20 +29,26 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].port[%d]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].port );
 			PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].ssl.certificate_file[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].ssl.certificate_file );
 			PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].ssl.certificate_key_file[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].ssl.certificate_key_file );
-			PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]]._server_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]]._server_count );
-			for( index[2] = 0 ; index[2] < pst->listen[index[1]]._server_count ; index[2]++ )
+			PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]]._website_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]]._website_count );
+			for( index[2] = 0 ; index[2] < pst->listen[index[1]]._website_count ; index[2]++ )
 			{
-			PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].server[index[2]].domain[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].server[index[2]].domain );
-			PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].server[index[2]].wwwroot[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].server[index[2]].wwwroot );
-			PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].server[index[2]].index[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].server[index[2]].index );
-			PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].server[index[2]].access_log[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].server[index[2]].access_log );
-				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].server[index[2]].forward.forward_type[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].server[index[2]].forward.forward_type );
-				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].server[index[2]].forward.forward_rule[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].server[index[2]].forward.forward_rule );
-					PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].server[index[2]].forward._forward_server_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].server[index[2]].forward._forward_server_count );
-					for( index[4] = 0 ; index[4] < pst->listen[index[1]].server[index[2]].forward._forward_server_count ; index[4]++ )
+			PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].domain[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].domain );
+			PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].wwwroot[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].wwwroot );
+			PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].index[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].index );
+			PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].access_log[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].access_log );
+				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]]._rewrite_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]]._rewrite_count );
+				for( index[3] = 0 ; index[3] < pst->listen[index[1]].website[index[2]]._rewrite_count ; index[3]++ )
+				{
+				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].rewrite[index[3]].pattern[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].rewrite[index[3]].pattern );
+				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].rewrite[index[3]].template[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].rewrite[index[3]].template );
+				}
+				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.forward_type[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.forward_type );
+				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.forward_rule[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.forward_rule );
+					PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward._forward_server_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward._forward_server_count );
+					for( index[4] = 0 ; index[4] < pst->listen[index[1]].website[index[2]].forward._forward_server_count ; index[4]++ )
 					{
-					PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].server[index[2]].forward.forward_server[index[4]].ip[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].server[index[2]].forward.forward_server[index[4]].ip );
-					PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].server[index[2]].forward.forward_server[index[4]].port[%d]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].server[index[2]].forward.forward_server[index[4]].port );
+					PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.forward_server[index[4]].ip[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.forward_server[index[4]].ip );
+					PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.forward_server[index[4]].port[%d]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.forward_server[index[4]].port );
 					}
 			}
 		}
