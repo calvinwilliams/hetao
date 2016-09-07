@@ -204,6 +204,8 @@ struct VirtualHost
 	struct ForwardServer	roundrobin_list ;
 	struct rb_root		leastconnection_rbtree ;
 	
+	SSL_CTX			*forward_ssl_ctx ;
+	
 	struct hlist_node	virtualhost_node ;
 } ;
 
@@ -229,6 +231,7 @@ struct MimeType
 {
 	char			type[ sizeof( ((hetao_conf*)0)->mime_types.mime_type[0].type ) ] ;
 	char			mime[ sizeof( ((hetao_conf*)0)->mime_types.mime_type[0].mime ) ] ;
+	char			compress_enable ;
 	
 	int			type_len ;
 	
@@ -249,18 +252,18 @@ struct HttpSession
 	struct VirtualHost	*p_virtualhost ;
 	struct HttpUri		http_uri ;
 	struct HttpEnv		*http ;
+	SSL			*ssl ;
 	
 	int			forward_flags ;
 	struct ForwardServer	*p_forward_server ;
 	SOCKET			forward_sock ;
 	struct HttpEnv		*forward_http ;
+	SSL			*forward_ssl ;
 	
 	int			timeout_timestamp ;
 	struct rb_node		timeout_rbnode ;
 	
 	struct list_head	list ;
-	
-	SSL			*ssl ;
 } ;
 
 /* 网页缓存会话结构 */
@@ -305,6 +308,8 @@ struct HetaoEnv
 	char				config_pathfilename[ 256 + 1 ] ;
 	hetao_conf			*p_config ;
 	int				log_level ;
+	
+	char				init_ssl_flag ;
 	
 	int				process_info_shmid ;
 	struct ProcessInfo		*process_info_array ;
@@ -382,7 +387,7 @@ void RemoveLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , str
 int UpdateLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
 struct ForwardServer *TravelMinLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
 
-void FreeHtmlCacheSession( struct HtmlCacheSession *p_htmlcache_session );
+void FreeHtmlCacheSession( struct HtmlCacheSession *p_htmlcache_session , int free_flag );
 
 int OnSendingSocket( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
 int OnReceivingSocket( struct HetaoEnv *p_server , struct HttpSession *p_http_session );

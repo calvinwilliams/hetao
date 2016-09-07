@@ -105,6 +105,7 @@ void SetHttpSessionUnused( struct HetaoEnv *p_env , struct HttpSession *p_http_s
 	{
 		SSL_shutdown( p_http_session->ssl ) ;
 		SSL_free( p_http_session->ssl ) ;
+		p_http_session->ssl = NULL ;
 	}
 	close( p_http_session->netaddr.sock );
 	ResetHttpEnv( p_http_session->http );
@@ -112,6 +113,12 @@ void SetHttpSessionUnused( struct HetaoEnv *p_env , struct HttpSession *p_http_s
 	
 	if( p_http_session->p_forward_server )
 	{
+		if( p_http_session->forward_ssl )
+		{
+			SSL_shutdown( p_http_session->forward_ssl ) ;
+			SSL_free( p_http_session->forward_ssl ) ;
+			p_http_session->forward_ssl = NULL ;
+		}
 		SetHttpSessionUnused_05( p_env , p_http_session );
 	}
 	

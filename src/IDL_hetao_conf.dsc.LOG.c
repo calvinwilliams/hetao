@@ -22,6 +22,7 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 	PREFIX_DSCLOG_hetao_conf "hetao_conf.error_log[%s]" NEWLINE_DSCLOG_hetao_conf , pst->error_log );
 	PREFIX_DSCLOG_hetao_conf "hetao_conf.log_level[%s]" NEWLINE_DSCLOG_hetao_conf , pst->log_level );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.limits.max_http_session_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->limits.max_http_session_count );
+		PREFIX_DSCLOG_hetao_conf "hetao_conf.limits.max_file_cache[%d]" NEWLINE_DSCLOG_hetao_conf , pst->limits.max_file_cache );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf._listen_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->_listen_count );
 		for( index[1] = 0 ; index[1] < pst->_listen_count ; index[1]++ )
 		{
@@ -44,6 +45,8 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 				}
 				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.forward_type[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.forward_type );
 				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.forward_rule[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.forward_rule );
+					PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.ssl.certificate_file[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.ssl.certificate_file );
+					PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.ssl.certificate_key_file[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.ssl.certificate_key_file );
 					PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward._forward_server_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward._forward_server_count );
 					for( index[4] = 0 ; index[4] < pst->listen[index[1]].website[index[2]].forward._forward_server_count ; index[4]++ )
 					{
@@ -70,6 +73,7 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 			{
 			PREFIX_DSCLOG_hetao_conf "hetao_conf.mime_types.mime_type[index[2]].type[%s]" NEWLINE_DSCLOG_hetao_conf , pst->mime_types.mime_type[index[2]].type );
 			PREFIX_DSCLOG_hetao_conf "hetao_conf.mime_types.mime_type[index[2]].mime[%s]" NEWLINE_DSCLOG_hetao_conf , pst->mime_types.mime_type[index[2]].mime );
+			PREFIX_DSCLOG_hetao_conf "hetao_conf.mime_types.mime_type[index[2]].compress_enable[%c]" NEWLINE_DSCLOG_hetao_conf , pst->mime_types.mime_type[index[2]].compress_enable );
 			}
 	return 0;
 }

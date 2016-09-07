@@ -94,6 +94,7 @@ typedef struct
 	struct
 	{
 		int	max_http_session_count ;
+		int	max_file_cache ;
 	} limits ;
 	struct
 	{
@@ -121,6 +122,11 @@ typedef struct
 			{
 				char	forward_type[ 16 + 1 ] ;
 				char	forward_rule[ 1 + 1 ] ;
+				struct
+				{
+					char	certificate_file[ 256 + 1 ] ;
+					char	certificate_key_file[ 256 + 1 ] ;
+				} ssl ;
 				struct
 				{
 					char	ip[ 15 + 1 ] ;
@@ -163,6 +169,7 @@ typedef struct
 		{
 			char	type[ 50 + 1 ] ;
 			char	mime[ 100 + 1 ] ;
+			char	compress_enable ;
 		} mime_type [ 256 ] ;
 		int	_mime_type_count ;
 		int	_mime_type_size ;

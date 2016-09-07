@@ -10,19 +10,18 @@ STRUCT	hetao_conf
 	STRUCT	limits
 	{
 		INT	4	max_http_session_count
+		INT	4	max_file_cache
 	}
 	
 	STRUCT	listen	ARRAY	16
 	{
 		STRING	15	ip
 		INT	4	port
-		
 		STRUCT	ssl
 		{
 			STRING	256	certificate_file
 			STRING	256	certificate_key_file
 		}
-		
 		STRUCT	website	ARRAY	64
 		{
 			STRING	256	domain
@@ -38,6 +37,11 @@ STRUCT	hetao_conf
 			{
 				STRING	16	forward_type
 				STRING	1	forward_rule
+				STRUCT	ssl
+				{
+					STRING	256	certificate_file
+					STRING	256	certificate_key_file
+				}
 				STRUCT	forward_server	ARRAY	1000
 				{
 					STRING	15	ip
@@ -78,6 +82,7 @@ STRUCT	hetao_conf
 		{
 			STRING	50	type
 			STRING	100	mime
+			CHAR	1	compress_enable
 		}
 	}
 }

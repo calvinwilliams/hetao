@@ -200,7 +200,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 			token_base = TokenHttpHeaderValue( token_base , & p_compress_algorithm , & compress_algorithm_len ) ;
 			if( p_compress_algorithm )
 			{
-				if( compress_algorithm_len == 4 && STRNICMP( p_compress_algorithm , == , "gzip" , compress_algorithm_len ) )
+				if( p_mimetype->compress_enable == 1 && compress_algorithm_len == 4 && STRNICMP( p_compress_algorithm , == , "gzip" , compress_algorithm_len ) )
 				{
 					if( p_htmlcache_session->html_gzip_content == NULL )
 					{
@@ -250,7 +250,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 					
 					break;
 				}
-				else if( compress_algorithm_len == 7 && STRNICMP( p_compress_algorithm , == , "deflate" , compress_algorithm_len ) )
+				else if( p_mimetype->compress_enable == 1 && compress_algorithm_len == 7 && STRNICMP( p_compress_algorithm , == , "deflate" , compress_algorithm_len ) )
 				{
 					if( p_htmlcache_session->html_deflate_content == NULL )
 					{
@@ -334,52 +334,60 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 	
 	if( p_bak == NULL )
 	{
-		/* 缓存文件内容，并注册文件变动通知 */
-		p_htmlcache_session = (struct HtmlCacheSession *)malloc( sizeof(struct HtmlCacheSession) ) ;
-		if( p_htmlcache_session == NULL )
+		if( htmlcache_session.st.st_size <= p_env->p_config->limits.max_file_cache )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
-			return -1;
-		}
-		memcpy( p_htmlcache_session , & htmlcache_session , sizeof(struct HtmlCacheSession) );
-		
-		p_htmlcache_session->wd = inotify_add_watch( p_env->htmlcache_inotify_fd , p_htmlcache_session->pathfilename , IN_MODIFY | IN_CLOSE_WRITE | IN_DELETE_SELF | IN_MOVE_SELF ) ; 
-		if( p_htmlcache_session->wd == -1 )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "inotify_add_watch[%s] failed , errno[%d]" , p_htmlcache_session->pathfilename , errno );
-			FreeHtmlCacheSession( p_htmlcache_session );
-			return HTTP_INTERNAL_SERVER_ERROR;
+			/* 缓存文件内容，并注册文件变动通知 */
+			p_htmlcache_session = (struct HtmlCacheSession *)malloc( sizeof(struct HtmlCacheSession) ) ;
+			if( p_htmlcache_session == NULL )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+				return -1;
+			}
+			memcpy( p_htmlcache_session , & htmlcache_session , sizeof(struct HtmlCacheSession) );
+			
+			p_htmlcache_session->wd = inotify_add_watch( p_env->htmlcache_inotify_fd , p_htmlcache_session->pathfilename , IN_MODIFY | IN_CLOSE_WRITE | IN_DELETE_SELF | IN_MOVE_SELF ) ; 
+			if( p_htmlcache_session->wd == -1 )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "inotify_add_watch[%s] failed , errno[%d]" , p_htmlcache_session->pathfilename , errno );
+				FreeHtmlCacheSession( p_htmlcache_session , 1 );
+				return HTTP_INTERNAL_SERVER_ERROR;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "inotify_add_watch[%s] ok , wd[%d]" , p_htmlcache_session->pathfilename , p_htmlcache_session->wd );
+			}
+			
+			nret = AddHtmlCacheWdTreeNode( p_env , p_htmlcache_session ) ;
+			if( nret )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "AddHtmlCacheWdTreeNode failed , errno[%d]" , errno );
+				inotify_rm_watch( p_env->htmlcache_inotify_fd , p_htmlcache_session->wd );
+				FreeHtmlCacheSession( p_htmlcache_session , 1 );
+				return HTTP_INTERNAL_SERVER_ERROR;
+			}
+			
+			nret = AddHtmlCachePathfilenameTreeNode( p_env , p_htmlcache_session ) ;
+			if( nret )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "AddHtmlCachePathfilenameTreeNode[%.*s] failed , errno[%d]" , p_htmlcache_session->pathfilename_len , p_htmlcache_session->pathfilename , errno );
+				RemoveHtmlCacheWdTreeNode( p_env , p_htmlcache_session );
+				inotify_rm_watch( p_env->htmlcache_inotify_fd , p_htmlcache_session->wd );
+				FreeHtmlCacheSession( p_htmlcache_session , 1 );
+				return HTTP_INTERNAL_SERVER_ERROR;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "AddHtmlCachePathfilenameTreeNode[%.*s] ok" , p_htmlcache_session->pathfilename_len , p_htmlcache_session->pathfilename );
+			}
+			
+			list_add( & (p_htmlcache_session->list) , & (p_env->htmlcache_session_list.list) );
+			p_env->htmlcache_session_count++;
 		}
 		else
 		{
-			DebugLog( __FILE__ , __LINE__ , "inotify_add_watch[%s] ok , wd[%d]" , p_htmlcache_session->pathfilename , p_htmlcache_session->wd );
+			FreeHtmlCacheSession( & htmlcache_session , 0 );
+			DebugLog( __FILE__ , __LINE__ , "FreeHtmlCacheSession" );
 		}
-		
-		nret = AddHtmlCacheWdTreeNode( p_env , p_htmlcache_session ) ;
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "AddHtmlCacheWdTreeNode failed , errno[%d]" , errno );
-			inotify_rm_watch( p_env->htmlcache_inotify_fd , p_htmlcache_session->wd );
-			FreeHtmlCacheSession( p_htmlcache_session );
-			return HTTP_INTERNAL_SERVER_ERROR;
-		}
-		
-		nret = AddHtmlCachePathfilenameTreeNode( p_env , p_htmlcache_session ) ;
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "AddHtmlCachePathfilenameTreeNode[%.*s] failed , errno[%d]" , p_htmlcache_session->pathfilename_len , p_htmlcache_session->pathfilename , errno );
-			RemoveHtmlCacheWdTreeNode( p_env , p_htmlcache_session );
-			inotify_rm_watch( p_env->htmlcache_inotify_fd , p_htmlcache_session->wd );
-			FreeHtmlCacheSession( p_htmlcache_session );
-			return HTTP_INTERNAL_SERVER_ERROR;
-		}
-		else
-		{
-			DebugLog( __FILE__ , __LINE__ , "AddHtmlCachePathfilenameTreeNode[%.*s] ok" , p_htmlcache_session->pathfilename_len , p_htmlcache_session->pathfilename );
-		}
-		
-		list_add( & (p_htmlcache_session->list) , & (p_env->htmlcache_session_list.list) );
-		p_env->htmlcache_session_count++;
 	}
 	
 	return HTTP_OK;
