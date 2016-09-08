@@ -8,24 +8,10 @@
 
 #include "hetao_in.h"
 
-int InitServerEnvirment( struct HetaoEnv *p_env )
+int InitEnvirment( struct HetaoEnv *p_env )
 {
-	int			k , i , j ;
-	
-	struct VirtualHost	*p_virtualhost = NULL ;
-	struct RewriteUrl	*p_rewrite_url = NULL ;
-	const char		*error_desc = NULL ;
-	int			error_offset ;
-	
 	struct NetAddress	*old_netaddr_array = NULL ;
 	int			old_netaddr_array_count ;
-	
-	char			*port_str = NULL ;
-	struct NetAddress	*p_netaddr = NULL ;
-	struct ListenSession	*p_listen_session = NULL ;
-	
-	struct MimeType		*p_mimetype = NULL ;
-	char			*p_type = NULL ;
 	
 	int			nret = 0 ;
 	
@@ -53,7 +39,7 @@ int InitServerEnvirment( struct HetaoEnv *p_env )
 	}
 	memset( p_env->process_info_array , 0x00 , sizeof(struct ProcessInfo) * p_env->p_config->worker_processes );
 	
-	/* 创建流类型哈希表 */
+	/* 创建、注册流类型哈希表 */
 	nret = InitMimeTypeHash( p_env ) ;
 	if( nret )
 	{
@@ -61,44 +47,29 @@ int InitServerEnvirment( struct HetaoEnv *p_env )
 		return -1;
 	}
 	
-	/* 注册所有流类型 */
-	for( i = 0 ; i < p_env->p_config->mime_types._mime_type_count ; i++ )
-	{
-		p_type = strtok( p_env->p_config->mime_types.mime_type[i].type , " \r" ) ;
-		while( p_type )
-		{
-			p_mimetype = (struct MimeType *)malloc( sizeof(struct MimeType) ) ;
-			if( p_mimetype == NULL )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
-				return -1;
-			}
-			memset( p_mimetype , 0x00 , sizeof(struct MimeType) );
-			
-			strncpy( p_mimetype->type , p_type , sizeof(p_mimetype->type)-1 );
-			p_mimetype->type_len = strlen(p_mimetype->type) ;
-			strncpy( p_mimetype->mime , p_env->p_config->mime_types.mime_type[i].mime , sizeof(p_mimetype->mime)-1 );
-			p_mimetype->compress_enable = p_env->p_config->mime_types.mime_type[i].compress_enable ;
-			
-			nret = PushMimeTypeHashNode( p_env , p_mimetype ) ;
-			if( nret )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "PushMimeTypeHashNode failed[%d]" , nret );
-				return -1;
-			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "PushMimeTypeHashNode[%s][%s] ok" , p_mimetype->type , p_mimetype->mime );
-			}
-			
-			p_type = strtok( NULL , " \t" ) ;
-		}
-	}
-	
 	/* 创建侦听会话链表首节点 */
 	memset( & (p_env->listen_session_list) , 0x00 , sizeof(struct ListenSession) );
 	INIT_LIST_HEAD( & (p_env->listen_session_list.list) );
 	p_env->listen_session_count = 0 ;
+	
+	/* 如果是优雅重启，从环境变量中获得上一辈侦听信息 */
+	nret = LoadOldListenSockets( & old_netaddr_array , & old_netaddr_array_count ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "LoadOldListenSockets failed[%d] , errno[%d]" , nret , errno );
+		return -1;
+	}
+	
+	/* 创建所有侦听会话 */
+	nret = InitListenEnvirment( p_env , old_netaddr_array , old_netaddr_array_count ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "InitListenEnvirment failed[%d] , errno[%d]" , nret , errno );
+		return -1;
+	}
+	
+	/* 清理上一辈侦听信息 */
+	CloseUnusedOldListeners( old_netaddr_array , old_netaddr_array_count );
 	
 	/* 创建网页缓存会话链表首节点 */
 	memset( & (p_env->htmlcache_session_list) , 0x00 , sizeof(struct HtmlCacheSession) );
@@ -112,278 +83,15 @@ int InitServerEnvirment( struct HetaoEnv *p_env )
 	
 	nret = IncreaseHttpSessions( p_env , INIT_HTTP_SESSION_COUNT ) ;
 	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "IncreaseHttpSessions failed[%d] , errno[%d]" , nret , errno );
 		return nret;
-	
-	/* 如果是优雅重启，从环境变量中获得上一辈侦听信息 */
-	nret = LoadOldListenSockets( & old_netaddr_array , & old_netaddr_array_count ) ;
-	if( nret )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "LoadOldListenSockets failed[%d] , errno[%d]" , nret , errno );
-		return -1;
 	}
-	
-	/* 创建所有侦听会话 */
-	for( k = 0 ; k < p_env->p_config->_listen_count ; k++ )
-	{
-		p_listen_session = (struct ListenSession *)malloc( sizeof(struct ListenSession) ) ;
-		if( p_listen_session == NULL )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
-			free( port_str );
-			return -1;
-		}
-		memset( p_listen_session , 0x00 , sizeof(struct ListenSession) );
-		
-		p_listen_session->type = DATASESSION_TYPE_LISTEN ;
-		
-		list_add( & (p_listen_session->list) , & (p_env->listen_session_list.list) );
-		
-		p_netaddr = GetListener( old_netaddr_array , old_netaddr_array_count , p_env->p_config->listen[k].ip , p_env->p_config->listen[k].port ) ;
-		if( p_netaddr )
-		{
-			/* 上一辈侦听信息中有本次侦听相同地址 */
-			memcpy( & (p_listen_session->netaddr) , p_netaddr , sizeof(struct NetAddress) );
-			DebugLog( __FILE__ , __LINE__ , "[%s:%d] reuse #%d#" , p_env->p_config->listen[k].ip , p_env->p_config->listen[k].port , p_listen_session->netaddr.sock );
-			p_env->listen_session_count++;
-		}
-		else
-		{
-			/* 上一辈侦听信息中没有本次侦听相同地址，老老实实创建新的侦听端口 */
-			p_listen_session->netaddr.sock = socket( AF_INET , SOCK_STREAM , IPPROTO_TCP ) ;
-			if( p_listen_session->netaddr.sock == -1 )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "socket failed , errno[%d]" , errno );
-				free( port_str );
-				return -1;
-			}
-			
-			SetHttpNonblock( p_listen_session->netaddr.sock );
-			SetHttpReuseAddr( p_listen_session->netaddr.sock );
-			
-			strncpy( p_listen_session->netaddr.ip , p_env->p_config->listen[k].ip , sizeof(p_listen_session->netaddr.ip)-1 );
-			p_listen_session->netaddr.port = p_env->p_config->listen[k].port ;
-			SETNETADDRESS( p_listen_session->netaddr )
-			nret = bind( p_listen_session->netaddr.sock , (struct sockaddr *) & (p_listen_session->netaddr.addr) , sizeof(struct sockaddr) ) ;
-			if( nret == -1 )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "bind[%s:%d] failed , errno[%d]" , p_env->p_config->listen[k].ip , p_env->p_config->listen[k].port , errno );
-				return -1;
-			}
-			
-			nret = listen( p_listen_session->netaddr.sock , 10240 ) ;
-			if( nret == -1 )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "listen failed , errno[%d]" , errno );
-				return -1;
-			}
-			
-			DebugLog( __FILE__ , __LINE__ , "[%s:%d] listen #%d#" , p_env->p_config->listen[k].ip , p_env->p_config->listen[k].port , p_listen_session->netaddr.sock );
-			p_env->listen_session_count++;
-		}
-		
-		/* 创建SSL环境 */
-		if( p_env->p_config->listen[k].ssl.certificate_file[0] )
-		{
-			if( p_env->init_ssl_flag == 0 )
-			{
-				SSL_library_init();
-				OpenSSL_add_ssl_algorithms();
-				SSL_load_error_strings();
-				p_env->init_ssl_flag = 1 ;
-			}
-			
-			p_listen_session->ssl_ctx = SSL_CTX_new( SSLv23_method() ) ;
-			if( p_listen_session->ssl_ctx == NULL )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_new failed , errno[%d]" , errno );
-				return -1;
-			}
-			
-			nret = SSL_CTX_use_certificate_file( p_listen_session->ssl_ctx , p_env->p_config->listen[k].ssl.certificate_file , SSL_FILETYPE_PEM ) ;
-			if( nret <= 0 )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file failed , errno[%d]" , errno );
-				return -1;
-			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file[%s] ok" , p_env->p_config->listen[k].ssl.certificate_file );
-			}
-			
-			nret = SSL_CTX_use_PrivateKey_file( p_listen_session->ssl_ctx , p_env->p_config->listen[k].ssl.certificate_key_file , SSL_FILETYPE_PEM ) ;
-			if( nret <= 0 )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_PrivateKey_file failed , errno[%d]" , errno );
-				return -1;
-			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "SSL_CTX_use_PrivateKey_file[%s] ok" , p_env->p_config->listen[k].ssl.certificate_key_file );
-			}
-		}
-		
-		/* 注册所有虚拟主机 */
-		nret = InitVirtualHostHash( p_listen_session , p_env->p_config->listen[k]._website_count ) ;
-		if( nret )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "InitVirtualHostHash failed[%d]" , nret );
-			return -1;
-		}
-		
-		p_listen_session->virtualhost_count = 0 ;
-		for( i = 0 ; i < p_env->p_config->listen[k]._website_count ; i++ )
-		{
-			if( p_env->p_config->listen[k].website[i].wwwroot[0] == '\0' || p_env->p_config->listen[k].website[i].access_log[0] == '\0' )
-				continue;
-			
-			p_virtualhost = (struct VirtualHost *)malloc( sizeof(struct VirtualHost) ) ;
-			if( p_virtualhost == NULL )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
-				return -1;
-			}
-			memset( p_virtualhost , 0x00 , sizeof(struct VirtualHost) );
-			strncpy( p_virtualhost->domain , p_env->p_config->listen[k].website[i].domain , sizeof(p_virtualhost->domain)-1 );
-			p_virtualhost->domain_len = strlen(p_virtualhost->domain) ;
-			strncpy( p_virtualhost->wwwroot , p_env->p_config->listen[k].website[i].wwwroot , sizeof(p_virtualhost->wwwroot)-1 );
-			strncpy( p_virtualhost->index , p_env->p_config->listen[k].website[i].index , sizeof(p_virtualhost->index)-1 );
-			strncpy( p_virtualhost->access_log , p_env->p_config->listen[k].website[i].access_log , sizeof(p_virtualhost->access_log)-1 );
-			p_virtualhost->access_log_fd = OPEN( p_virtualhost->access_log , O_CREAT_WRONLY_APPEND ) ;
-			if( p_virtualhost->access_log_fd == -1 )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "open access log[%s] failed , errno[%d]" , p_virtualhost->access_log , errno );
-				return -1;
-			}
-			SetHttpCloseExec( p_virtualhost->access_log_fd );
-			
-			memset( & (p_virtualhost->rewrite_url_list) , 0x00 , sizeof(struct RewriteUrl) );
-			INIT_LIST_HEAD( & (p_virtualhost->rewrite_url_list.rewriteurl_node) );
-			
-			if( p_env->p_config->listen[k].website[i]._rewrite_count > 0 && p_env->template_re == NULL )
-			{
-				p_env->template_re = pcre_compile( TEMPLATE_PATTERN , 0 , & error_desc , & error_offset , NULL ) ;
-				if( p_env->template_re == NULL )
-				{
-					ErrorLog( __FILE__ , __LINE__ , "pcre_compile[%s] failed[%s][%d]" , TEMPLATE_PATTERN , error_desc , error_offset );
-					return -1;
-				}
-				DebugLog( __FILE__ , __LINE__ , "create template pattern[%s]" , TEMPLATE_PATTERN );
-			}	
-			
-			for( j = 0 ; j < p_env->p_config->listen[k].website[i]._rewrite_count ; j++ )
-			{
-				if( p_env->p_config->listen[k].website[i].rewrite[j].pattern[0] == '\0' || p_env->p_config->listen[k].website[i].rewrite[j].template[0] == '\0' )
-				{
-					ErrorLog( __FILE__ , __LINE__ , "rewrite url invalid , pattern[%s] template[%s]" , p_env->p_config->listen[k].website[i].rewrite[j].pattern , p_env->p_config->listen[k].website[i].rewrite[j].template );
-					return -1;
-				}
-				
-				p_rewrite_url = (struct RewriteUrl *)malloc( sizeof(struct RewriteUrl) ) ;
-				if( p_rewrite_url == NULL )
-				{
-					ErrorLog( __FILE__ , __LINE__ , "malloc failed[%d] , errno[%d]" , errno );
-					return -1;
-				}
-				memset( p_rewrite_url , 0x00 , sizeof(struct RewriteUrl) );
-				
-				strcpy( p_rewrite_url->pattern , p_env->p_config->listen[k].website[i].rewrite[j].pattern );
-				strcpy( p_rewrite_url->template , p_env->p_config->listen[k].website[i].rewrite[j].template );
-				p_rewrite_url->template_len = strlen( p_rewrite_url->template ) ;
-				
-				p_rewrite_url->pattern_re = pcre_compile( p_rewrite_url->pattern , PCRE_MULTILINE , & error_desc , & error_offset , NULL ) ;
-				if( p_rewrite_url->pattern_re == NULL )
-				{
-					ErrorLog( __FILE__ , __LINE__ , "pcre_compile[%s] failed[%s][%d]" , p_rewrite_url->pattern , error_desc , error_offset );
-					return -1;
-				}
-				
-				list_add_tail( & (p_rewrite_url->rewriteurl_node) , & (p_virtualhost->rewrite_url_list.rewriteurl_node) );
-				DebugLog( __FILE__ , __LINE__ , "add rewrite[%s][%s]" , p_rewrite_url->pattern , p_rewrite_url->template );
-			}
-			
-			/* 注册反向代理 */
-			strncpy( p_virtualhost->forward_type , p_env->p_config->listen[k].website[i].forward.forward_type , sizeof(p_virtualhost->forward_type)-1 );
-			p_virtualhost->forward_type_len = strlen(p_virtualhost->forward_type) ;
-			strncpy( p_virtualhost->forward_rule , p_env->p_config->listen[k].website[i].forward.forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
-			
-			if( p_env->p_config->listen[k].website[i].forward.ssl.certificate_file[0] )
-			{
-				if( p_env->init_ssl_flag == 0 )
-				{
-					SSL_library_init();
-					OpenSSL_add_ssl_algorithms();
-					SSL_load_error_strings();
-					p_env->init_ssl_flag = 1 ;
-				}
-				
-				p_virtualhost->forward_ssl_ctx = SSL_CTX_new( SSLv23_method() ) ;
-				if( p_virtualhost->forward_ssl_ctx == NULL )
-				{
-					ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_new failed , errno[%d]" , errno );
-					return -1;
-				}
-				
-				nret = SSL_CTX_use_certificate_file( p_virtualhost->forward_ssl_ctx , p_env->p_config->listen[k].website[i].forward.ssl.certificate_file , SSL_FILETYPE_PEM ) ;
-				if( nret <= 0 )
-				{
-					ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file failed , errno[%d]" , errno );
-					return -1;
-				}
-				else
-				{
-					DebugLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file[%s] ok" , p_env->p_config->listen[k].website[i].forward.ssl.certificate_file );
-				}
-			}
-			
-			INIT_LIST_HEAD( & (p_virtualhost->roundrobin_list.roundrobin_node) );
-			
-			if( p_virtualhost->forward_rule[0] && p_env->p_config->listen[k].website[i].forward._forward_server_count > 0 )
-			{
-				struct ForwardServer	*p_forward_server = NULL ;
-				
-				for( j = 0 ; j < p_env->p_config->listen[k].website[i].forward._forward_server_count ; j++ )
-				{
-					p_forward_server = (struct ForwardServer *)malloc( sizeof(struct ForwardServer) ) ;
-					if( p_forward_server == NULL )
-					{
-						ErrorLog( __FILE__ , __LINE__ , "malloc failed[%d] , errno[%d]" , errno );
-						return -1;
-					}
-					memset( p_forward_server , 0x00 , sizeof(struct ForwardServer) );
-					strncpy( p_forward_server->netaddr.ip , p_env->p_config->listen[k].website[i].forward.forward_server[j].ip , sizeof(p_forward_server->netaddr.ip)-1 );
-					p_forward_server->netaddr.port = p_env->p_config->listen[k].website[i].forward.forward_server[j].port ;
-					SETNETADDRESS( p_forward_server->netaddr )
-					
-					list_add_tail( & (p_forward_server->roundrobin_node) , & (p_virtualhost->roundrobin_list.roundrobin_node) );
-					AddLeastConnectionCountTreeNode( p_virtualhost , p_forward_server );
-				}
-			}
-			
-			nret = PushVirtualHostHashNode( p_listen_session , p_virtualhost ) ;
-			if( nret )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "PushVirtualHostHashNode[%s][%s] failed[%d] , errno[%d]" , p_virtualhost->domain , p_virtualhost->wwwroot , nret , errno );
-				return -1;
-			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "PushVirtualHostHashNode[%s][%s] ok" , p_virtualhost->domain , p_virtualhost->wwwroot , nret );
-			}
-			
-			if( p_virtualhost->domain[0] == '\0' )
-				p_listen_session->p_virtualhost_default = p_virtualhost ;
-			
-			p_listen_session->virtualhost_count++;
-		}
-	}
-	
-	/* 清理上一辈侦听信息 */
-	CloseUnusedOldListeners( old_netaddr_array , old_netaddr_array_count );
 	
 	return 0;
 }
 
-void CleanServerEnvirment( struct HetaoEnv *p_env )
+void CleanEnvirment( struct HetaoEnv *p_env )
 {
 	struct list_head	*p_curr = NULL , *p_next = NULL ;
 	

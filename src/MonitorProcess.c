@@ -183,7 +183,7 @@ int MonitorProcess( void *pv )
 			
 			nret = WorkerProcess((void*)p_env) ;
 			
-			CleanServerEnvirment( p_env );
+			CleanEnvirment( p_env );
 			
 			return -nret;
 		}
@@ -297,7 +297,7 @@ _FORK :
 			
 			nret = WorkerProcess((void*)p_env) ;
 			
-			CleanServerEnvirment( p_env );
+			CleanEnvirment( p_env );
 			
 			return -nret;
 		}
@@ -312,7 +312,7 @@ _FORK :
 		InfoLog( __FILE__ , __LINE__ , "worker_processes[%d]" , worker_processes );
 	}
 	
-	CleanServerEnvirment( p_env );
+	CleanEnvirment( p_env );
 	
 	InfoLog( __FILE__ , __LINE__ , "--- master exit ---" );
 	

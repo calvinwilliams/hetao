@@ -61,7 +61,7 @@ int main( int argc , char *argv[] )
 		if( nret )
 		{
 			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
-				printf( "Load config failed[%d]\n" , nret );
+				printf( "LoadConfig failed[%d]\n" , nret );
 			return -nret;
 		}
 		
@@ -77,11 +77,11 @@ int main( int argc , char *argv[] )
 		SetHttpCloseExec( g_file_fd );
 		
 		/* 初始化服务器环境 */
-		nret = InitServerEnvirment( p_env ) ;
+		nret = InitEnvirment( p_env ) ;
 		if( nret )
 		{
 			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
-				printf( "Init envirment failed[%d]\n" , nret );
+				printf( "InitEnvirment failed[%d]\n" , nret );
 			return -nret;
 		}
 		

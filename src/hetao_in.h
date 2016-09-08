@@ -309,7 +309,7 @@ struct HetaoEnv
 	hetao_conf			*p_config ;
 	int				log_level ;
 	
-	char				init_ssl_flag ;
+	char				init_ssl_env_flag ;
 	
 	int				process_info_shmid ;
 	struct ProcessInfo		*process_info_array ;
@@ -344,15 +344,21 @@ extern signed char		g_second_elapse ;
 
 extern char			*__HETAO_VERSION ;
 
-int InitMimeTypeHash( struct HetaoEnv *p_server );
-void CleanMimeTypeHash( struct HetaoEnv *p_server );
-int PushMimeTypeHashNode( struct HetaoEnv *p_server , struct MimeType *p_mimetype );
-struct MimeType *QueryMimeTypeHashNode( struct HetaoEnv *p_server , char *type , int type_len );
-
 int InitVirtualHostHash( struct ListenSession *p_listen_session , int count );
 void CleanVirtualHostHash( struct ListenSession *p_listen_session );
 int PushVirtualHostHashNode( struct ListenSession *p_listen_session , struct VirtualHost *p_virtualhost );
 struct VirtualHost *QueryVirtualHostHashNode( struct ListenSession *p_listen_session , char *domain , int domain_len );
+
+int IncreaseHttpSessions( struct HetaoEnv *p_server , int http_session_incre_count );
+struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_server );
+void SetHttpSessionUnused( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+void SetHttpSessionUnused_05( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+void SetHttpSessionUnused_02( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+
+int AddHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+void RemoveHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+int UpdateHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session , int timeout_timestamp );
+struct HttpSession *GetExpireHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server );
 
 int AddHtmlCacheWdTreeNode( struct HetaoEnv *p_server , struct HtmlCacheSession *p_htmlcache_session );
 struct HtmlCacheSession *QueryHtmlCacheWdTreeNode( struct HetaoEnv *p_server , int wd );
@@ -364,23 +370,10 @@ void RemoveHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_server , struct Htm
 
 int RegexReplaceString( pcre *pattern_re , char *url , int url_len , pcre *template_re , char *new_url , int *p_new_url_len , int new_url_size );
 
-int AddHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-void RemoveHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-int UpdateHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session , int timeout_timestamp );
-struct HttpSession *GetExpireHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server );
-
-int InitServerEnvirment( struct HetaoEnv *p_server );
-void CleanServerEnvirment( struct HetaoEnv *p_server );
-int SaveListenSockets( struct HetaoEnv *p_server );
-int LoadOldListenSockets( struct NetAddress **pp_old_netaddr_array , int *p_old_netaddr_array_count );
-struct NetAddress *GetListener( struct NetAddress *old_netaddr_array , int old_netaddr_array_count , char *ip , int port );
-int CloseUnusedOldListeners( struct NetAddress *p_old_netaddr_array , int old_netaddr_array );
-
-int IncreaseHttpSessions( struct HetaoEnv *p_server , int http_session_incre_count );
-struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_server );
-void SetHttpSessionUnused( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-void SetHttpSessionUnused_05( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-void SetHttpSessionUnused_02( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+int InitMimeTypeHash( struct HetaoEnv *p_server );
+void CleanMimeTypeHash( struct HetaoEnv *p_server );
+int PushMimeTypeHashNode( struct HetaoEnv *p_server , struct MimeType *p_mimetype );
+struct MimeType *QueryMimeTypeHashNode( struct HetaoEnv *p_server , char *type , int type_len );
 
 int AddLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
 void RemoveLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
@@ -396,14 +389,22 @@ int OnAcceptingSocket( struct HetaoEnv *p_server , struct ListenSession *p_liste
 int DirectoryWatcherEventHander( struct HetaoEnv *p_server );
 int HtmlCacheEventHander( struct HetaoEnv *p_server );
 
-void *WorkerThread( void *pv );
-void *TimerThread( void *pv );
+int LoadConfig( char *config_pathfilename , struct HetaoEnv *p_server );
 
-int WorkerProcess( void *pv );
+int InitEnvirment( struct HetaoEnv *p_server );
+void CleanEnvirment( struct HetaoEnv *p_server );
+int SaveListenSockets( struct HetaoEnv *p_server );
+int LoadOldListenSockets( struct NetAddress **pp_old_netaddr_array , int *p_old_netaddr_array_count );
+struct NetAddress *GetListener( struct NetAddress *old_netaddr_array , int old_netaddr_array_count , char *ip , int port );
+int CloseUnusedOldListeners( struct NetAddress *p_old_netaddr_array , int old_netaddr_array );
+
+int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr_array , int old_netaddr_array_count );
 
 int MonitorProcess( void *pv );
 
-int LoadConfig( char *config_pathfilename , struct HetaoEnv *p_server );
+int WorkerProcess( void *pv );
+void *WorkerThread( void *pv );
+void *TimerThread( void *pv );
 
 int BindDaemonServer( int (* ServerMain)( void *pv ) , void *pv );
 int AccessDirectoryExist( char *pathdirname );

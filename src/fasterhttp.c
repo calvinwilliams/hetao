@@ -623,7 +623,7 @@ void ResetHttpEnv( struct HttpEnv *e )
 		CleanHttpBuffer( b );
 	}
 	if( UNLIKELY( b->ref_flag == 0 && b->buf_size > FASTERHTTP_REQUEST_BUFSIZE_MAX && b->fill_ptr-b->process_ptr<FASTERHTTP_REQUEST_BUFSIZE_MAX ) )
-		ReallocHttpBuffer( b , FASTERHTTP_REQUEST_BUFSIZE_DEFAULT );
+		ReallocHttpBuffer( b , FASTERHTTP_REQUEST_BUFSIZE_MAX );
 	
 	b = &(e->response_buffer) ;
 	if( b->ref_flag == 0 && UNLIKELY( b->process_ptr < b->fill_ptr ) && e->reforming_flag == 1 )
@@ -636,7 +636,7 @@ void ResetHttpEnv( struct HttpEnv *e )
 		CleanHttpBuffer( b );
 	}
 	if( UNLIKELY( b->ref_flag == 0 && b->buf_size > FASTERHTTP_RESPONSE_BUFSIZE_MAX ) )
-		ReallocHttpBuffer( b , FASTERHTTP_RESPONSE_BUFSIZE_DEFAULT );
+		ReallocHttpBuffer( b , FASTERHTTP_RESPONSE_BUFSIZE_MAX );
 	
 	e->parse_step = FASTERHTTP_PARSESTEP_BEGIN ;
 	

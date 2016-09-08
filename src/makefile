@@ -8,6 +8,7 @@
 ###### 源文件配置区
 #@ c_FILE
 c_FILE		=	\
+			ListenSession.c \
 			LOGC.c \
 			rbtree.c \
 			list.c \
