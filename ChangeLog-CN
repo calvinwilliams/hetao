@@ -1,3 +1,8 @@
+0.7.0		2016-09-10	calvin
+		* 支持启动后切换到其它用户身份
+		* 修正了fasterhttp的一个致命问题
+		* 修改了makefile以及相关文件以支持直接编译安装到系统目录
+
 0.6.0		2016-09-07	calvin
 		* 在流类型配置mimetype中增加是否压缩选项compress_enable
 		* 在限制配置limits中增加最大缓存文件大小max_file_cache

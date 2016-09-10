@@ -58,7 +58,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->p_config->http_options.timeout );
 		
 		b = GetHttpRequestBuffer(p_http_session->http) ;
-		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpRequestBuffer" );
+		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpRequestBuffer [%d]bytes" , GetHttpBufferLength(b) );
 		
 		/* 查询虚拟主机 */
 		host = QueryHttpHeaderPtr( p_http_session->http , "Host" , & host_len ) ;
@@ -113,7 +113,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		nret = SplitHttpUri( p_http_session->p_virtualhost->wwwroot , p_url , url_len , & (p_http_session->http_uri) ) ;
 		if( nret )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "SplitHttpUri failed[%d] , errno[%d]" , nret , errno );
+			ErrorLog( __FILE__ , __LINE__ , "SplitHttpUri[%s][%.*s] failed[%d] , errno[%d]" , p_http_session->p_virtualhost->wwwroot , url_len , p_url , nret , errno );
 			return HTTP_BAD_REQUEST;
 		}
 		
@@ -216,7 +216,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		}
 		
 		b = GetHttpResponseBuffer(p_http_session->http) ;
-		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer" );
+		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer [%d]bytes" , GetHttpBufferLength(b) );
 		
 		/* 注册epoll写事件 */
 		memset( & event , 0x00 , sizeof(struct epoll_event) );

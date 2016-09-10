@@ -250,7 +250,7 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 		}
 		
 		b = GetHttpResponseBuffer(p_http_session->http) ;
-		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer" );
+		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer [%d]bytes" , GetHttpBufferLength(b) );
 		
 		/* 恢复原连接事件 */
 		memset( & event , 0x00 , sizeof(struct epoll_event) );

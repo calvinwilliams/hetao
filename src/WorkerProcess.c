@@ -10,9 +10,19 @@
 
 int WorkerProcess( void *pv )
 {
+	struct HetaoEnv			*p_env = (struct HetaoEnv *)pv ;
+	
 	pthread_t			timer_thread_tid ;
 	
 	int				nret = 0 ;
+	
+	if( p_env->p_config->user[0] )
+	{
+		setuid( p_env->pwd->pw_uid );
+		InfoLog( __FILE__ , __LINE__ , "setuid[%s][%d]" , p_env->p_config->user , p_env->pwd->pw_uid );
+		setgid( p_env->pwd->pw_gid );
+		InfoLog( __FILE__ , __LINE__ , "setgid[%s][%d]" , p_env->p_config->user , p_env->pwd->pw_gid );
+	}
 	
 	signal( SIGTERM , SIG_DFL );
 	signal( SIGUSR1 , SIG_IGN );
