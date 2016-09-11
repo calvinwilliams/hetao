@@ -922,8 +922,6 @@ static int ReceiveHttpBuffer1( SOCKET sock , SSL *ssl , struct HttpEnv *e , stru
 
 #define DEBUG_PARSER		0
 
-#include "LOGC.h"
-
 int ParseHttpBuffer( struct HttpEnv *e , struct HttpBuffer *b )
 {
 	register char		*p = b->process_ptr ;
@@ -1365,7 +1363,7 @@ _GOTO_PARSESTEP_HEADER_NAME0 :
 			else
 			{
 				p_header->p_buffer = b ;
-				p_header->name_offset = b->base - p ;
+				p_header->name_offset = p - b->base ;
 				p++;
 				*(p_parse_step) = FASTERHTTP_PARSESTEP_HEADER_NAME ;
 			}
@@ -2466,7 +2464,7 @@ struct HttpHeader *QueryHttpHeader( struct HttpEnv *e , char *name )
 	name_len = strlen(name) ;
 	for( i = 0 , p_header = e->headers.header_array ; i < e->headers.header_array_size ; i++ , p_header++ )
 	{
-		if( p_header->p_buffer && p_header->p_buffer->base+p_header->name_offset && p_header->name_len == name_len && MEMCMP( p_header->p_buffer+p_header->name_offset , == , name , name_len ) )
+		if( p_header->p_buffer && p_header->p_buffer->base && p_header->name_len == name_len && MEMCMP( p_header->p_buffer->base+p_header->name_offset , == , name , name_len ) )
 		{
 			return p_header;
 		}
