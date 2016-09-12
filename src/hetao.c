@@ -17,7 +17,7 @@ static void usage()
 
 int main( int argc , char *argv[] )
 {
-	struct HetaoEnv		server ;
+	hetao_conf		*p_conf = NULL ;
 	struct HetaoEnv		*p_env = NULL ;
 	
 	int			nret = 0 ;
@@ -26,13 +26,30 @@ int main( int argc , char *argv[] )
 	
 	if( argc == 1 + 1 )
 	{
+		/* 申请环境结构内存 */
+		p_env = (struct HetaoEnv *)malloc( sizeof(struct HetaoEnv) ) ;
+		if( p_env == NULL )
+		{
+			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
+				printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
+			return 1;
+		}
+		memset( p_env , 0x00 , sizeof(struct HetaoEnv) );
+		g_p_env = p_env ;
+		p_env->argv = argv ;
+		
+		/* 申请配置结构内存 */
+		p_conf = (hetao_conf *)malloc( sizeof(hetao_conf) ) ;
+		if( p_conf == NULL )
+		{
+			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
+				printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
+			return 1;
+		}
+		memset( p_conf , 0x00 , sizeof(hetao_conf) );
+		
 		/* 重置所有HTTP状态码、描述为缺省 */
 		ResetAllHttpStatus();
-		
-		p_env = & server ;
-		g_p_env = p_env ;
-		memset( p_env , 0x00 , sizeof(struct HetaoEnv) );
-		p_env->argv = argv ;
 		
 		/* 设置缺省主日志 */
 		if( getenv( HETAO_LOG_PATHFILENAME ) == NULL )
@@ -46,26 +63,19 @@ int main( int argc , char *argv[] )
 		
 		/* 装载配置 */
 		strncpy( p_env->config_pathfilename , argv[1] , sizeof(p_env->config_pathfilename)-1 );
-		p_env->p_config = (hetao_conf *)malloc( sizeof(hetao_conf) ) ;
-		if( p_env->p_config == NULL )
-		{
-			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
-				printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
-			return 1;
-		}
-		memset( p_env->p_config , 0x00 , sizeof(hetao_conf) );
-		nret = LoadConfig( p_env->config_pathfilename , p_env ) ;
+		nret = LoadConfig( p_env->config_pathfilename , p_conf , p_env ) ;
 		if( nret )
 		{
 			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
 				printf( "LoadConfig failed[%d]\n" , nret );
+			free( p_env );
 			return -nret;
 		}
 		
 		/* 重新设置主日志 */
 		CloseLogFile();
 		
-		SetLogFile( p_env->p_config->error_log );
+		SetLogFile( p_conf->error_log );
 		SetLogLevel( p_env->log_level );
 		SETPID
 		SETTID
@@ -74,7 +84,8 @@ int main( int argc , char *argv[] )
 		SetHttpCloseExec( g_file_fd );
 		
 		/* 初始化服务器环境 */
-		nret = InitEnvirment( p_env ) ;
+		nret = InitEnvirment( p_env , p_conf ) ;
+		free( p_conf );
 		if( nret )
 		{
 			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )

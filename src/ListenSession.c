@@ -8,7 +8,7 @@
 
 #include "hetao_in.h"
 
-int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr_array , int old_netaddr_array_count )
+int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct NetAddress *old_netaddr_array , int old_netaddr_array_count )
 {
 	int			k , i , j ;
 	
@@ -23,7 +23,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 	
 	int			nret = 0 ;
 	
-	for( k = 0 ; k < p_env->p_config->_listen_count ; k++ )
+	for( k = 0 ; k < p_conf->_listen_count ; k++ )
 	{
 		p_listen_session = (struct ListenSession *)malloc( sizeof(struct ListenSession) ) ;
 		if( p_listen_session == NULL )
@@ -37,12 +37,12 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 		
 		list_add( & (p_listen_session->list) , & (p_env->listen_session_list.list) );
 		
-		p_netaddr = GetListener( old_netaddr_array , old_netaddr_array_count , p_env->p_config->listen[k].ip , p_env->p_config->listen[k].port ) ;
+		p_netaddr = GetListener( old_netaddr_array , old_netaddr_array_count , p_conf->listen[k].ip , p_conf->listen[k].port ) ;
 		if( p_netaddr )
 		{
 			/* 上一辈侦听信息中有本次侦听相同地址 */
 			memcpy( & (p_listen_session->netaddr) , p_netaddr , sizeof(struct NetAddress) );
-			DebugLog( __FILE__ , __LINE__ , "[%s:%d] reuse #%d#" , p_env->p_config->listen[k].ip , p_env->p_config->listen[k].port , p_listen_session->netaddr.sock );
+			DebugLog( __FILE__ , __LINE__ , "[%s:%d] reuse #%d#" , p_conf->listen[k].ip , p_conf->listen[k].port , p_listen_session->netaddr.sock );
 			p_env->listen_session_count++;
 		}
 		else
@@ -58,13 +58,13 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 			SetHttpNonblock( p_listen_session->netaddr.sock );
 			SetHttpReuseAddr( p_listen_session->netaddr.sock );
 			
-			strncpy( p_listen_session->netaddr.ip , p_env->p_config->listen[k].ip , sizeof(p_listen_session->netaddr.ip)-1 );
-			p_listen_session->netaddr.port = p_env->p_config->listen[k].port ;
+			strncpy( p_listen_session->netaddr.ip , p_conf->listen[k].ip , sizeof(p_listen_session->netaddr.ip)-1 );
+			p_listen_session->netaddr.port = p_conf->listen[k].port ;
 			SETNETADDRESS( p_listen_session->netaddr )
 			nret = bind( p_listen_session->netaddr.sock , (struct sockaddr *) & (p_listen_session->netaddr.addr) , sizeof(struct sockaddr) ) ;
 			if( nret == -1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "bind[%s:%d] failed , errno[%d]" , p_env->p_config->listen[k].ip , p_env->p_config->listen[k].port , errno );
+				ErrorLog( __FILE__ , __LINE__ , "bind[%s:%d] failed , errno[%d]" , p_conf->listen[k].ip , p_conf->listen[k].port , errno );
 				return -1;
 			}
 			
@@ -75,12 +75,12 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 				return -1;
 			}
 			
-			DebugLog( __FILE__ , __LINE__ , "[%s:%d] listen #%d#" , p_env->p_config->listen[k].ip , p_env->p_config->listen[k].port , p_listen_session->netaddr.sock );
+			DebugLog( __FILE__ , __LINE__ , "[%s:%d] listen #%d#" , p_conf->listen[k].ip , p_conf->listen[k].port , p_listen_session->netaddr.sock );
 			p_env->listen_session_count++;
 		}
 		
 		/* 创建SSL环境 */
-		if( p_env->p_config->listen[k].ssl.certificate_file[0] )
+		if( p_conf->listen[k].ssl.certificate_file[0] )
 		{
 			if( p_env->init_ssl_env_flag == 0 )
 			{
@@ -97,7 +97,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 				return -1;
 			}
 			
-			nret = SSL_CTX_use_certificate_file( p_listen_session->ssl_ctx , p_env->p_config->listen[k].ssl.certificate_file , SSL_FILETYPE_PEM ) ;
+			nret = SSL_CTX_use_certificate_file( p_listen_session->ssl_ctx , p_conf->listen[k].ssl.certificate_file , SSL_FILETYPE_PEM ) ;
 			if( nret <= 0 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file failed , errno[%d]" , errno );
@@ -105,10 +105,10 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 			}
 			else
 			{
-				DebugLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file[%s] ok" , p_env->p_config->listen[k].ssl.certificate_file );
+				DebugLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file[%s] ok" , p_conf->listen[k].ssl.certificate_file );
 			}
 			
-			nret = SSL_CTX_use_PrivateKey_file( p_listen_session->ssl_ctx , p_env->p_config->listen[k].ssl.certificate_key_file , SSL_FILETYPE_PEM ) ;
+			nret = SSL_CTX_use_PrivateKey_file( p_listen_session->ssl_ctx , p_conf->listen[k].ssl.certificate_key_file , SSL_FILETYPE_PEM ) ;
 			if( nret <= 0 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_PrivateKey_file failed , errno[%d]" , errno );
@@ -116,12 +116,12 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 			}
 			else
 			{
-				DebugLog( __FILE__ , __LINE__ , "SSL_CTX_use_PrivateKey_file[%s] ok" , p_env->p_config->listen[k].ssl.certificate_key_file );
+				DebugLog( __FILE__ , __LINE__ , "SSL_CTX_use_PrivateKey_file[%s] ok" , p_conf->listen[k].ssl.certificate_key_file );
 			}
 		}
 		
 		/* 注册所有虚拟主机 */
-		nret = InitVirtualHostHash( p_listen_session , p_env->p_config->listen[k]._website_count ) ;
+		nret = InitVirtualHostHash( p_listen_session , p_conf->listen[k]._website_count ) ;
 		if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "InitVirtualHostHash failed[%d]" , nret );
@@ -129,9 +129,9 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 		}
 		
 		p_listen_session->virtualhost_count = 0 ;
-		for( i = 0 ; i < p_env->p_config->listen[k]._website_count ; i++ )
+		for( i = 0 ; i < p_conf->listen[k]._website_count ; i++ )
 		{
-			if( p_env->p_config->listen[k].website[i].wwwroot[0] == '\0' || p_env->p_config->listen[k].website[i].access_log[0] == '\0' )
+			if( p_conf->listen[k].website[i].wwwroot[0] == '\0' || p_conf->listen[k].website[i].access_log[0] == '\0' )
 				continue;
 			
 			p_virtualhost = (struct VirtualHost *)malloc( sizeof(struct VirtualHost) ) ;
@@ -141,11 +141,11 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 				return -1;
 			}
 			memset( p_virtualhost , 0x00 , sizeof(struct VirtualHost) );
-			strncpy( p_virtualhost->domain , p_env->p_config->listen[k].website[i].domain , sizeof(p_virtualhost->domain)-1 );
+			strncpy( p_virtualhost->domain , p_conf->listen[k].website[i].domain , sizeof(p_virtualhost->domain)-1 );
 			p_virtualhost->domain_len = strlen(p_virtualhost->domain) ;
-			strncpy( p_virtualhost->wwwroot , p_env->p_config->listen[k].website[i].wwwroot , sizeof(p_virtualhost->wwwroot)-1 );
-			strncpy( p_virtualhost->index , p_env->p_config->listen[k].website[i].index , sizeof(p_virtualhost->index)-1 );
-			strncpy( p_virtualhost->access_log , p_env->p_config->listen[k].website[i].access_log , sizeof(p_virtualhost->access_log)-1 );
+			strncpy( p_virtualhost->wwwroot , p_conf->listen[k].website[i].wwwroot , sizeof(p_virtualhost->wwwroot)-1 );
+			strncpy( p_virtualhost->index , p_conf->listen[k].website[i].index , sizeof(p_virtualhost->index)-1 );
+			strncpy( p_virtualhost->access_log , p_conf->listen[k].website[i].access_log , sizeof(p_virtualhost->access_log)-1 );
 			p_virtualhost->access_log_fd = OPEN( p_virtualhost->access_log , O_CREAT_WRONLY_APPEND ) ;
 			if( p_virtualhost->access_log_fd == -1 )
 			{
@@ -158,7 +158,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 			memset( & (p_virtualhost->rewrite_url_list) , 0x00 , sizeof(struct RewriteUrl) );
 			INIT_LIST_HEAD( & (p_virtualhost->rewrite_url_list.rewriteurl_node) );
 			
-			if( p_env->p_config->listen[k].website[i]._rewrite_count > 0 && p_env->template_re == NULL )
+			if( p_conf->listen[k].website[i]._rewrite_count > 0 && p_env->template_re == NULL )
 			{
 				if( p_env->template_re == NULL )
 				{
@@ -172,11 +172,11 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 				}
 			}	
 			
-			for( j = 0 ; j < p_env->p_config->listen[k].website[i]._rewrite_count ; j++ )
+			for( j = 0 ; j < p_conf->listen[k].website[i]._rewrite_count ; j++ )
 			{
-				if( p_env->p_config->listen[k].website[i].rewrite[j].pattern[0] == '\0' || p_env->p_config->listen[k].website[i].rewrite[j].template[0] == '\0' )
+				if( p_conf->listen[k].website[i].rewrite[j].pattern[0] == '\0' || p_conf->listen[k].website[i].rewrite[j].template[0] == '\0' )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "rewrite url invalid , pattern[%s] template[%s]" , p_env->p_config->listen[k].website[i].rewrite[j].pattern , p_env->p_config->listen[k].website[i].rewrite[j].template );
+					ErrorLog( __FILE__ , __LINE__ , "rewrite url invalid , pattern[%s] template[%s]" , p_conf->listen[k].website[i].rewrite[j].pattern , p_conf->listen[k].website[i].rewrite[j].template );
 					return -1;
 				}
 				
@@ -188,8 +188,8 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 				}
 				memset( p_rewrite_url , 0x00 , sizeof(struct RewriteUrl) );
 				
-				strcpy( p_rewrite_url->pattern , p_env->p_config->listen[k].website[i].rewrite[j].pattern );
-				strcpy( p_rewrite_url->template , p_env->p_config->listen[k].website[i].rewrite[j].template );
+				strcpy( p_rewrite_url->pattern , p_conf->listen[k].website[i].rewrite[j].pattern );
+				strcpy( p_rewrite_url->template , p_conf->listen[k].website[i].rewrite[j].template );
 				p_rewrite_url->template_len = strlen( p_rewrite_url->template ) ;
 				
 				p_rewrite_url->pattern_re = pcre_compile( p_rewrite_url->pattern , PCRE_MULTILINE , & error_desc , & error_offset , NULL ) ;
@@ -204,11 +204,11 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 			}
 			
 			/* 创建反向代理链表 */
-			strncpy( p_virtualhost->forward_type , p_env->p_config->listen[k].website[i].forward.forward_type , sizeof(p_virtualhost->forward_type)-1 );
+			strncpy( p_virtualhost->forward_type , p_conf->listen[k].website[i].forward.forward_type , sizeof(p_virtualhost->forward_type)-1 );
 			p_virtualhost->forward_type_len = strlen(p_virtualhost->forward_type) ;
-			strncpy( p_virtualhost->forward_rule , p_env->p_config->listen[k].website[i].forward.forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
+			strncpy( p_virtualhost->forward_rule , p_conf->listen[k].website[i].forward.forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
 			
-			if( p_env->p_config->listen[k].website[i].forward.ssl.certificate_file[0] )
+			if( p_conf->listen[k].website[i].forward.ssl.certificate_file[0] )
 			{
 				if( p_env->init_ssl_env_flag == 0 )
 				{
@@ -225,7 +225,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 					return -1;
 				}
 				
-				nret = SSL_CTX_use_certificate_file( p_virtualhost->forward_ssl_ctx , p_env->p_config->listen[k].website[i].forward.ssl.certificate_file , SSL_FILETYPE_PEM ) ;
+				nret = SSL_CTX_use_certificate_file( p_virtualhost->forward_ssl_ctx , p_conf->listen[k].website[i].forward.ssl.certificate_file , SSL_FILETYPE_PEM ) ;
 				if( nret <= 0 )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file failed , errno[%d]" , errno );
@@ -233,18 +233,18 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 				}
 				else
 				{
-					DebugLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file[%s] ok" , p_env->p_config->listen[k].website[i].forward.ssl.certificate_file );
+					DebugLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file[%s] ok" , p_conf->listen[k].website[i].forward.ssl.certificate_file );
 				}
 			}
 			
 			INIT_LIST_HEAD( & (p_virtualhost->roundrobin_list.roundrobin_node) );
 			
 			/* 注册反向代理应用服务器 */
-			if( p_virtualhost->forward_rule[0] && p_env->p_config->listen[k].website[i].forward._forward_server_count > 0 )
+			if( p_virtualhost->forward_rule[0] && p_conf->listen[k].website[i].forward._forward_server_count > 0 )
 			{
 				struct ForwardServer	*p_forward_server = NULL ;
 				
-				for( j = 0 ; j < p_env->p_config->listen[k].website[i].forward._forward_server_count ; j++ )
+				for( j = 0 ; j < p_conf->listen[k].website[i].forward._forward_server_count ; j++ )
 				{
 					p_forward_server = (struct ForwardServer *)malloc( sizeof(struct ForwardServer) ) ;
 					if( p_forward_server == NULL )
@@ -253,8 +253,8 @@ int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr
 						return -1;
 					}
 					memset( p_forward_server , 0x00 , sizeof(struct ForwardServer) );
-					strncpy( p_forward_server->netaddr.ip , p_env->p_config->listen[k].website[i].forward.forward_server[j].ip , sizeof(p_forward_server->netaddr.ip)-1 );
-					p_forward_server->netaddr.port = p_env->p_config->listen[k].website[i].forward.forward_server[j].port ;
+					strncpy( p_forward_server->netaddr.ip , p_conf->listen[k].website[i].forward.forward_server[j].ip , sizeof(p_forward_server->netaddr.ip)-1 );
+					p_forward_server->netaddr.port = p_conf->listen[k].website[i].forward.forward_server[j].port ;
 					SETNETADDRESS( p_forward_server->netaddr )
 					
 					list_add_tail( & (p_forward_server->roundrobin_node) , & (p_virtualhost->roundrobin_list.roundrobin_node) );

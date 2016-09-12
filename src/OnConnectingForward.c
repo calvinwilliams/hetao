@@ -85,8 +85,8 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 	}
 	
 	SetHttpNonblock( p_http_session->forward_sock );
-	SetHttpNodelay( p_http_session->forward_sock , p_env->p_config->tcp_options.nodelay );
-	SetHttpNoLinger( p_http_session->forward_sock , p_env->p_config->tcp_options.nolinger );
+	SetHttpNodelay( p_http_session->forward_sock , p_env->tcp_options__nodelay );
+	SetHttpLinger( p_http_session->forward_sock , p_env->tcp_options__nolinger );
 	
 	p_http_session->forward_flags |= HTTPSESSION_FLAGS_CONNECTING ;
 	p_http_session->p_forward_server->connection_count++;
@@ -211,7 +211,7 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 		epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->forward_sock , NULL );
 		SetHttpSessionUnused_02( p_env , p_http_session );
 		
-		p_http_session->p_forward_server->timestamp_to_valid = GETSECONDSTAMP + p_env->p_config->http_options.forward_disable ;
+		p_http_session->p_forward_server->timestamp_to_valid = GETSECONDSTAMP + p_env->http_options__forward_disable ;
 		
 		/* 选择转发服务端 */
 		nret = SelectForwardAddress( p_env , p_http_session ) ;

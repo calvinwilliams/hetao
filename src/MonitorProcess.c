@@ -47,7 +47,7 @@ static void sig_proc( struct HetaoEnv *p_env )
 	if( g_SIGUSR1_flag == 1 )
 	{
 		/* 通知所有工作进程重新打开事件日志 */
-		for( i = 0 ; i < g_p_env->p_config->worker_processes ; i++ )
+		for( i = 0 ; i < g_p_env->worker_processes ; i++ )
 		{
 			char	ch = SIGNAL_REOPEN_LOG ;
 			nret = write( g_p_env->process_info_array[i].pipe[1] , & ch , 1 ) ;
@@ -92,7 +92,7 @@ static void sig_proc( struct HetaoEnv *p_env )
 	else if( g_SIGTERM_flag == 1 )
 	{
 		/* 以关闭通知管道的方式通知所有工作进程优雅结束 */
-		for( i = 0 ; i < g_p_env->p_config->worker_processes ; i++ )
+		for( i = 0 ; i < g_p_env->worker_processes ; i++ )
 		{
 			DebugLog( __FILE__ , __LINE__ , "Close pipe[%d]" , g_p_env->process_info_array[i].pipe[1] );
 			close( g_p_env->process_info_array[i].pipe[1] );
@@ -141,7 +141,7 @@ int MonitorProcess( void *pv )
 	sigaction( SIGUSR2 , & act , NULL );
 	
 	/* 创建所有工作进程组 */
-	for( i = 0 ; i < p_env->p_config->worker_processes ; i++ )
+	for( i = 0 ; i < p_env->worker_processes ; i++ )
 	{
 		/* 创建命令管道 */
 		nret = pipe( p_env->process_info_array[i].pipe ) ;
@@ -198,7 +198,7 @@ int MonitorProcess( void *pv )
 	}
 	
 	/* 监控所有工作进程。如果发现有结束，重启它 */
-	worker_processes = p_env->p_config->worker_processes ;
+	worker_processes = p_env->worker_processes ;
 	while( worker_processes > 0 )
 	{
 _WAITPID :
@@ -229,12 +229,12 @@ _WAITPID :
 				, pid , WEXITSTATUS(status) , WIFSIGNALED(status) , WTERMSIG(status) );
 		}
 		
-		for( i = 0 ; i < p_env->p_config->worker_processes ; i++ )
+		for( i = 0 ; i < p_env->worker_processes ; i++ )
 		{
 			if( p_env->process_info_array[i].pid == pid )
 				break;
 		}
-		if( i >= p_env->p_config->worker_processes )
+		if( i >= p_env->worker_processes )
 			goto _WAITPID;
 		
 		close( p_env->process_info_array[i].pipe[1] );
@@ -286,7 +286,7 @@ _FORK :
 			
 			close( p_env->process_info_array[i].pipe[1] ) ;
 			DebugLog( __FILE__ , __LINE__ , "pipe #%d# close #%d#" , p_env->process_info_array[i].pipe[0] , p_env->process_info_array[i].pipe[1] );
-			for( j = p_env->p_config->worker_processes-1 ; j >= 0 ; j-- )
+			for( j = p_env->worker_processes-1 ; j >= 0 ; j-- )
 			{
 				if( j != i )
 				{

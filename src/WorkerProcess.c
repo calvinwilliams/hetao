@@ -16,12 +16,12 @@ int WorkerProcess( void *pv )
 	
 	int				nret = 0 ;
 	
-	if( p_env->p_config->user[0] )
+	if( p_env->pwd )
 	{
 		setuid( p_env->pwd->pw_uid );
-		InfoLog( __FILE__ , __LINE__ , "setuid[%s][%d]" , p_env->p_config->user , p_env->pwd->pw_uid );
+		InfoLog( __FILE__ , __LINE__ , "setuid[%d]" , p_env->pwd->pw_uid );
 		setgid( p_env->pwd->pw_gid );
-		InfoLog( __FILE__ , __LINE__ , "setgid[%s][%d]" , p_env->p_config->user , p_env->pwd->pw_gid );
+		InfoLog( __FILE__ , __LINE__ , "setgid[%d]" , p_env->pwd->pw_gid );
 	}
 	
 	signal( SIGTERM , SIG_DFL );

@@ -15,15 +15,15 @@ int IncreaseHttpSessions( struct HetaoEnv *p_env , int http_session_incre_count 
 	int			i ;
 	
 	/* 判断是否到达最大HTTP通讯会话数量 */
-	if( p_env->http_session_used_count >= p_env->p_config->limits.max_http_session_count )
+	if( p_env->http_session_used_count >= p_env->limits__max_http_session_count )
 	{
-		WarnLog( __FILE__ , __LINE__ , "http session count limits[%d]" , p_env->p_config->limits.max_http_session_count );
+		WarnLog( __FILE__ , __LINE__ , "http session count limits[%d]" , p_env->limits__max_http_session_count );
 		return 1;
 	}
 	
 	/* 批量增加空闲HTTP通讯会话 */
-	if( p_env->http_session_used_count + http_session_incre_count > p_env->p_config->limits.max_http_session_count )
-		http_session_incre_count = p_env->p_config->limits.max_http_session_count - p_env->http_session_used_count ;
+	if( p_env->http_session_used_count + http_session_incre_count > p_env->limits__max_http_session_count )
+		http_session_incre_count = p_env->limits__max_http_session_count - p_env->http_session_used_count ;
 	
 	p_http_session_array = (struct HttpSession *)malloc( sizeof(struct HttpSession) * http_session_incre_count ) ;
 	if( p_http_session_array == NULL )
@@ -41,14 +41,14 @@ int IncreaseHttpSessions( struct HetaoEnv *p_env , int http_session_incre_count 
 			ErrorLog( __FILE__ , __LINE__ , "CreateHttpEnv failed , errno[%d]" , errno );
 			return -1;
 		}
-		SetHttpTimeout( p_http_session->http , p_env->p_config->http_options.timeout );
+		SetHttpTimeout( p_http_session->http , p_env->http_options__timeout );
 		p_http_session->forward_http = CreateHttpEnv() ;
 		if( p_http_session->forward_http == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "CreateHttpEnv failed , errno[%d]" , errno );
 			return -1;
 		}
-		SetHttpTimeout( p_http_session->forward_http , p_env->p_config->http_options.timeout );
+		SetHttpTimeout( p_http_session->forward_http , p_env->http_options__timeout );
 		
 		list_add_tail( & (p_http_session->list) , & (p_env->http_session_unused_list.list) );
 		DebugLog( __FILE__ , __LINE__ , "init http session[%p] http env[%p]" , p_http_session , p_http_session->http );
@@ -78,7 +78,7 @@ struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_env )
 	list_del( & (p_http_session->list) );
 	
 	/* 加入到工作HTTP通讯会话树中 */
-	p_http_session->timeout_timestamp = GETSECONDSTAMP + p_env->p_config->http_options.timeout ;
+	p_http_session->timeout_timestamp = GETSECONDSTAMP + p_env->http_options__timeout ;
 	nret = AddHttpSessionTimeoutTreeNode( p_env , p_http_session ) ;
 	if( nret )
 	{

@@ -307,8 +307,18 @@ struct HetaoEnv
 {
 	char				**argv ;
 	char				config_pathfilename[ 256 + 1 ] ;
-	hetao_conf			*p_config ;
 	int				log_level ;
+	
+	int				worker_processes ;
+	int				cpu_affinity ;
+	int				accept_mutex ;
+	int				limits__max_http_session_count ;
+	int				limits__max_file_cache ;
+	int				tcp_options__nodelay ;
+	int				tcp_options__nolinger ;
+	int				http_options__timeout ;
+	int				http_options__compress_on ;
+	int				http_options__forward_disable ;
 	
 	struct passwd			*pwd ;
 	
@@ -373,7 +383,7 @@ void RemoveHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_server , struct Htm
 
 int RegexReplaceString( pcre *pattern_re , char *url , int url_len , pcre *template_re , char *new_url , int *p_new_url_len , int new_url_size );
 
-int InitMimeTypeHash( struct HetaoEnv *p_server );
+int InitMimeTypeHash( struct HetaoEnv *p_server , hetao_conf *p_conf );
 void CleanMimeTypeHash( struct HetaoEnv *p_server );
 int PushMimeTypeHashNode( struct HetaoEnv *p_server , struct MimeType *p_mimetype );
 struct MimeType *QueryMimeTypeHashNode( struct HetaoEnv *p_server , char *type , int type_len );
@@ -392,16 +402,16 @@ int OnAcceptingSocket( struct HetaoEnv *p_server , struct ListenSession *p_liste
 int DirectoryWatcherEventHander( struct HetaoEnv *p_server );
 int HtmlCacheEventHander( struct HetaoEnv *p_server );
 
-int LoadConfig( char *config_pathfilename , struct HetaoEnv *p_server );
+int LoadConfig( char *config_pathfilename , hetao_conf *p_conf , struct HetaoEnv *p_env );
 
-int InitEnvirment( struct HetaoEnv *p_server );
+int InitEnvirment( struct HetaoEnv *p_server , hetao_conf *p_conf );
 void CleanEnvirment( struct HetaoEnv *p_server );
 int SaveListenSockets( struct HetaoEnv *p_server );
 int LoadOldListenSockets( struct NetAddress **pp_old_netaddr_array , int *p_old_netaddr_array_count );
 struct NetAddress *GetListener( struct NetAddress *old_netaddr_array , int old_netaddr_array_count , char *ip , int port );
 int CloseUnusedOldListeners( struct NetAddress *p_old_netaddr_array , int old_netaddr_array );
 
-int InitListenEnvirment( struct HetaoEnv *p_env , struct NetAddress *old_netaddr_array , int old_netaddr_array_count );
+int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct NetAddress *old_netaddr_array , int old_netaddr_array_count );
 
 int MonitorProcess( void *pv );
 

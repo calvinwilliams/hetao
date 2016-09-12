@@ -10,8 +10,8 @@
 
 struct HetaoEnv	*g_p_env = NULL ;
 
-char	__HETAO_VERSION_0_7_0[] = "0.7.0" ;
-char	*__HETAO_VERSION = __HETAO_VERSION_0_7_0 ;
+char	__HETAO_VERSION_0_7_1[] = "0.7.1" ;
+char	*__HETAO_VERSION = __HETAO_VERSION_0_7_1 ;
 
 char *strndup(const char *s, size_t n);
 
@@ -137,7 +137,7 @@ static char *StrdupEntireFile( char *pathfilename , int *p_file_size )
 	return p_html_content;
 }
 
-int LoadConfig( char *config_pathfilename , struct HetaoEnv *p_env )
+int LoadConfig( char *config_pathfilename , hetao_conf *p_config , struct HetaoEnv *p_env )
 {
 	char		*buf = NULL ;
 	int		file_size ;
@@ -151,12 +151,12 @@ int LoadConfig( char *config_pathfilename , struct HetaoEnv *p_env )
 		return -1;
 	
 	/* 预设缺省值 */
-	p_env->p_config->worker_processes = sysconf(_SC_NPROCESSORS_ONLN) ;
+	p_config->worker_processes = sysconf(_SC_NPROCESSORS_ONLN) ;
 	
-	p_env->p_config->limits.max_http_session_count = MAX_HTTP_SESSION_COUNT_DEFAULT ;
+	p_config->limits.max_http_session_count = MAX_HTTP_SESSION_COUNT_DEFAULT ;
 	
 	/* 解析配置文件 */
-	nret = DSCDESERIALIZE_JSON_hetao_conf( NULL , buf , & file_size , p_env->p_config ) ;
+	nret = DSCDESERIALIZE_JSON_hetao_conf( NULL , buf , & file_size , p_config ) ;
 	free( buf );
 	if( nret )
 	{
@@ -164,105 +164,105 @@ int LoadConfig( char *config_pathfilename , struct HetaoEnv *p_env )
 		return -1;
 	}
 	
-	if( p_env->p_config->worker_processes <= 0 )
+	if( p_config->worker_processes <= 0 )
 	{
-		p_env->p_config->worker_processes = sysconf(_SC_NPROCESSORS_ONLN) ;
+		p_config->worker_processes = sysconf(_SC_NPROCESSORS_ONLN) ;
 	}
 	
 	/* 展开主日志名中的环境变量 */
-	nret = StringExpandEnvval( p_env->p_config->error_log , sizeof(p_env->p_config->error_log) ) ;
+	nret = StringExpandEnvval( p_config->error_log , sizeof(p_config->error_log) ) ;
 	if( nret )
 		return nret;
 	
 	/* 转换主日志等级值 */
-	nret = ConvertLogLevel_atoi( p_env->p_config->log_level , &(p_env->log_level) ) ;
+	nret = ConvertLogLevel_atoi( p_config->log_level , &(p_env->log_level) ) ;
 	if( nret )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "log_level[%s] invalid" , p_env->p_config->log_level );
+		ErrorLog( __FILE__ , __LINE__ , "log_level[%s] invalid" , p_config->log_level );
 		return nret;
 	}
 	
 	/* 检查用户名 */
-	if( p_env->p_config->user[0] )
+	if( p_config->user[0] )
 	{
-		p_env->pwd = getpwnam( p_env->p_config->user ) ;
+		p_env->pwd = getpwnam( p_config->user ) ;
 		if( p_env->pwd == NULL )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "user[%s] not found" , p_env->p_config->user );
+			ErrorLog( __FILE__ , __LINE__ , "user[%s] not found" , p_config->user );
 			return nret;
 		}
 	}
 	
 	/* 展开日志文件名中的环境变量 */
-	for( k = 0 ; k < p_env->p_config->_listen_count ; k++ )
+	for( k = 0 ; k < p_config->_listen_count ; k++ )
 	{
 		/* 展开SSL证书文件名中的环境变量 */
-		nret = StringExpandEnvval( p_env->p_config->listen[k].ssl.certificate_file , sizeof(p_env->p_config->listen[k].ssl.certificate_file) ) ;
+		nret = StringExpandEnvval( p_config->listen[k].ssl.certificate_file , sizeof(p_config->listen[k].ssl.certificate_file) ) ;
 		if( nret )
 			return nret;
 		
-		if( p_env->p_config->listen[k].ssl.certificate_file[0] )
+		if( p_config->listen[k].ssl.certificate_file[0] )
 		{
-			nret = AccessFileExist( p_env->p_config->listen[k].ssl.certificate_file ) ;
+			nret = AccessFileExist( p_config->listen[k].ssl.certificate_file ) ;
 			if( nret != 1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "ssl.certificate_file[%s] not exist" , p_env->p_config->listen[k].ssl.certificate_file , nret );
+				ErrorLog( __FILE__ , __LINE__ , "ssl.certificate_file[%s] not exist" , p_config->listen[k].ssl.certificate_file , nret );
 				return -1;
 			}
 		}
 		
-		nret = StringExpandEnvval( p_env->p_config->listen[k].ssl.certificate_key_file , sizeof(p_env->p_config->listen[k].ssl.certificate_key_file) ) ;
+		nret = StringExpandEnvval( p_config->listen[k].ssl.certificate_key_file , sizeof(p_config->listen[k].ssl.certificate_key_file) ) ;
 		if( nret )
 			return nret;
 		
-		if( p_env->p_config->listen[k].ssl.certificate_key_file[0] )
+		if( p_config->listen[k].ssl.certificate_key_file[0] )
 		{
-			nret = AccessFileExist( p_env->p_config->listen[k].ssl.certificate_key_file ) ;
+			nret = AccessFileExist( p_config->listen[k].ssl.certificate_key_file ) ;
 			if( nret != 1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "ssl.certificate_key_file[%s] not exist" , p_env->p_config->listen[k].ssl.certificate_key_file , nret );
+				ErrorLog( __FILE__ , __LINE__ , "ssl.certificate_key_file[%s] not exist" , p_config->listen[k].ssl.certificate_key_file , nret );
 				return -1;
 			}
 		}
 		
-		for( i = 0 ; i < p_env->p_config->listen[k]._website_count ; i++ )
+		for( i = 0 ; i < p_config->listen[k]._website_count ; i++ )
 		{
-			nret = StringExpandEnvval( p_env->p_config->listen[k].website[i].wwwroot , sizeof(p_env->p_config->listen[k].website[i].wwwroot) ) ;
+			nret = StringExpandEnvval( p_config->listen[k].website[i].wwwroot , sizeof(p_config->listen[k].website[i].wwwroot) ) ;
 			if( nret )
 				return nret;
 			
-			nret = AccessDirectoryExist( p_env->p_config->listen[k].website[i].wwwroot ) ;
+			nret = AccessDirectoryExist( p_config->listen[k].website[i].wwwroot ) ;
 			if( nret != 1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "wwwroot[%s] not exist" , p_env->p_config->listen[k].website[i].wwwroot , nret );
+				ErrorLog( __FILE__ , __LINE__ , "wwwroot[%s] not exist" , p_config->listen[k].website[i].wwwroot , nret );
 				return -1;
 			}
 			
-			nret = StringExpandEnvval( p_env->p_config->listen[k].website[i].access_log , sizeof(p_env->p_config->listen[k].website[i].access_log) ) ;
+			nret = StringExpandEnvval( p_config->listen[k].website[i].access_log , sizeof(p_config->listen[k].website[i].access_log) ) ;
 			if( nret )
 				return nret;
 			
-			if( p_env->p_config->listen[k].website[i].forward.forward_rule[0] )
+			if( p_config->listen[k].website[i].forward.forward_rule[0] )
 			{
-				nret = StringExpandEnvval( p_env->p_config->listen[k].website[i].forward.ssl.certificate_file , sizeof(p_env->p_config->listen[k].website[i].forward.ssl.certificate_file) ) ;
+				nret = StringExpandEnvval( p_config->listen[k].website[i].forward.ssl.certificate_file , sizeof(p_config->listen[k].website[i].forward.ssl.certificate_file) ) ;
 				if( nret )
 					return nret;
 				
-				if( p_env->p_config->listen[k].website[i].forward.ssl.certificate_file[0] )
+				if( p_config->listen[k].website[i].forward.ssl.certificate_file[0] )
 				{
-					nret = AccessFileExist( p_env->p_config->listen[k].website[i].forward.ssl.certificate_file ) ;
+					nret = AccessFileExist( p_config->listen[k].website[i].forward.ssl.certificate_file ) ;
 					if( nret != 1 )
 					{
-						ErrorLog( __FILE__ , __LINE__ , "ssl.certificate_file[%s] not exist" , p_env->p_config->listen[k].website[i].forward.ssl.certificate_file , nret );
+						ErrorLog( __FILE__ , __LINE__ , "ssl.certificate_file[%s] not exist" , p_config->listen[k].website[i].forward.ssl.certificate_file , nret );
 						return -1;
 					}
 				}
 				
-				if( STRCMP( p_env->p_config->listen[k].website[i].forward.forward_rule , != , FORWARD_RULE_ROUNDROBIN )
-					&& STRCMP( p_env->p_config->listen[k].website[i].forward.forward_rule , != , FORWARD_RULE_LEASTCONNECTION )
+				if( STRCMP( p_config->listen[k].website[i].forward.forward_rule , != , FORWARD_RULE_ROUNDROBIN )
+					&& STRCMP( p_config->listen[k].website[i].forward.forward_rule , != , FORWARD_RULE_LEASTCONNECTION )
 				)
 				{
-					ErrorLog( __FILE__ , __LINE__ , "p_env->p_config->server.forward.forward_rule[%s] invalid" , p_env->p_config->listen[k].website[i].forward.forward_rule );
+					ErrorLog( __FILE__ , __LINE__ , "p_config->server.forward.forward_rule[%s] invalid" , p_config->listen[k].website[i].forward.forward_rule );
 					return -1;
 				}
 			}
@@ -270,125 +270,137 @@ int LoadConfig( char *config_pathfilename , struct HetaoEnv *p_env )
 	}
 	
 	/* 设置个性化页面信息 */
-	if( STRCMP( p_env->p_config->error_pages.error_page_400 , != , "" ) )
+	if( STRCMP( p_config->error_pages.error_page_400 , != , "" ) )
 	{
 		char	*p_html_content = NULL ;
 		
-		nret = StringExpandEnvval( p_env->p_config->error_pages.error_page_400 , sizeof(p_env->p_config->error_pages.error_page_400) ) ;
+		nret = StringExpandEnvval( p_config->error_pages.error_page_400 , sizeof(p_config->error_pages.error_page_400) ) ;
 		if( nret )
 			return nret;
 		
-		p_html_content = StrdupEntireFile( p_env->p_config->error_pages.error_page_400 , NULL ) ;
+		p_html_content = StrdupEntireFile( p_config->error_pages.error_page_400 , NULL ) ;
 		if( p_html_content == NULL )
 			return -1;
 		
 		SetHttpStatus( HTTP_BAD_REQUEST , HTTP_BAD_REQUEST_S , p_html_content );
 	}
 	
-	if( STRCMP( p_env->p_config->error_pages.error_page_401 , != , "" ) )
+	if( STRCMP( p_config->error_pages.error_page_401 , != , "" ) )
 	{
 		char	*p_html_content = NULL ;
 		
-		nret = StringExpandEnvval( p_env->p_config->error_pages.error_page_401 , sizeof(p_env->p_config->error_pages.error_page_401) ) ;
+		nret = StringExpandEnvval( p_config->error_pages.error_page_401 , sizeof(p_config->error_pages.error_page_401) ) ;
 		if( nret )
 			return nret;
 		
-		p_html_content = StrdupEntireFile( p_env->p_config->error_pages.error_page_401 , NULL ) ;
+		p_html_content = StrdupEntireFile( p_config->error_pages.error_page_401 , NULL ) ;
 		if( p_html_content == NULL )
 			return -1;
 		
 		SetHttpStatus( HTTP_UNAUTHORIZED , HTTP_UNAUTHORIZED_S , p_html_content );
 	}
 	
-	if( STRCMP( p_env->p_config->error_pages.error_page_403 , != , "" ) )
+	if( STRCMP( p_config->error_pages.error_page_403 , != , "" ) )
 	{
 		char	*p_html_content = NULL ;
 		
-		nret = StringExpandEnvval( p_env->p_config->error_pages.error_page_403 , sizeof(p_env->p_config->error_pages.error_page_403) ) ;
+		nret = StringExpandEnvval( p_config->error_pages.error_page_403 , sizeof(p_config->error_pages.error_page_403) ) ;
 		if( nret )
 			return nret;
 		
-		p_html_content = StrdupEntireFile( p_env->p_config->error_pages.error_page_403 , NULL ) ;
+		p_html_content = StrdupEntireFile( p_config->error_pages.error_page_403 , NULL ) ;
 		if( p_html_content == NULL )
 			return -1;
 		
 		SetHttpStatus( HTTP_FORBIDDEN , HTTP_FORBIDDEN_S , p_html_content );
 	}
 	
-	if( STRCMP( p_env->p_config->error_pages.error_page_404 , != , "" ) )
+	if( STRCMP( p_config->error_pages.error_page_404 , != , "" ) )
 	{
 		char	*p_html_content = NULL ;
 		
-		nret = StringExpandEnvval( p_env->p_config->error_pages.error_page_404 , sizeof(p_env->p_config->error_pages.error_page_404) ) ;
+		nret = StringExpandEnvval( p_config->error_pages.error_page_404 , sizeof(p_config->error_pages.error_page_404) ) ;
 		if( nret )
 			return nret;
 		
-		p_html_content = StrdupEntireFile( p_env->p_config->error_pages.error_page_404 , NULL ) ;
+		p_html_content = StrdupEntireFile( p_config->error_pages.error_page_404 , NULL ) ;
 		if( p_html_content == NULL )
 			return -1;
 		
 		SetHttpStatus( HTTP_NOT_FOUND , HTTP_NOT_FOUND_S , p_html_content );
 	}
 	
-	if( STRCMP( p_env->p_config->error_pages.error_page_408 , != , "" ) )
+	if( STRCMP( p_config->error_pages.error_page_408 , != , "" ) )
 	{
 		char	*p_html_content = NULL ;
 		
-		nret = StringExpandEnvval( p_env->p_config->error_pages.error_page_408 , sizeof(p_env->p_config->error_pages.error_page_408) ) ;
+		nret = StringExpandEnvval( p_config->error_pages.error_page_408 , sizeof(p_config->error_pages.error_page_408) ) ;
 		if( nret )
 			return nret;
 		
-		p_html_content = StrdupEntireFile( p_env->p_config->error_pages.error_page_408 , NULL ) ;
+		p_html_content = StrdupEntireFile( p_config->error_pages.error_page_408 , NULL ) ;
 		if( p_html_content == NULL )
 			return -1;
 		
 		SetHttpStatus( HTTP_REQUEST_TIMEOUT , HTTP_REQUEST_TIMEOUT_S , p_html_content );
 	}
 	
-	if( STRCMP( p_env->p_config->error_pages.error_page_500 , != , "" ) )
+	if( STRCMP( p_config->error_pages.error_page_500 , != , "" ) )
 	{
 		char	*p_html_content = NULL ;
 		
-		nret = StringExpandEnvval( p_env->p_config->error_pages.error_page_500 , sizeof(p_env->p_config->error_pages.error_page_500) ) ;
+		nret = StringExpandEnvval( p_config->error_pages.error_page_500 , sizeof(p_config->error_pages.error_page_500) ) ;
 		if( nret )
 			return nret;
 		
-		p_html_content = StrdupEntireFile( p_env->p_config->error_pages.error_page_500 , NULL ) ;
+		p_html_content = StrdupEntireFile( p_config->error_pages.error_page_500 , NULL ) ;
 		if( p_html_content == NULL )
 			return -1;
 		
 		SetHttpStatus( HTTP_INTERNAL_SERVER_ERROR , HTTP_INTERNAL_SERVER_ERROR_S , p_html_content );
 	}
 	
-	if( STRCMP( p_env->p_config->error_pages.error_page_503 , != , "" ) )
+	if( STRCMP( p_config->error_pages.error_page_503 , != , "" ) )
 	{
 		char	*p_html_content = NULL ;
 		
-		nret = StringExpandEnvval( p_env->p_config->error_pages.error_page_503 , sizeof(p_env->p_config->error_pages.error_page_503) ) ;
+		nret = StringExpandEnvval( p_config->error_pages.error_page_503 , sizeof(p_config->error_pages.error_page_503) ) ;
 		if( nret )
 			return nret;
 		
-		p_html_content = StrdupEntireFile( p_env->p_config->error_pages.error_page_503 , NULL ) ;
+		p_html_content = StrdupEntireFile( p_config->error_pages.error_page_503 , NULL ) ;
 		if( p_html_content == NULL )
 			return -1;
 		
 		SetHttpStatus( HTTP_SERVICE_UNAVAILABLE , HTTP_SERVICE_UNAVAILABLE_S , p_html_content );
 	}
 	
-	if( STRCMP( p_env->p_config->error_pages.error_page_505 , != , "" ) )
+	if( STRCMP( p_config->error_pages.error_page_505 , != , "" ) )
 	{
 		char	*p_html_content = NULL ;
 		
-		nret = StringExpandEnvval( p_env->p_config->error_pages.error_page_505 , sizeof(p_env->p_config->error_pages.error_page_505) ) ;
+		nret = StringExpandEnvval( p_config->error_pages.error_page_505 , sizeof(p_config->error_pages.error_page_505) ) ;
 		if( nret )
 			return nret;
 		
-		p_html_content = StrdupEntireFile( p_env->p_config->error_pages.error_page_505 , NULL ) ;
+		p_html_content = StrdupEntireFile( p_config->error_pages.error_page_505 , NULL ) ;
 		if( p_html_content == NULL )
 			return -1;
 		
 		SetHttpStatus( HTTP_VERSION_NOT_SUPPORTED , HTTP_VERSION_NOT_SUPPORTED_S , p_html_content );
 	}
+	
+	/* 填充环境结构 */
+	p_env->worker_processes = p_config->worker_processes ;
+	p_env->cpu_affinity = p_config->cpu_affinity ;
+	p_env->accept_mutex = p_config->accept_mutex ;
+	p_env->limits__max_http_session_count = p_config->limits.max_http_session_count ;
+	p_env->limits__max_file_cache = p_config->limits.max_file_cache ;
+	p_env->tcp_options__nodelay = p_config->tcp_options.nodelay ;
+	p_env->tcp_options__nolinger = p_config->tcp_options.nolinger ;
+	p_env->http_options__timeout = p_config->http_options.timeout ;
+	p_env->http_options__compress_on = p_config->http_options.compress_on ;
+	p_env->http_options__forward_disable = p_config->http_options.forward_disable ;
 	
 	return 0;
 }
