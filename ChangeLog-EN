@@ -1,3 +1,6 @@
+0.7.2		2016-09-13	calvin
+		* Fixed a bug about processing directory index files and forward file type
+
 0.7.1		2016-09-12	calvin
 		* Optimize memory , drops to 30%
 
