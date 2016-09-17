@@ -155,6 +155,11 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		
 		b = GetHttpResponseBuffer(p_http_session->http) ;
 		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer [%d]bytes" , GetHttpBufferLength(b) );
+		b = GetHttpAppendBuffer(p_http_session->http) ;
+		if( b )
+		{
+			DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer [%d]bytes" , GetHttpBufferLength(b) );
+		}
 		
 		/* ×¢²áepollÐ´ÊÂ¼þ */
 		memset( & event , 0x00 , sizeof(struct epoll_event) );

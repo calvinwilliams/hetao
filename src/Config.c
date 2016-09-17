@@ -10,8 +10,8 @@
 
 struct HetaoEnv	*g_p_env = NULL ;
 
-char	__HETAO_VERSION_0_7_2[] = "0.7.2" ;
-char	*__HETAO_VERSION = __HETAO_VERSION_0_7_2 ;
+char	__HETAO_VERSION_0_7_3[] = "0.7.3" ;
+char	*__HETAO_VERSION = __HETAO_VERSION_0_7_3 ;
 
 char *strndup(const char *s, size_t n);
 

@@ -253,6 +253,7 @@ struct HttpSession
 	struct VirtualHost	*p_virtualhost ;
 	struct HttpUri		http_uri ;
 	struct HttpEnv		*http ;
+	struct HttpBuffer	*http_buf ;
 	SSL			*ssl ;
 	
 	int			forward_flags ;
@@ -367,6 +368,7 @@ struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_server );
 void SetHttpSessionUnused( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
 void SetHttpSessionUnused_05( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
 void SetHttpSessionUnused_02( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+int ReallocHttpSessionChanged( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session );
 
 int AddHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
 void RemoveHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );

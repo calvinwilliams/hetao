@@ -16,6 +16,8 @@ int HtmlCacheEventHander( struct HetaoEnv *p_env )
 	struct inotify_event	*p_event = NULL ;
 	struct HtmlCacheSession	*p_htmlcache_session = NULL ;
 	
+	int			nret = 0 ;
+	
 	memset( inotify_buffer , 0x00 , sizeof(inotify_buffer) );
 	nread = read( p_env->htmlcache_inotify_fd , inotify_buffer , sizeof(inotify_buffer)-1 ) ;
 	if( nread <= 0 )
@@ -38,6 +40,16 @@ int HtmlCacheEventHander( struct HetaoEnv *p_env )
 		if( p_htmlcache_session )
 		{
 			/* 发生了监控文件变动通知 */
+			nret = ReallocHttpSessionChanged( p_env , p_htmlcache_session ) ;
+			if( nret )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "ReallocHttpSessionChanged failed[%d] , errno[%d]" , nret , errno );
+				return nret;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "ReallocHttpSessionChanged ok" );
+			}
 			
 			RemoveHtmlCachePathfilenameTreeNode( p_env , p_htmlcache_session );
 			RemoveHtmlCacheWdTreeNode( p_env , p_htmlcache_session );

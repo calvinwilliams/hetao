@@ -351,6 +351,7 @@ _WINDLL_FUNC void *GetParserCustomPtrData( struct HttpEnv *e );
 /* global properties */
 _WINDLL_FUNC void ResetAllHttpStatus();
 _WINDLL_FUNC void SetHttpStatus( int status_code , char *status_code_s , char *status_text );
+_WINDLL_FUNC void GetHttpStatus( int status_code , char **pp_status_code_s , char **pp_status_text );
 
 /* http client advance api */
 _WINDLL_FUNC int RequestHttp( SOCKET sock , SSL *ssl , struct HttpEnv *e );
@@ -377,7 +378,7 @@ _WINDLL_FUNC int ReceiveHttpResponseNonblock( SOCKET sock , SSL *ssl , struct Ht
 _WINDLL_FUNC int ReceiveHttpRequestNonblock( SOCKET sock , SSL *ssl , struct HttpEnv *e );
 _WINDLL_FUNC int SendHttpResponseNonblock( SOCKET sock , SSL *ssl , struct HttpEnv *e );
 
-/* http test api */
+/* http parse api */
 _WINDLL_FUNC int ParseHttpResponse( struct HttpEnv *e );
 _WINDLL_FUNC int ParseHttpRequest( struct HttpEnv *e );
 
@@ -411,6 +412,7 @@ _WINDLL_FUNC int GetHttpBodyLen( struct HttpEnv *e );
 /* buffer operations */
 _WINDLL_FUNC struct HttpBuffer *GetHttpRequestBuffer( struct HttpEnv *e );
 _WINDLL_FUNC struct HttpBuffer *GetHttpResponseBuffer( struct HttpEnv *e );
+_WINDLL_FUNC struct HttpBuffer *GetHttpAppendBuffer( struct HttpEnv *e );
 
 _WINDLL_FUNC char *GetHttpBufferBase( struct HttpBuffer *b , int *p_data_len );
 _WINDLL_FUNC int GetHttpBufferLength( struct HttpBuffer *b );
@@ -422,26 +424,23 @@ _WINDLL_FUNC int StrcatHttpBuffer( struct HttpBuffer *b , char *str );
 _WINDLL_FUNC int StrcatfHttpBuffer( struct HttpBuffer *b , char *format , ... );
 _WINDLL_FUNC int StrcatvHttpBuffer( struct HttpBuffer *b , char *format , va_list valist );
 _WINDLL_FUNC int MemcatHttpBuffer( struct HttpBuffer *b , char *base , int len );
-
 _WINDLL_FUNC int StrcatHttpBufferFromFile( struct HttpBuffer *b , char *pathfilename , int *p_filesize );
 
+_WINDLL_FUNC int InitHttpBuffer( struct HttpBuffer *b , int buf_size );
+_WINDLL_FUNC int InitHttpBuffer2( struct HttpBuffer *b , int buf_size , char *base );
+_WINDLL_FUNC void ReformingHttpBuffer( struct HttpBuffer *b );
+_WINDLL_FUNC void ResetHttpBuffer( struct HttpBuffer *b );
+_WINDLL_FUNC void CleanHttpBuffer( struct HttpBuffer *b );
+_WINDLL_FUNC struct HttpBuffer *AllocHttpBuffer( int buf_size );
+_WINDLL_FUNC struct HttpBuffer *AllocHttpBuffer2( int buf_size , char *base );
+_WINDLL_FUNC int ReallocHttpBuffer( struct HttpBuffer *b , int new_buf_size );
+_WINDLL_FUNC void FreeHttpBuffer( struct HttpBuffer *b );
+_WINDLL_FUNC void SetHttpBufferPtr( struct HttpBuffer *b , int buf_size , char *base );
+_WINDLL_FUNC int DuplicateHttpBufferPtr( struct HttpBuffer *b );
+
+_WINDLL_FUNC void AppendHttpBuffer( struct HttpEnv *e , struct HttpBuffer *b );
+
 /* util */
-struct HttpUri
-{
-	char				*dirname_base ;
-	int				dirname_len ;
-	char				*filename_base ;
-	int				filename_len ;
-	char				*main_filename_base ;
-	int				main_filename_len ;
-	char				*ext_filename_base ;
-	int				ext_filename_len ;
-	char				*param_base ;
-	int				param_len ;
-} ;
-
-_WINDLL_FUNC int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct HttpUri *p_httpuri );
-
 #define SetHttpReuseAddr(_sock_) \
 	{ \
 		int	onoff = 1 ; \
@@ -507,6 +506,22 @@ _WINDLL_FUNC int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct 
 	}
 
 _WINDLL_FUNC char *TokenHttpHeaderValue( char *str , char **pp_token , int *p_token_len );
+
+struct HttpUri
+{
+	char				*dirname_base ;
+	int				dirname_len ;
+	char				*filename_base ;
+	int				filename_len ;
+	char				*main_filename_base ;
+	int				main_filename_len ;
+	char				*ext_filename_base ;
+	int				ext_filename_len ;
+	char				*param_base ;
+	int				param_len ;
+} ;
+
+_WINDLL_FUNC int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct HttpUri *p_httpuri );
 
 #ifdef __cplusplus
 }
