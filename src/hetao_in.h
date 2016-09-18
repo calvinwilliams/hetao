@@ -264,6 +264,8 @@ struct HttpSession
 	
 	int			timeout_timestamp ;
 	struct rb_node		timeout_rbnode ;
+	int			elapse_timestamp ;
+	struct rb_node		elapse_rbnode ;
 	
 	struct list_head	list ;
 } ;
@@ -292,6 +294,15 @@ struct HtmlCacheSession
 	struct list_head	list ;
 } ;
 
+/* IPLIMITS结构 */
+struct IpLimits
+{
+	unsigned int		ip ;
+	int			count ;
+	
+	struct hlist_node	iplimits_node ;
+} ;
+
 /* 工作进程共享信息结构 */
 struct ProcessInfo
 {
@@ -306,51 +317,56 @@ struct ProcessInfo
 /* 主环境结构 */
 struct HetaoEnv
 {
-	char				**argv ;
-	char				config_pathfilename[ 256 + 1 ] ;
-	int				log_level ;
+	char			**argv ;
+	char			config_pathfilename[ 256 + 1 ] ;
+	int			log_level ;
 	
-	int				worker_processes ;
-	int				cpu_affinity ;
-	int				accept_mutex ;
-	int				limits__max_http_session_count ;
-	int				limits__max_file_cache ;
-	int				tcp_options__nodelay ;
-	int				tcp_options__nolinger ;
-	int				http_options__timeout ;
-	int				http_options__compress_on ;
-	int				http_options__forward_disable ;
+	int			worker_processes ;
+	int			cpu_affinity ;
+	int			accept_mutex ;
+	int			limits__max_http_session_count ;
+	int			limits__max_file_cache ;
+	int			limits__max_connections_per_ip ;
+	int			tcp_options__nodelay ;
+	int			tcp_options__nolinger ;
+	int			http_options__timeout ;
+	int			http_options__elapse ;
+	int			http_options__compress_on ;
+	int			http_options__forward_disable ;
 	
-	struct passwd			*pwd ;
+	struct passwd		*pwd ;
 	
-	char				init_ssl_env_flag ;
+	char			init_ssl_env_flag ;
 	
-	int				process_info_shmid ;
-	struct ProcessInfo		*process_info_array ;
-	struct ProcessInfo		*p_this_process_info ;
-	int				process_info_index ;
+	int			process_info_shmid ;
+	struct ProcessInfo	*process_info_array ;
+	struct ProcessInfo	*p_this_process_info ;
+	int			process_info_index ;
 	
-	int				mimetype_hashsize ;
-	struct hlist_head		*mimetype_hash ;
+	int			mimetype_hashsize ;
+	struct hlist_head	*mimetype_hash ;
 	
-	struct DataSession		pipe_session ;
+	struct DataSession	pipe_session ;
 	
-	struct ListenSession		listen_session_list ;
-	int				listen_session_count ;
+	struct ListenSession	listen_session_list ;
+	int			listen_session_count ;
 	
-	pcre				*template_re ;
+	pcre			*template_re ;
 	
-	int				htmlcache_inotify_fd ;
-	struct HtmlCacheSession		htmlcache_session ;
-	struct HtmlCacheSession		htmlcache_session_list ;
-	int				htmlcache_session_count ;
-	struct rb_root			htmlcache_wd_rbtree ;
-	struct rb_root			htmlcache_pathfilename_rbtree ;
+	int			htmlcache_inotify_fd ;
+	struct HtmlCacheSession	htmlcache_session ;
+	struct HtmlCacheSession	htmlcache_session_list ;
+	int			htmlcache_session_count ;
+	struct rb_root		htmlcache_wd_rbtree ;
+	struct rb_root		htmlcache_pathfilename_rbtree ;
 	
-	int				http_session_used_count ;
-	struct HttpSession		http_session_unused_list ;
-	int				http_session_unused_count ;
-	struct rb_root			http_session_rbtree_used ;
+	int			http_session_used_count ;
+	struct HttpSession	http_session_unused_list ;
+	int			http_session_unused_count ;
+	struct rb_root		http_session_timeout_rbtree_used ;
+	struct rb_root		http_session_elapse_rbtree_used ;
+	
+	struct hlist_head	*iplimits_hash ;
 } ;
 
 extern struct HetaoEnv		*g_p_env ;
@@ -363,8 +379,13 @@ void CleanVirtualHostHash( struct ListenSession *p_listen_session );
 int PushVirtualHostHashNode( struct ListenSession *p_listen_session , struct VirtualHost *p_virtualhost );
 struct VirtualHost *QueryVirtualHostHashNode( struct ListenSession *p_listen_session , char *domain , int domain_len );
 
+int InitIpLimitsHash( struct HetaoEnv *p_env );
+void CleanIpLimitsHash( struct HetaoEnv *p_env );
+int IncreaseIpLimitsHashNode( struct HetaoEnv *p_env , unsigned int ip );
+int DecreaseIpLimitsHashNode( struct HetaoEnv *p_env , unsigned int ip );
+
 int IncreaseHttpSessions( struct HetaoEnv *p_server , int http_session_incre_count );
-struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_server );
+struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_server , unsigned int ip );
 void SetHttpSessionUnused( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
 void SetHttpSessionUnused_05( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
 void SetHttpSessionUnused_02( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
@@ -374,6 +395,11 @@ int AddHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSessio
 void RemoveHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
 int UpdateHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session , int timeout_timestamp );
 struct HttpSession *GetExpireHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server );
+
+int AddHttpSessionElapseTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+void RemoveHttpSessionElapseTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+int UpdateHttpSessionElapseTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session , int elapse_timestamp );
+struct HttpSession *GetExpireHttpSessionElapseTreeNode( struct HetaoEnv *p_server );
 
 int AddHtmlCacheWdTreeNode( struct HetaoEnv *p_server , struct HtmlCacheSession *p_htmlcache_session );
 struct HtmlCacheSession *QueryHtmlCacheWdTreeNode( struct HetaoEnv *p_server , int wd );

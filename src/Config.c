@@ -10,8 +10,8 @@
 
 struct HetaoEnv	*g_p_env = NULL ;
 
-char	__HETAO_VERSION_0_7_3[] = "0.7.3" ;
-char	*__HETAO_VERSION = __HETAO_VERSION_0_7_3 ;
+char	__HETAO_VERSION_0_8_0[] = "0.8.0" ;
+char	*__HETAO_VERSION = __HETAO_VERSION_0_8_0 ;
 
 char *strndup(const char *s, size_t n);
 
@@ -396,9 +396,11 @@ int LoadConfig( char *config_pathfilename , hetao_conf *p_config , struct HetaoE
 	p_env->accept_mutex = p_config->accept_mutex ;
 	p_env->limits__max_http_session_count = p_config->limits.max_http_session_count ;
 	p_env->limits__max_file_cache = p_config->limits.max_file_cache ;
+	p_env->limits__max_connections_per_ip = p_config->limits.max_connections_per_ip ;
 	p_env->tcp_options__nodelay = p_config->tcp_options.nodelay ;
 	p_env->tcp_options__nolinger = p_config->tcp_options.nolinger ;
 	p_env->http_options__timeout = p_config->http_options.timeout ;
+	p_env->http_options__elapse = p_config->http_options.elapse ;
 	p_env->http_options__compress_on = p_config->http_options.compress_on ;
 	p_env->http_options__forward_disable = p_config->http_options.forward_disable ;
 	

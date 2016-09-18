@@ -24,6 +24,7 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 	PREFIX_DSCLOG_hetao_conf "hetao_conf.user[%s]" NEWLINE_DSCLOG_hetao_conf , pst->user );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.limits.max_http_session_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->limits.max_http_session_count );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.limits.max_file_cache[%d]" NEWLINE_DSCLOG_hetao_conf , pst->limits.max_file_cache );
+		PREFIX_DSCLOG_hetao_conf "hetao_conf.limits.max_connections_per_ip[%d]" NEWLINE_DSCLOG_hetao_conf , pst->limits.max_connections_per_ip );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf._listen_count[%d]" NEWLINE_DSCLOG_hetao_conf , pst->_listen_count );
 		for( index[1] = 0 ; index[1] < pst->_listen_count ; index[1]++ )
 		{
@@ -60,6 +61,7 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.tcp_options.nolinger[%d]" NEWLINE_DSCLOG_hetao_conf , pst->tcp_options.nolinger );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.http_options.compress_on[%d]" NEWLINE_DSCLOG_hetao_conf , pst->http_options.compress_on );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.http_options.timeout[%d]" NEWLINE_DSCLOG_hetao_conf , pst->http_options.timeout );
+		PREFIX_DSCLOG_hetao_conf "hetao_conf.http_options.elapse[%d]" NEWLINE_DSCLOG_hetao_conf , pst->http_options.elapse );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.http_options.forward_disable[%d]" NEWLINE_DSCLOG_hetao_conf , pst->http_options.forward_disable );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.error_pages.error_page_400[%s]" NEWLINE_DSCLOG_hetao_conf , pst->error_pages.error_page_400 );
 		PREFIX_DSCLOG_hetao_conf "hetao_conf.error_pages.error_page_401[%s]" NEWLINE_DSCLOG_hetao_conf , pst->error_pages.error_page_401 );

@@ -76,7 +76,7 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 		}
 		
 		/* 获得一个新的会话结构 */
-		p_http_session = FetchHttpSessionUnused( p_env ) ;
+		p_http_session = FetchHttpSessionUnused( p_env , (unsigned int)(addr.sin_addr.s_addr) ) ;
 		if( p_http_session == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "FetchHttpSessionUnused failed , errno[%d]" , errno );

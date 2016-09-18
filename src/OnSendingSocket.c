@@ -20,6 +20,8 @@ int OnSendingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session
 	{
 		/* Ã»·¢Íê */
 		DebugLog( __FILE__ , __LINE__ , "SendHttpResponseNonblock return FASTERHTTP_INFO_TCP_SEND_WOULDBLOCK" );
+		
+		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->http_options__timeout );
 	}
 	else if( nret )
 	{
@@ -89,6 +91,9 @@ int OnSendingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session
 				ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
 				return -1;
 			}
+			
+			UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->http_options__timeout );
+			UpdateHttpSessionElapseTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->http_options__elapse );
 		}
 		else
 		{

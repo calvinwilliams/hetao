@@ -20,6 +20,8 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 	{
 		/* 没收完整 */
 		DebugLog( __FILE__ , __LINE__ , "ReceiveHttpRequestNonblock return FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER" );
+		
+		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->http_options__timeout );
 	}
 	else if( nret )
 	{
@@ -54,8 +56,6 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		struct HttpBuffer	*b = NULL ;
 		
 		DebugLog( __FILE__ , __LINE__ , "ReceiveHttpRequestNonblock done" );
-		
-		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->http_options__timeout );
 		
 		b = GetHttpRequestBuffer(p_http_session->http) ;
 		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpRequestBuffer [%d]bytes" , GetHttpBufferLength(b) );
@@ -171,6 +171,9 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
 			return -1;
 		}
+		
+		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->http_options__timeout );
+		UpdateHttpSessionElapseTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->http_options__elapse );
 		
 		/* 直接来一发 */
 		/*

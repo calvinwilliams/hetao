@@ -37,9 +37,11 @@ c_FILE		=	\
 			HtmlCacheWdTree.c \
 			HtmlCachePathfilenameTree.c \
 			HttpSessionTimeoutTree.c \
+			HttpSessionElapseTree.c \
 			LeastConnectionCountTree.c \
 			MimeTypeHash.c \
 			RewriteUrl.c \
+			IpLimitsHash.c \
 
 c_FILE2		=	\
 			LOGC.c \

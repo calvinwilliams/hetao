@@ -60,6 +60,7 @@ void CleanVirtualHostHash( struct ListenSession *p_listen_session )
 	}
 	
 	free( p_listen_session->virtualhost_hash );
+	p_listen_session->virtualhost_hash = NULL ;
 	
 	return;
 }

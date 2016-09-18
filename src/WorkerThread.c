@@ -141,6 +141,16 @@ void *WorkerThread( void *pv )
 				SetHttpSessionUnused( p_env , p_http_session );
 			}
 			
+			while(1)
+			{
+				p_http_session = GetExpireHttpSessionElapseTreeNode( p_env ) ;
+				if( p_http_session == NULL )
+					break;
+				
+				ErrorLog( __FILE__ , __LINE__ , "SESSION ELAPSE --------- client_ip[%s]" , p_http_session->netaddr.ip );
+				SetHttpSessionUnused( p_env , p_http_session );
+			}
+			
 			g_second_elapse = 0 ;
 		}
 		
