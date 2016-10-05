@@ -66,7 +66,9 @@ int WorkerProcess( void *pv )
 	
 	WorkerThread( pv );
 	
+#if ( defined _WIN32 )
 	TerminateThread( timer_thread_tid , 0 );
+#endif
 	
 	return 0;
 }

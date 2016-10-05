@@ -453,7 +453,7 @@ void *WorkerThread( void *pv )
 					struct DataSession	*p_data_session = NULL ;
 					
 					/* 关闭所有侦听 */
-					list_for_each_entry( p_listen_session , & (p_env->listen_session_list.list) , list )
+					list_for_each_entry( p_listen_session , & (p_env->listen_session_list.list) , struct ListenSession , list )
 					{
 						epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_listen_session->netaddr.sock , NULL );
 						close( p_listen_session->netaddr.sock );
@@ -489,11 +489,11 @@ void *WorkerThread( void *pv )
 						/* 管理进程发送给了重新打开日志信号 */
 						CloseLogFile();
 						
-						list_for_each_entry( p_listen_session , & (p_env->listen_session_list.list) , list )
+						list_for_each_entry( p_listen_session , & (p_env->listen_session_list.list) , struct ListenSession , list )
 						{
 							for( i = 0 ; i < p_listen_session->virtualhost_hashsize ; i++ )
 							{
-								hlist_for_each_entry( p_virtualhost , p_listen_session->virtualhost_hash+i , virtualhost_node )
+								hlist_for_each_entry( p_virtualhost , p_listen_session->virtualhost_hash+i , struct VirtualHost , virtualhost_node )
 								{
 									DebugLog( __FILE__ , __LINE__ , "close access_log[%s] #%d#" , p_virtualhost->access_log , p_virtualhost->access_log_fd );
 									close( p_virtualhost->access_log_fd );

@@ -22,7 +22,7 @@ int OnSendingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_sessio
 	
 #if ( defined __linux ) || ( defined __unix )
 	/* 发一把HTTP请求 */
-	nret = SendHttpRequestNonblock( p_http_session->forward_sock , p_http_session->forward_ssl , p_http_session->forward_http ) ;
+	nret = SendHttpRequestNonblock( p_http_session->forward_netaddr.sock , p_http_session->forward_ssl , p_http_session->forward_http ) ;
 	if( nret == FASTERHTTP_INFO_TCP_SEND_WOULDBLOCK )
 	{
 		/* 没发完 */
@@ -66,7 +66,7 @@ int OnSendingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_sessio
 		memset( & event , 0x00 , sizeof(struct epoll_event) );
 		event.events = EPOLLIN | EPOLLERR ;
 		event.data.ptr = p_http_session ;
-		nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->forward_sock , & event ) ;
+		nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->forward_netaddr.sock , & event ) ;
 		if( nret == 1 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , ERRNO );

@@ -19,6 +19,27 @@
 
 #include "rbtree.h"
 
+static void rb_set_parent(struct rb_node *rb, struct rb_node *p)
+{
+	rb->rb_parent_color = (rb->rb_parent_color & 3) | (unsigned long)p;
+}
+
+static void rb_set_color(struct rb_node *rb, int color)
+{
+	rb->rb_parent_color = (rb->rb_parent_color & ~1) | color;
+}
+
+#if 0
+static void rb_init_node(struct rb_node *rb)
+{
+	rb->rb_parent_color = 0;
+	rb->rb_right = NULL;
+	rb->rb_left = NULL;
+	RB_CLEAR_NODE(rb);
+}
+
+#endif
+
 static void __rb_rotate_left(struct rb_node *node, struct rb_root *root)
 {
 	struct rb_node *right = node->rb_right;
@@ -445,5 +466,13 @@ void rb_replace_node(struct rb_node *victim, struct rb_node *new,
 
 	/* Copy the pointers/colour from the victim to the replacement */
 	*new = *victim;
+}
+
+void rb_link_node(struct rb_node * node, struct rb_node * parent, struct rb_node ** rb_link)
+{
+	node->rb_parent_color = (unsigned long )parent;
+	node->rb_left = node->rb_right = NULL;
+
+	*rb_link = node;
 }
 

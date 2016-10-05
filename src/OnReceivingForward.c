@@ -21,7 +21,7 @@ int OnReceivingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 	struct epoll_event	event ;
 	
 	/* 收一把HTTP响应 */
-	nret = ReceiveHttpResponseNonblock( p_http_session->forward_sock , p_http_session->forward_ssl , p_http_session->forward_http ) ;
+	nret = ReceiveHttpResponseNonblock( p_http_session->forward_netaddr.sock , p_http_session->forward_ssl , p_http_session->forward_http ) ;
 	if( nret == FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER )
 	{
 		/* 没收完整 */

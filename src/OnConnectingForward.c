@@ -264,8 +264,10 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 	SOCKLEN_T		addr_len ;
 
 	struct HttpBuffer	*b = NULL ;
+#if ( defined _WIN32 )
 	WSABUF			buf ;
 	DWORD			dwFlags ;
+#endif
 	
 	char			*request_base = NULL ;
 	int			request_len ;
@@ -414,9 +416,9 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 		
 		SSL_set_fd( p_http_session->forward_ssl , p_http_session->forward_netaddr.sock );
 		
-		SetHttpBlock( p_http_session->forward_sock );
+		SetHttpBlock( p_http_session->forward_netaddr.sock );
 		nret = SSL_connect( p_http_session->forward_ssl ) ;
-		SetHttpNonblock( p_http_session->forward_sock );
+		SetHttpNonblock( p_http_session->forward_netaddr.sock );
 		if( nret == -1 )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "SSL_connect failed , errno[%d]" , ERRNO );

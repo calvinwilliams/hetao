@@ -190,7 +190,7 @@ void SetHttpSessionUnused_05( struct HetaoEnv *p_env , struct HttpSession *p_htt
 void SetHttpSessionUnused_02( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
 #if ( defined __linux ) || ( defined __unix )
-	epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->forward_sock , NULL ) ;
+	epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->forward_netaddr.sock , NULL ) ;
 #endif
 	p_http_session->p_forward_server->connection_count--;
 	CLOSESOCKET( p_http_session->forward_netaddr.sock );

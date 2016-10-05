@@ -1,5 +1,5 @@
 0.9.0		2016-10-07	calvin
-		* Transplant to WINDOWS based on IOCP
+		* 移植到WINDOWS，基于IOCP
 
 0.8.0		2016-09-19	calvin
 		* 新增IP限制连接数功能
