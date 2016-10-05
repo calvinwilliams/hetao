@@ -202,10 +202,12 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 				SetHttpSessionUnused_05( p_env , p_http_session );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
-		
+			
+#if ( defined _WIN32 )
 			p_http_session->forward_in_bio = BIO_new(BIO_s_mem()) ;
 			p_http_session->forward_out_bio = BIO_new(BIO_s_mem()) ;
 			SSL_set_bio( p_http_session->forward_ssl , p_http_session->forward_in_bio , p_http_session->forward_out_bio );
+#endif
 		}
 		
 		/* 复制HTTP请求 */
@@ -442,9 +444,11 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 			return 1;
 		}
 		
+#if ( defined _WIN32 )
 		p_http_session->forward_in_bio = BIO_new(BIO_s_mem()) ;
 		p_http_session->forward_out_bio = BIO_new(BIO_s_mem()) ;
 		SSL_set_bio( p_http_session->forward_ssl , p_http_session->forward_in_bio , p_http_session->forward_out_bio );
+#endif
 	}
 	
 	/* 复制HTTP请求 */

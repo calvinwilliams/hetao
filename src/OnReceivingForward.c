@@ -10,7 +10,9 @@
 
 int OnReceivingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
+#if ( defined _WIN32 )
 	struct HttpBuffer	*forward_b = NULL ;
+#endif
 	struct HttpBuffer	*b = NULL ;
 	char			*response_base = NULL ;
 	int			response_len ;
@@ -18,7 +20,6 @@ int OnReceivingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 	int			nret = 0 ;
 	
 #if ( defined __linux ) || ( defined __unix )
-	
 	struct epoll_event	event ;
 	
 	/* 收一把HTTP响应 */
