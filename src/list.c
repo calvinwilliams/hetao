@@ -233,7 +233,7 @@ void list_cut_position(struct list_head *list, struct list_head *head, struct li
 		__list_cut_position(list, head, entry);
 }
 
-static inline void __list_splice(const struct list_head *list,
+static void __list_splice(const struct list_head *list,
 				 struct list_head *prev,
 				 struct list_head *next)
 {
@@ -329,8 +329,8 @@ static void __hlist_del(struct hlist_node *n)
 void hlist_del(struct hlist_node *n)
 {
 	__hlist_del(n);
-	n->next = LIST_POISON1;
-	n->pprev = LIST_POISON2;
+	n->next = HLIST_POISON1;
+	n->pprev = HLIST_POISON2;
 }
 
 void hlist_del_init(struct hlist_node *n)

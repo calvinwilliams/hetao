@@ -2,6 +2,7 @@ hetaoÊÇÒ»¿î¹úÈËÔ­´´ÑÐ·¢µÄ¿ªÔ´µÄCÓïÑÔÊµÏÖµÄÖ§³Ö¸ß²¢·¢¡¢³¬¸ßÐÔÄÜWeb·þÎñÆ÷£¬Ê¹ÓÃ¸ßÐ
 hetaoÔÚ¿ªÆôKeep-AliveºÍgzipÑ¹ËõÊ±£¨ÏÖ´úä¯ÀÀÆ÷Ä¬ÈÏ¿ªÆô£©ÐÔÄÜ±ÈnginxÔ¼¿ì3±¶¡£
 
 hetao¹¦ÄÜ£º
+* Ö§³ÖÖ÷Á÷²Ù×÷ÏµÍ³Linux(»ùÓÚepoll)¡¢WINDOWS(»ùÓÚIOCP£¬ÔÝ²»Ö§³ÖHTTPS)
 * Ö§³ÖHTTP/1.0¡¢HTTP/1.1
 * Ö§³ÖÍ¨Ñ¶³¬Ê±¿ØÖÆ
 * Ö§³Ö¶àÕìÌý¶Ë¿Ú
@@ -23,6 +24,22 @@ hetao°²È«»úÖÆ£º
 * Ã¿¸öIPÁ¬½ÓÊýÏÞÖÆ
 * È«¾Ö×î´óÁ¬½ÓÊýÏÞÖÆ
 * ×î´óµ¥¸öÎÄ¼þ»º´æ´óÐ¡
+
+Ñ¡ÔñhetaoµÄÀíÓÉ£º 
+* hetaoÔÚLinuxÉÏµÄ×ÛºÏÐÔÄÜÔ¼±ÈNginx»¹Òª¿ìÈý±¶£¬ÓÈÆäÊÊºÏÖÐÐ¡ÐÍ¾²Ì¬ÎÄ¼þ
+* hetaoÊÇÖÚ¶à¿ªÔ´Web·þÎñÆ÷ÖÐÔÚWINDOWS°æ±¾Î¨Ò»È«²¿²ÉÓÃIOCPÄ£ÐÍ¡£ApacheµÄWINDOWS°æ±¾ÊÇ´«Í³µÄLeader-Follow¶à½ø³ÌÄ£ÐÍ£¬NginxÔòÊÇ¶àÏß³ÌselectÄ£ÐÍ£¨Íæ¾ß£¿£©
+* hetaoÅäÖÃÎÄ¼þ²ÉÓÃJSON±ê×¼¸ñÊ½£¬¼ò½àÒ×Ð´£¬¶øÇÒÖ§³ÖÐÐ×¢ÊÍºÍ¿é×¢ÊÍ¡£ApacheÅäÖÃ¸ñÊ½±È½Ï¸´ÔÓ£¬NginxÅäÖÃ¸ñÊ½¶à±ä¹ÖÒìÇÒ²»Ö§³Ö¿é×¢ÊÍ
+* hetaoÉè¼Æ¾«Á¶£¬´úÂë½á¹¹¼ò½àÒ×¶Á£¬´úÂëÁ¿Ð¡£¬Ò×ÓÚ¸ÄÔì
+* hetaoÊÇÖÐ¹ú¹ú²úÔ­´´£¬×÷Õß¿ÉËæÊ±ÁªÏµ½»Á÷<calvinwilliams@163.com>£¬ÖÐÎÄ×ÊÁÏ½Ï¶à
+
+Ô´ÂëÍÐ¹Ü£º
+http://git.oschina.net/calvinwilliams/hetao
+https://github.com/calvinwilliams/hetao
+
+×÷ÕßÓÊÏä£º
+calvinwilliams@163.com
+
+------------------------------------------------------------
 
 Ñ¹²â½áÂÛ£º
 ÔÚ¿ªÆôKeep-AliveºÍgzipÑ¹Ëõ¡¢ÖÐÐÍÎÄ¼þ£¨Ô¼3.3KB£©µÄ³¡¾°ÏÂ£¬hetao±Ènginx×ã×ã¿ìÁË½ü3±¶ ^_^

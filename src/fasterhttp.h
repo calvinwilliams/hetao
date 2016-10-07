@@ -19,16 +19,17 @@ extern "C" {
 #include <fcntl.h>
 #include <stdarg.h>
 
-#if ( defined _WIN32 )
-#include <winsock2.h>
-#include <windows.h>
-#elif ( defined __unix ) || ( defined __linux__ )
+#if ( defined __unix ) || ( defined __linux__ )
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+#elif ( defined _WIN32 )
+#include <winsock2.h>
+#include <mswsock.h>
+#include <windows.h>
 #endif
 
 char *strcasestr(const char *haystack, const char *needle);
@@ -65,8 +66,8 @@ char *strcasestr(const char *haystack, const char *needle);
 
 #ifndef STRICMP
 #if ( defined _WIN32 )
-#define STRICMP(_a_,_C_,_b_) ( stricmp(_a_,_b_) _C_ 0 )
-#define STRNICMP(_a_,_C_,_b_,_n_) ( strnicmp(_a_,_b_,_n_) _C_ 0 )
+#define STRICMP(_a_,_C_,_b_) ( _stricmp(_a_,_b_) _C_ 0 )
+#define STRNICMP(_a_,_C_,_b_,_n_) ( _strnicmp(_a_,_b_,_n_) _C_ 0 )
 #elif ( defined __unix ) || ( defined _AIX ) || ( defined __linux__ )
 #define STRICMP(_a_,_C_,_b_) ( strcasecmp(_a_,_b_) _C_ 0 )
 #define STRNICMP(_a_,_C_,_b_,_n_) ( strncasecmp(_a_,_b_,_n_) _C_ 0 )
@@ -96,9 +97,17 @@ char *strcasestr(const char *haystack, const char *needle);
 #endif
 
 #if ( defined _WIN32 )
+#define ERRNO		GetLastError()
+#define EWOULDBLOCK	WSAEWOULDBLOCK
+#define ECONNABORTED	WSAECONNABORTED
+#define EINPROGRESS	WSAEINPROGRESS
+#define ECONNRESET	WSAECONNRESET
+#define ENOTCONN	WSAENOTCONN
+#define EISCONN		WSAEISCONN
 #define SOCKLEN_T	int
 #define CLOSESOCKET	closesocket
 #elif ( defined __unix ) || ( defined __linux__ )
+#define ERRNO		errno
 #define SOCKET		int
 #define SOCKLEN_T	socklen_t
 #define CLOSESOCKET	close
@@ -416,6 +425,7 @@ _WINDLL_FUNC struct HttpBuffer *GetHttpAppendBuffer( struct HttpEnv *e );
 
 _WINDLL_FUNC char *GetHttpBufferBase( struct HttpBuffer *b , int *p_data_len );
 _WINDLL_FUNC int GetHttpBufferLength( struct HttpBuffer *b );
+_WINDLL_FUNC int GetHttpBufferSize( struct HttpBuffer *b );
 
 _WINDLL_FUNC int StrcpyHttpBuffer( struct HttpBuffer *b , char *str );
 _WINDLL_FUNC int StrcpyfHttpBuffer( struct HttpBuffer *b , char *format , ... );
@@ -439,6 +449,13 @@ _WINDLL_FUNC void SetHttpBufferPtr( struct HttpBuffer *b , int buf_size , char *
 _WINDLL_FUNC int DuplicateHttpBufferPtr( struct HttpBuffer *b );
 
 _WINDLL_FUNC void AppendHttpBuffer( struct HttpEnv *e , struct HttpBuffer *b );
+
+_WINDLL_FUNC void OffsetHttpBufferFillPtr( struct HttpBuffer *b , int offset );
+_WINDLL_FUNC int GetHttpBufferLengthFilled( struct HttpBuffer *b );
+_WINDLL_FUNC int GetHttpBufferLengthUnfilled( struct HttpBuffer *b );
+_WINDLL_FUNC void OffsetHttpBufferProcessPtr( struct HttpBuffer *b , int offset );
+_WINDLL_FUNC int GetHttpBufferLengthProcessed( struct HttpBuffer *b );
+_WINDLL_FUNC int GetHttpBufferLengthUnprocessed( struct HttpBuffer *b );
 
 /* util */
 #define SetHttpReuseAddr(_sock_) \
@@ -497,6 +514,7 @@ _WINDLL_FUNC void AppendHttpBuffer( struct HttpEnv *e , struct HttpBuffer *b );
 		setsockopt( _sock_ , SOL_SOCKET , SO_LINGER , (void*) & lg , sizeof(struct linger) ); \
 	}
 
+#if ( defined __linux ) || ( defined __unix )
 #define SetHttpCloseExec(_sock_) \
 	{ \
 		int	val ; \
@@ -504,7 +522,9 @@ _WINDLL_FUNC void AppendHttpBuffer( struct HttpEnv *e , struct HttpBuffer *b );
 		val |= FD_CLOEXEC ; \
 		fcntl( _sock_ , F_SETFD , val ); \
 	}
-
+#elif ( defined _WIN32 )
+#define SetHttpCloseExec(_sock_)
+#endif
 _WINDLL_FUNC char *TokenHttpHeaderValue( char *str , char **pp_token , int *p_token_len );
 
 struct HttpUri

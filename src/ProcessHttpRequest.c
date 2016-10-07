@@ -24,7 +24,7 @@ static int CompressData( char *html_content , int html_content_len , int compres
 	nret = deflateInit2( &stream , Z_BEST_COMPRESSION , Z_DEFLATED , compress_algorithm , MAX_MEM_LEVEL , Z_DEFAULT_STRATEGY ) ;
 	if( nret != Z_OK )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "deflateInit2 failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "deflateInit2 failed , errno[%d]" , ERRNO );
 		return HTTP_INTERNAL_SERVER_ERROR;
 	}
 	
@@ -33,7 +33,7 @@ static int CompressData( char *html_content , int html_content_len , int compres
 	out_base = (Bytef *)malloc( out_len+1 ) ;
 	if( out_base == NULL )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 		deflateEnd( &stream );
 		return HTTP_INTERNAL_SERVER_ERROR;
 	}
@@ -45,7 +45,7 @@ static int CompressData( char *html_content , int html_content_len , int compres
 	nret = deflate( &stream , Z_FINISH ) ;
 	if( nret != Z_OK && nret != Z_STREAM_END )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 		free( out_base );
 		deflateEnd( &stream );
 		return HTTP_INTERNAL_SERVER_ERROR;
@@ -59,7 +59,10 @@ static int CompressData( char *html_content , int html_content_len , int compres
 
 int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_session , char *pathname , char *filename , int filename_len )
 {
+#if ( defined __linux ) || ( defined __unix )
 	struct epoll_event	event ;
+#elif ( defined _WIN32 )
+#endif
 	
 	struct MimeType		*p_mimetype = NULL ;
 	
@@ -81,7 +84,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 	nret = SplitHttpUri( pathname , filename , filename_len , & (p_http_session->http_uri) ) ;
 	if( nret )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "SplitHttpUri[%s][%.*s] failed[%d] , errno[%d]" , pathname , filename_len , filename , nret , errno );
+		ErrorLog( __FILE__ , __LINE__ , "SplitHttpUri[%s][%.*s] failed[%d] , errno[%d]" , pathname , filename_len , filename , nret , ERRNO );
 		return HTTP_NOT_FOUND;
 	}
 	
@@ -100,6 +103,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 				nret = ConnectForwardServer( p_env , p_http_session ) ;
 				if( nret == HTTP_OK )
 				{
+#if ( defined __linux ) || ( defined __unix )
 					/* 暂禁原连接事件 */
 					memset( & event , 0x00 , sizeof(struct epoll_event) );
 					event.events = EPOLLRDHUP | EPOLLERR ;
@@ -107,21 +111,22 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 					nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
 					if( nret == -1 )
 					{
-						ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
+						ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , ERRNO );
 						return -1;
 					}
+#endif
 					
 					return 0;
 				}
 				else
 				{
-					ErrorLog( __FILE__ , __LINE__ , "ConnectForwardServer failed[%d] , errno[%d]" , nret , errno );
+					ErrorLog( __FILE__ , __LINE__ , "ConnectForwardServer failed[%d] , errno[%d]" , nret , ERRNO );
 					return HTTP_SERVICE_UNAVAILABLE;
 				}
 			}
 			else
 			{
-				ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , errno );
+				ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , ERRNO );
 				return HTTP_SERVICE_UNAVAILABLE;
 			}
 		}
@@ -129,7 +134,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 	
 	/* 组装URL */
 	memset( pathfilename , 0x00 , sizeof(pathfilename) );
-	snprintf( pathfilename , sizeof(pathfilename)-1 , "%s%.*s" , pathname , filename_len , filename );
+	SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s%.*s" , pathname , filename_len , filename );
 	if( strstr( pathfilename , ".." ) )
 	{
 		WarnLog( __FILE__ , __LINE__ , "URI[%s%.*s] include \"..\"" , pathname , filename_len , filename );
@@ -142,44 +147,44 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 	p_bak = p_htmlcache_session ;
 	if( p_htmlcache_session == NULL )
 	{
-		/* 缓存里没有 */
-		FILE		*fp = NULL ;
-		
-		/* 打开文件，或目录 */
-		fp = fopen( pathfilename , "r" ) ;
-		if( fp == NULL )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "fopen[%s] failed , errno[%d]" , pathfilename , errno );
-			return HTTP_NOT_FOUND;
-		}
-		else
-		{
-			DebugLog( __FILE__ , __LINE__ , "fopen[%s] ok" , pathfilename );
-		}
-		
 		p_htmlcache_session = & htmlcache_session ;
 		memset( p_htmlcache_session , 0x00 , sizeof(struct HtmlCacheSession) );
 				
 		p_htmlcache_session->type = DATASESSION_TYPE_HTMLCACHE ;
 		
-		p_htmlcache_session->pathfilename = strdup( pathfilename ) ;
+		p_htmlcache_session->pathfilename = STRDUP( pathfilename ) ;
 		if( p_htmlcache_session->pathfilename == NULL )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "strdup failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "strdup failed , errno[%d]" , ERRNO );
 			return HTTP_INTERNAL_SERVER_ERROR;
 		}
 		p_htmlcache_session->pathfilename_len = pathfilename_len ;
 		
 		/* 判断是目录还是文件 */
-		fstat( fileno(fp) , & (p_htmlcache_session->st) );
+		STAT( pathfilename , & (p_htmlcache_session->st) );
 		if( ! STAT_DIRECTORY(p_htmlcache_session->st) )
 		{
+			/* 缓存里没有 */
+			FILE		*fp = NULL ;
+			
+			/* 打开文件，或目录 */
+			fp = fopen( pathfilename , "rb" ) ;
+			if( fp == NULL )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "fopen[%s] failed , errno[%d]" , pathfilename , ERRNO );
+				return HTTP_NOT_FOUND;
+			}
+			else
+			{
+				DebugLog( __FILE__ , __LINE__ , "fopen[%s] ok" , pathfilename );
+			}
+			
 			/* 是文件，读取整个文件 */
 			p_htmlcache_session->html_content_len = (int)(p_htmlcache_session->st.st_size) ;
 			p_htmlcache_session->html_content = (char*)malloc( p_htmlcache_session->html_content_len+1 ) ;
 			if( p_htmlcache_session->html_content == NULL )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 				free( p_htmlcache_session->pathfilename );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
@@ -187,7 +192,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 			nret = fread( p_htmlcache_session->html_content , p_htmlcache_session->html_content_len , 1 , fp ) ;
 			if( nret != 1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "fread failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "fread failed , errno[%d]" , ERRNO );
 				free( p_htmlcache_session->pathfilename );
 				free( p_htmlcache_session->html_content );
 				return HTTP_INTERNAL_SERVER_ERROR;
@@ -196,11 +201,11 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 			{
 				DebugLog( __FILE__ , __LINE__ , "fread[%s] ok , [%d]bytes" , p_htmlcache_session->pathfilename , p_htmlcache_session->html_content_len );
 			}
+			
+			/* 关闭文件，或目录 */
+			fclose( fp );
+			DebugLog( __FILE__ , __LINE__ , "fclose[%s] ok" , p_htmlcache_session->pathfilename );
 		}
-		
-		/* 关闭文件，或目录 */
-		fclose( fp );
-		DebugLog( __FILE__ , __LINE__ , "fclose[%s] ok" , p_htmlcache_session->pathfilename );
 	}
 	else
 	{
@@ -233,7 +238,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 		}
 		if( index_filename == NULL )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "wwwroot[%s] dirname[%.*s] index[%s] failed , errno[%d]" , p_http_session->p_virtualhost->wwwroot , index_filename_len , index_filename , p_http_session->p_virtualhost->index , errno );
+			ErrorLog( __FILE__ , __LINE__ , "wwwroot[%s] dirname[%.*s] index[%s] failed , errno[%d]" , p_http_session->p_virtualhost->wwwroot , index_filename_len , index_filename , p_http_session->p_virtualhost->index , ERRNO );
 			return HTTP_NOT_FOUND;
 		}
 	}
@@ -243,7 +248,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 		nret = FormatHttpResponseStartLine( HTTP_OK , p_http_session->http , 0 ) ;
 		if( nret )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
+			ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , ERRNO );
 			return HTTP_INTERNAL_SERVER_ERROR;
 		}
 		
@@ -271,7 +276,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 						nret = CompressData( p_htmlcache_session->html_content , p_htmlcache_session->html_content_len , HTTP_COMPRESSALGORITHM_GZIP , &(p_htmlcache_session->html_gzip_content) , &(p_htmlcache_session->html_gzip_content_len) ) ;
 						if( nret )
 						{
-							ErrorLog( __FILE__ , __LINE__ , "CompressBuffer HTTP_COMPRESSALGORITHM_GZIP failed , errno[%d]" , errno );
+							ErrorLog( __FILE__ , __LINE__ , "CompressBuffer HTTP_COMPRESSALGORITHM_GZIP failed , errno[%d]" , ERRNO );
 							return nret;
 						}
 						else
@@ -297,7 +302,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 									, CheckHttpKeepAlive(p_http_session->http)?"Connection: Keep-Alive\r\n":"" ) ;
 					if( nret )
 					{
-						ErrorLog( __FILE__ , __LINE__ , "StrcatfHttpBuffer failed , errno[%d]" , errno );
+						ErrorLog( __FILE__ , __LINE__ , "StrcatfHttpBuffer failed , errno[%d]" , ERRNO );
 						return HTTP_INTERNAL_SERVER_ERROR;
 					}
 					
@@ -307,7 +312,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 						nret = MemcatHttpBuffer( b , p_htmlcache_session->html_gzip_content , p_htmlcache_session->html_gzip_content_len ) ;
 						if( nret )
 						{
-							ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , errno );
+							ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , ERRNO );
 							return HTTP_INTERNAL_SERVER_ERROR;
 						}
 						*/
@@ -325,7 +330,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 						nret = CompressData( p_htmlcache_session->html_content , p_htmlcache_session->html_content_len , HTTP_COMPRESSALGORITHM_DEFLATE , &(p_htmlcache_session->html_deflate_content) , &(p_htmlcache_session->html_deflate_content_len) ) ;
 						if( nret )
 						{
-							ErrorLog( __FILE__ , __LINE__ , "CompressBuffer HTTP_COMPRESSALGORITHM_DEFLATE failed , errno[%d]" , errno );
+							ErrorLog( __FILE__ , __LINE__ , "CompressBuffer HTTP_COMPRESSALGORITHM_DEFLATE failed , errno[%d]" , ERRNO );
 							return nret;
 						}
 						else
@@ -351,7 +356,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 									, CheckHttpKeepAlive(p_http_session->http)?"Connection: Keep-Alive\r\n":"" ) ;
 					if( nret )
 					{
-						ErrorLog( __FILE__ , __LINE__ , "StrcatfHttpBuffer failed , errno[%d]" , errno );
+						ErrorLog( __FILE__ , __LINE__ , "StrcatfHttpBuffer failed , errno[%d]" , ERRNO );
 						return HTTP_INTERNAL_SERVER_ERROR;
 					}
 					
@@ -361,7 +366,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 						nret = MemcatHttpBuffer( b , p_htmlcache_session->html_deflate_content , p_htmlcache_session->html_deflate_content_len ) ;
 						if( nret )
 						{
-							ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , errno );
+							ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , ERRNO );
 							return HTTP_INTERNAL_SERVER_ERROR;
 						}
 						*/
@@ -387,7 +392,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 							, CheckHttpKeepAlive(p_http_session->http)?"Connection: Keep-Alive\r\n":"" ) ;
 			if( nret )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "StrcatfHttpBuffer failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "StrcatfHttpBuffer failed , errno[%d]" , ERRNO );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
 			
@@ -397,7 +402,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 				nret = MemcatHttpBuffer( b , p_htmlcache_session->html_content , p_htmlcache_session->html_content_len ) ;
 				if( nret )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , errno );
+					ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , ERRNO );
 					return HTTP_INTERNAL_SERVER_ERROR;
 				}
 				*/
@@ -415,15 +420,16 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 			p_htmlcache_session = (struct HtmlCacheSession *)malloc( sizeof(struct HtmlCacheSession) ) ;
 			if( p_htmlcache_session == NULL )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 				return -1;
 			}
 			memcpy( p_htmlcache_session , & htmlcache_session , sizeof(struct HtmlCacheSession) );
 			
+#if ( defined __linux ) || ( defined __unix )
 			p_htmlcache_session->wd = inotify_add_watch( p_env->htmlcache_inotify_fd , p_htmlcache_session->pathfilename , IN_MODIFY | IN_CLOSE_WRITE | IN_DELETE_SELF | IN_MOVE_SELF ) ; 
 			if( p_htmlcache_session->wd == -1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "inotify_add_watch[%s] failed , errno[%d]" , p_htmlcache_session->pathfilename , errno );
+				ErrorLog( __FILE__ , __LINE__ , "inotify_add_watch[%s] failed , errno[%d]" , p_htmlcache_session->pathfilename , ERRNO );
 				FreeHtmlCacheSession( p_htmlcache_session , 1 );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
@@ -431,12 +437,17 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 			{
 				DebugLog( __FILE__ , __LINE__ , "inotify_add_watch[%s] ok , wd[%d]" , p_htmlcache_session->pathfilename , p_htmlcache_session->wd );
 			}
+#elif ( defined _WIN32 )
+#endif
 			
 			nret = AddHtmlCacheWdTreeNode( p_env , p_htmlcache_session ) ;
 			if( nret )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "AddHtmlCacheWdTreeNode failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "AddHtmlCacheWdTreeNode failed , errno[%d]" , ERRNO );
+#if ( defined __linux ) || ( defined __unix )
 				inotify_rm_watch( p_env->htmlcache_inotify_fd , p_htmlcache_session->wd );
+#elif ( defined _WIN32 )
+#endif
 				FreeHtmlCacheSession( p_htmlcache_session , 1 );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
@@ -444,9 +455,12 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 			nret = AddHtmlCachePathfilenameTreeNode( p_env , p_htmlcache_session ) ;
 			if( nret )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "AddHtmlCachePathfilenameTreeNode[%.*s] failed , errno[%d]" , p_htmlcache_session->pathfilename_len , p_htmlcache_session->pathfilename , errno );
+				ErrorLog( __FILE__ , __LINE__ , "AddHtmlCachePathfilenameTreeNode[%.*s] failed , errno[%d]" , p_htmlcache_session->pathfilename_len , p_htmlcache_session->pathfilename , ERRNO );
 				RemoveHtmlCacheWdTreeNode( p_env , p_htmlcache_session );
+#if ( defined __linux ) || ( defined __unix )
 				inotify_rm_watch( p_env->htmlcache_inotify_fd , p_htmlcache_session->wd );
+#elif ( defined _WIN32 )
+#endif
 				FreeHtmlCacheSession( p_htmlcache_session , 1 );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}

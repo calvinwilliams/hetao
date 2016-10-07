@@ -10,102 +10,20 @@
 #define _H_HETAO_IN_
 
 #if ( defined __linux ) || ( defined __unix )
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/epoll.h>
-#ifndef EPOLLRDHUP
-#define EPOLLRDHUP	0x2000
-#endif
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/inotify.h>
-#include <signal.h>
-#include <sys/wait.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/sem.h>
-#include <dirent.h>
-#include <pwd.h>
-#include "pcre.h"
-#define __USE_GNU
-#include <sched.h>
-#include <pthread.h>
-#include <dlfcn.h>
-#define _VSNPRINTF			vsnprintf
-#define _SNPRINTF			snprintf
-#define _CLOSESOCKET			close
-#define _CLOSESOCKET2(_fd1_,_fd2_)	close(_fd1_),close(_fd2_);
-#define _ERRNO				errno
-#define _EWOULDBLOCK			EWOULDBLOCK
-#define _ECONNABORTED			ECONNABORTED
-#define _EINPROGRESS			EINPROGRESS
-#define _ECONNRESET			ECONNRESET
-#define _ENOTCONN			ENOTCONN
-#define _EISCONN			EISCONN
-#define _SOCKLEN_T			socklen_t
-#define _GETTIMEOFDAY(_tv_)		gettimeofday(&(_tv_),NULL)
-#define _LOCALTIME(_tt_,_stime_) \
-	localtime_r(&(_tt_),&(_stime_));
-#define _ACCESS				access
-#define _ACCESS_MODE			R_OK
 #elif ( defined _WIN32 )
-#include <stdio.h>
-#include <time.h>
-#include <sys/types.h>
-#include <io.h>
-#include <windows.h>
-#define _VSNPRINTF			_vsnprintf
-#define _SNPRINTF			_snprintf
-#define _CLOSESOCKET			closesocket
-#define _CLOSESOCKET2(_fd1_,_fd2_)	closesocket(_fd1_),closesocket(_fd2_);
-#define _ERRNO				GetLastError()
-#define _EWOULDBLOCK			WSAEWOULDBLOCK
-#define _ECONNABORTED			WSAECONNABORTED
-#define _EINPROGRESS			WSAEINPROGRESS
-#define _ECONNRESET			WSAECONNRESET
-#define _ENOTCONN			WSAENOTCONN
-#define _EISCONN			WSAEISCONN
-#define _SOCKLEN_T			int
-#define _GETTIMEOFDAY(_tv_) \
-	{ \
-		SYSTEMTIME stNow ; \
-		GetLocalTime( & stNow ); \
-		(_tv_).tv_usec = stNow.wMilliseconds * 1000 ; \
-		time( & ((_tv_).tv_sec) ); \
-	}
-#define _SYSTEMTIME2TIMEVAL_USEC(_syst_,_tv_) \
-		(_tv_).tv_usec = (_syst_).wMilliseconds * 1000 ;
-#define _SYSTEMTIME2TM(_syst_,_stime_) \
-		(_stime_).tm_year = (_syst_).wYear - 1900 ; \
-		(_stime_).tm_mon = (_syst_).wMonth - 1 ; \
-		(_stime_).tm_mday = (_syst_).wDay ; \
-		(_stime_).tm_hour = (_syst_).wHour ; \
-		(_stime_).tm_min = (_syst_).wMinute ; \
-		(_stime_).tm_sec = (_syst_).wSecond ;
-#define _LOCALTIME(_tt_,_stime_) \
-	{ \
-		SYSTEMTIME	stNow ; \
-		GetLocalTime( & stNow ); \
-		_SYSTEMTIME2TM( stNow , (_stime_) ); \
-	}
-#define _ACCESS				_access
-#define _ACCESS_MODE			04
 #endif
 
-#include "fasterhttp.h"
 #include "LOGC.h"
+#include "fasterhttp.h"
+
 #include "rbtree.h"
 #include "list.h"
 
+#include "pcre.h"
+
 #include "IDL_hetao_conf.dsc.h"
+
+char *strndup (const char *s, size_t n);
 
 #define HETAO_LISTEN_SOCKFDS			"HETAO_LISTEN_SOCKFDS"	/* 环境变量名，用于优雅重启时传给下一辈侦听信息 */
 #define HETAO_LOG_PATHFILENAME			"HETAO_LOG_PATHFILENAME"	/* 环境变量名，用于优雅重启时传给下一辈日志文件名 */
@@ -115,12 +33,6 @@
 #define INIT_HTTP_SESSION_COUNT			100	/* 初始化HTTP通讯会话数量 */
 #define INCRE_HTTP_SESSION_COUNT		100	/* 每次补充的HTTP通讯会话数量 */
 #define MAX_HTTP_SESSION_COUNT_DEFAULT		100000	/* 缺省的最大HTTP通讯会话数量 */
-
-/* 会话类型 */
-#define DATASESSION_TYPE_PIPE			'P'
-#define DATASESSION_TYPE_LISTEN			'L'
-#define DATASESSION_TYPE_HTMLCACHE		'C'
-#define DATASESSION_TYPE_HTTP			'A'
 
 #define SIGNAL_REOPEN_LOG			'L' /* 重新打开日志 */
 
@@ -148,8 +60,16 @@ struct NetAddress
 } ;
 
 /* 泛数据会话结构，type为其它会话做预判断 */
+#define DATASESSION_TYPE_PIPE		'P'
+#define DATASESSION_TYPE_LISTEN		'L'
+#define DATASESSION_TYPE_HTTP		'H'
+#define DATASESSION_TYPE_HTMLCACHE	'F'
+
 struct DataSession
 {
+#if ( defined _WIN32 )
+	OVERLAPPED		overlapped ;
+#endif
 	char			type ;
 } ;
 
@@ -189,6 +109,11 @@ struct ForwardServer
 
 struct VirtualHost
 {
+#if ( defined _WIN32 )
+	OVERLAPPED		overlapped ;
+#endif
+	char			type ;
+	
 	char			domain[ sizeof( ((hetao_conf*)0)->listen[0].website[0].domain ) ] ;
 	char			wwwroot[ sizeof( ((hetao_conf*)0)->listen[0].website[0].wwwroot ) ] ;
 	char			index[ sizeof( ((hetao_conf*)0)->listen[0].website[0].index ) ] ;
@@ -208,14 +133,30 @@ struct VirtualHost
 	SSL_CTX			*forward_ssl_ctx ;
 	
 	struct hlist_node	virtualhost_node ;
+
+#if ( defined _WIN32 )
+	HANDLE			directory_changes_handler ;
+	char			directory_changes_buffer[ MAX_PATH * 2 + 1 ] ;
+	/*
+	char			directory_changes_buffer_mulitbyte[ MAX_PATH + 1 ] ;
+	*/
+#endif
 } ;
 
 /* 侦听会话结构 */
 struct ListenSession
 {
+#if ( defined _WIN32 )
+	OVERLAPPED		overlapped ;
+#endif
 	char			type ;
 	
 	struct NetAddress	netaddr ;
+#if ( defined _WIN32 )
+	LPFN_ACCEPTEX		lpfnAcceptEx ;
+	SOCKET			accept_socket ;
+	char			acceptex_buf[ (sizeof(struct sockaddr_in)+16) * 2 ] ;
+#endif
 	
 	SSL_CTX			*ssl_ctx ;
 	
@@ -240,15 +181,22 @@ struct MimeType
 } ;
 
 /* HTTP通讯会话 */
+#define HTTPSESSION_FLAGS_RECEIVING	0x0001
+#define HTTPSESSION_FLAGS_SENDING	0x0002
+
 #define HTTPSESSION_FLAGS_CONNECTING	0x0001
 #define HTTPSESSION_FLAGS_CONNECTED	0x0002
 
 struct HttpSession
 {
+#if ( defined _WIN32 )
+	OVERLAPPED		overlapped ;
+#endif
 	char			type ;
 	
 	struct ListenSession	*p_listen_session ;
 	
+	int			flag ;
 	struct NetAddress	netaddr ;
 	struct VirtualHost	*p_virtualhost ;
 	struct HttpUri		http_uri ;
@@ -258,7 +206,8 @@ struct HttpSession
 	
 	int			forward_flags ;
 	struct ForwardServer	*p_forward_server ;
-	SOCKET			forward_sock ;
+	//SOCKET			forward_sock ;
+	struct NetAddress	forward_netaddr ;
 	struct HttpEnv		*forward_http ;
 	SSL			*forward_ssl ;
 	
@@ -273,13 +222,16 @@ struct HttpSession
 /* 网页缓存会话结构 */
 struct HtmlCacheSession
 {
+#if ( defined _WIN32 )
+	OVERLAPPED		overlapped ;
+#endif
 	char			type ;
 	
 	char			*pathfilename ;
 	int			pathfilename_len ;
 	struct rb_node		htmlcache_pathfilename_rbnode ;
 	
-	struct stat		st ;
+	struct STAT		st ;
 	
 	char			*html_content ;
 	int			html_content_len ;
@@ -308,7 +260,13 @@ struct ProcessInfo
 {
 	int			pipe[2] ;
 	
+#if ( defined __linux ) || ( defined __unix )
 	pid_t			pid ;
+#elif ( defined _WIN32 )
+	HANDLE			handle ;
+	STARTUPINFO		si ;
+	PROCESS_INFORMATION	pi ;
+#endif
 	
 	int			epoll_fd ;
 	int			epoll_nfds ;
@@ -319,11 +277,12 @@ struct HetaoEnv
 {
 	char			**argv ;
 	char			config_pathfilename[ 256 + 1 ] ;
-	int			log_level ;
 	
 	int			worker_processes ;
 	int			cpu_affinity ;
 	int			accept_mutex ;
+	char			error_log[ sizeof( ((hetao_conf*)0)->error_log ) ] ;
+	int			log_level ;
 	int			limits__max_http_session_count ;
 	int			limits__max_file_cache ;
 	int			limits__max_connections_per_ip ;
@@ -338,10 +297,19 @@ struct HetaoEnv
 	
 	char			init_ssl_env_flag ;
 	
+#if ( defined __linux ) || ( defined __unix )
 	int			process_info_shmid ;
+#elif ( defined _WIN32 )
+	HANDLE			process_info_shmid ;
+#endif
 	struct ProcessInfo	*process_info_array ;
 	struct ProcessInfo	*p_this_process_info ;
 	int			process_info_index ;
+	
+#if ( defined _WIN32 )
+	HANDLE			iocp ;
+	LPFN_CONNECTEX		lpfnConnectEx ;
+#endif
 	
 	int			mimetype_hashsize ;
 	struct hlist_head	*mimetype_hash ;
@@ -353,7 +321,9 @@ struct HetaoEnv
 	
 	pcre			*template_re ;
 	
+#if ( defined __linux ) || ( defined __unix )
 	int			htmlcache_inotify_fd ;
+#endif
 	struct HtmlCacheSession	htmlcache_session ;
 	struct HtmlCacheSession	htmlcache_session_list ;
 	int			htmlcache_session_count ;
@@ -384,37 +354,37 @@ void CleanIpLimitsHash( struct HetaoEnv *p_env );
 int IncreaseIpLimitsHashNode( struct HetaoEnv *p_env , unsigned int ip );
 int DecreaseIpLimitsHashNode( struct HetaoEnv *p_env , unsigned int ip );
 
-int IncreaseHttpSessions( struct HetaoEnv *p_server , int http_session_incre_count );
-struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_server , unsigned int ip );
-void SetHttpSessionUnused( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-void SetHttpSessionUnused_05( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-void SetHttpSessionUnused_02( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+int IncreaseHttpSessions( struct HetaoEnv *p_env , int http_session_incre_count );
+struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_env , unsigned int ip );
+void SetHttpSessionUnused( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+void SetHttpSessionUnused_05( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+void SetHttpSessionUnused_02( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
 int ReallocHttpSessionChanged( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session );
 
-int AddHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-void RemoveHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-int UpdateHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session , int timeout_timestamp );
-struct HttpSession *GetExpireHttpSessionTimeoutTreeNode( struct HetaoEnv *p_server );
+int AddHttpSessionTimeoutTreeNode( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+void RemoveHttpSessionTimeoutTreeNode( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+int UpdateHttpSessionTimeoutTreeNode( struct HetaoEnv *p_env , struct HttpSession *p_http_session , int timeout_timestamp );
+struct HttpSession *GetExpireHttpSessionTimeoutTreeNode( struct HetaoEnv *p_env );
 
-int AddHttpSessionElapseTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-void RemoveHttpSessionElapseTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-int UpdateHttpSessionElapseTreeNode( struct HetaoEnv *p_server , struct HttpSession *p_http_session , int elapse_timestamp );
-struct HttpSession *GetExpireHttpSessionElapseTreeNode( struct HetaoEnv *p_server );
+int AddHttpSessionElapseTreeNode( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+void RemoveHttpSessionElapseTreeNode( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+int UpdateHttpSessionElapseTreeNode( struct HetaoEnv *p_env , struct HttpSession *p_http_session , int elapse_timestamp );
+struct HttpSession *GetExpireHttpSessionElapseTreeNode( struct HetaoEnv *p_env );
 
-int AddHtmlCacheWdTreeNode( struct HetaoEnv *p_server , struct HtmlCacheSession *p_htmlcache_session );
-struct HtmlCacheSession *QueryHtmlCacheWdTreeNode( struct HetaoEnv *p_server , int wd );
-void RemoveHtmlCacheWdTreeNode( struct HetaoEnv *p_server , struct HtmlCacheSession *p_htmlcache_session );
+int AddHtmlCacheWdTreeNode( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session );
+struct HtmlCacheSession *QueryHtmlCacheWdTreeNode( struct HetaoEnv *p_env , int wd );
+void RemoveHtmlCacheWdTreeNode( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session );
 
-int AddHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_server , struct HtmlCacheSession *p_htmlcache_session );
-struct HtmlCacheSession *QueryHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_server , char *pathfilename );
-void RemoveHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_server , struct HtmlCacheSession *p_htmlcache_session );
+int AddHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session );
+struct HtmlCacheSession *QueryHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , char *pathfilename );
+void RemoveHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session );
 
 int RegexReplaceString( pcre *pattern_re , char *url , int url_len , pcre *template_re , char *new_url , int *p_new_url_len , int new_url_size );
 
-int InitMimeTypeHash( struct HetaoEnv *p_server , hetao_conf *p_conf );
-void CleanMimeTypeHash( struct HetaoEnv *p_server );
-int PushMimeTypeHashNode( struct HetaoEnv *p_server , struct MimeType *p_mimetype );
-struct MimeType *QueryMimeTypeHashNode( struct HetaoEnv *p_server , char *type , int type_len );
+int InitMimeTypeHash( struct HetaoEnv *p_env , hetao_conf *p_conf );
+void CleanMimeTypeHash( struct HetaoEnv *p_env );
+int PushMimeTypeHashNode( struct HetaoEnv *p_env , struct MimeType *p_mimetype );
+struct MimeType *QueryMimeTypeHashNode( struct HetaoEnv *p_env , char *type , int type_len );
 
 int AddLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
 void RemoveLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
@@ -423,18 +393,18 @@ struct ForwardServer *TravelMinLeastConnectionCountTreeNode( struct VirtualHost 
 
 void FreeHtmlCacheSession( struct HtmlCacheSession *p_htmlcache_session , int free_flag );
 
-int OnSendingSocket( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-int OnReceivingSocket( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-int OnAcceptingSocket( struct HetaoEnv *p_server , struct ListenSession *p_listen_session );
+int OnSendingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_session );
 
-int DirectoryWatcherEventHander( struct HetaoEnv *p_server );
-int HtmlCacheEventHander( struct HetaoEnv *p_server );
+int DirectoryWatcherEventHander( struct HetaoEnv *p_env , struct VirtualHost *p_virtualhost );
+int HtmlCacheEventHander( struct HetaoEnv *p_env );
 
 int LoadConfig( char *config_pathfilename , hetao_conf *p_conf , struct HetaoEnv *p_env );
 
-int InitEnvirment( struct HetaoEnv *p_server , hetao_conf *p_conf );
-void CleanEnvirment( struct HetaoEnv *p_server );
-int SaveListenSockets( struct HetaoEnv *p_server );
+int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf );
+void CleanEnvirment( struct HetaoEnv *p_env );
+int SaveListenSockets( struct HetaoEnv *p_env );
 int LoadOldListenSockets( struct NetAddress **pp_old_netaddr_array , int *p_old_netaddr_array_count );
 struct NetAddress *GetListener( struct NetAddress *old_netaddr_array , int old_netaddr_array_count , char *ip , int port );
 int CloseUnusedOldListeners( struct NetAddress *p_old_netaddr_array , int old_netaddr_array );
@@ -445,7 +415,12 @@ int MonitorProcess( void *pv );
 
 int WorkerProcess( void *pv );
 void *WorkerThread( void *pv );
+
+#if ( defined __linux ) || ( defined __unix )
 void *TimerThread( void *pv );
+#elif ( defined _WIN32 )
+DWORD WINAPI TimerThread( LPVOID lpParameter );
+#endif
 
 int BindDaemonServer( int (* ServerMain)( void *pv ) , void *pv );
 int AccessDirectoryExist( char *pathdirname );
@@ -453,13 +428,23 @@ int AccessFileExist( char *pathfilename );
 int BindCpuAffinity( int processor_no );
 unsigned long CalcHash( char *str , int len );
 
-int ProcessHttpRequest( struct HetaoEnv *p_server , struct HttpSession *p_http_session , char *pathname , char *filename , int filename_len );
+int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_session , char *pathname , char *filename , int filename_len );
 
-int SelectForwardAddress( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-int ConnectForwardServer( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-int OnConnectingForward( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-int OnSendingForward( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
-int OnReceivingForward( struct HetaoEnv *p_server , struct HttpSession *p_http_session );
+int SelectForwardAddress( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+int OnSendingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+int OnReceivingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+
+#if ( defined _WIN32 )
+
+int InstallService( char *pszConfigPathfilename );
+int UninstallService();
+int RunService();
+void WINAPI ServiceCtrlHandler( DWORD dwControl );
+void WINAPI ServiceMainProc( DWORD argc , LPTSTR *argv );
+
+#endif
 
 #endif
 

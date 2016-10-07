@@ -17,7 +17,7 @@ int InitVirtualHostHash( struct ListenSession *p_listen_session , int count )
 	p_listen_session->virtualhost_hash = (struct hlist_head *)malloc( sizeof(struct hlist_head) * p_listen_session->virtualhost_hashsize ) ;
 	if( p_listen_session->virtualhost_hash == NULL )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 		return -1;
 	}
 	memset( p_listen_session->virtualhost_hash , 0x00 , sizeof(struct hlist_head) * p_listen_session->virtualhost_hashsize );
@@ -26,7 +26,6 @@ int InitVirtualHostHash( struct ListenSession *p_listen_session , int count )
 	{
 		INIT_HLIST_HEAD( p_hlist_head );
 	}
-	
 	
 	return 0;
 }
@@ -46,7 +45,7 @@ void CleanVirtualHostHash( struct ListenSession *p_listen_session )
 		{
 			hlist_del( curr );
 			p_virtualhost = container_of(curr,struct VirtualHost,virtualhost_node) ;
-			list_for_each_entry_safe( p_rewrite_url , p_next_rewrite_url , & (p_virtualhost->rewrite_url_list.rewriteurl_node) , rewriteurl_node )
+			list_for_each_entry_safe( p_rewrite_url , p_next_rewrite_url , & (p_virtualhost->rewrite_url_list.rewriteurl_node) , struct RewriteUrl , rewriteurl_node )
 			{
 				free( p_rewrite_url->pattern_re );
 			}
@@ -55,6 +54,9 @@ void CleanVirtualHostHash( struct ListenSession *p_listen_session )
 				SSL_CTX_free( p_virtualhost->forward_ssl_ctx );
 				p_virtualhost->forward_ssl_ctx = NULL ;
 			}
+#if ( defined _WIN32 )
+			CloseHandle( p_virtualhost->directory_changes_handler );
+#endif
 			free( p_virtualhost );
 		}
 	}
@@ -74,7 +76,7 @@ int PushVirtualHostHashNode( struct ListenSession *p_listen_session , struct Vir
 	index = CalcHash(p_virtualhost->domain,p_virtualhost->domain_len) % (p_listen_session->virtualhost_hashsize) ;
 	DebugLog( __FILE__ , __LINE__ , "VirtualHost[%d]=CalcHash[%.*s][%d]" , index , p_virtualhost->domain_len , p_virtualhost->domain , p_listen_session->virtualhost_hashsize );
 	p_hlist_head = p_listen_session->virtualhost_hash + index ;
-	hlist_for_each_entry( p , p_hlist_head , virtualhost_node )
+	hlist_for_each_entry( p , p_hlist_head , struct VirtualHost , virtualhost_node )
 	{
 		if( STRCMP( p->domain , == , p_virtualhost->domain ) )
 			return 1;
@@ -92,7 +94,7 @@ struct VirtualHost *QueryVirtualHostHashNode( struct ListenSession *p_listen_ses
 	
 	index = CalcHash(domain,domain_len) % (p_listen_session->virtualhost_hashsize) ;
 	p_hlist_head = p_listen_session->virtualhost_hash + index ;
-	hlist_for_each_entry( p , p_hlist_head , virtualhost_node )
+	hlist_for_each_entry( p , p_hlist_head , struct VirtualHost , virtualhost_node )
 	{
 		if( p->domain_len == domain_len && STRNCMP( p->domain , == , domain , domain_len ) )
 			return p;

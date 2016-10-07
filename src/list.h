@@ -28,8 +28,8 @@ struct list_head {
 #define READ_ONCE(_var_)		(_var_)
 
 #define POISON_POINTER_DELTA 0
-#define LIST_POISON1  ((void *) 0x100 + POISON_POINTER_DELTA)
-#define LIST_POISON2  ((void *) 0x200 + POISON_POINTER_DELTA)
+#define LIST_POISON1  ((struct list_head *) 0x100 + POISON_POINTER_DELTA)
+#define LIST_POISON2  ((struct list_head *) 0x200 + POISON_POINTER_DELTA)
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
 
@@ -103,16 +103,16 @@ void list_splice_tail_init(struct list_head *list, struct list_head *head);
  * @p_node:	the type * to cursor
  * @member:	the name of the list_head within the struct.
  */
-#define list_next_entry(p_node, member) \
-	list_entry((p_node)->member.next, typeof(*(p_node)), member)
+#define list_next_entry(p_node, type, member) \
+	list_entry((p_node)->member.next, type, member)
 
 /**
  * list_prev_entry - get the prev element in list
  * @p_node:	the type * to cursor
  * @member:	the name of the list_head within the struct.
  */
-#define list_prev_entry(p_node, member) \
-	list_entry((p_node)->member.prev, typeof(*(p_node)), member)
+#define list_prev_entry(p_node, type, member) \
+	list_entry((p_node)->member.prev, type, member)
 
 /**
  * list_for_each	-	iterate over a list
@@ -157,10 +157,10 @@ void list_splice_tail_init(struct list_head *list, struct list_head *head);
  * @head:	the head for your list.
  * @member:	the name of the list_head within the struct.
  */
-#define list_for_each_entry(p_node, head, member)				\
-	for (p_node = list_first_entry(head, typeof(*p_node), member);	\
+#define list_for_each_entry(p_node, head, type, member)				\
+	for (p_node = list_first_entry(head, type, member);	\
 	     &p_node->member != (head);					\
-	     p_node = list_next_entry(p_node, member))
+	     p_node = list_next_entry(p_node, type, member))
 
 /**
  * list_for_each_entry_reverse - iterate backwards over list of given type.
@@ -231,11 +231,11 @@ void list_splice_tail_init(struct list_head *list, struct list_head *head);
  * @head:	the head for your list.
  * @member:	the name of the list_head within the struct.
  */
-#define list_for_each_entry_safe(p_node, n, head, member)			\
-	for (p_node = list_first_entry(head, typeof(*p_node), member),	\
-		n = list_next_entry(p_node, member);			\
+#define list_for_each_entry_safe(p_node, n, head, type, member)			\
+	for (p_node = list_first_entry(head, type, member),	\
+		n = list_next_entry(p_node, type, member);			\
 	     &p_node->member != (head); 					\
-	     p_node = n, n = list_next_entry(n, member))
+	     p_node = n, n = list_next_entry(n, type, member))
 
 /**
  * list_for_each_entry_safe_continue - continue list iteration safe against removal
@@ -314,6 +314,9 @@ struct hlist_node {
 	struct hlist_node *next, **pprev;
 };
 
+#define HLIST_POISON1  ((struct hlist_node *) 0x100 + POISON_POINTER_DELTA)
+#define HLIST_POISON2  ((struct hlist_node **) 0x200 + POISON_POINTER_DELTA)
+
 #define HLIST_HEAD_INIT { .first = NULL }
 #define HLIST_HEAD(name) struct hlist_head name = {  .first = NULL }
 #define INIT_HLIST_HEAD(ptr) ((ptr)->first = NULL)
@@ -331,19 +334,16 @@ int hlist_fake(struct hlist_node *h);
 int hlist_is_singular_node(struct hlist_node *n, struct hlist_head *h);
 void hlist_move_list(struct hlist_head *old, struct hlist_head *new);
 
-#define hlist_entry(ptr, type, member) container_of(ptr,type,member)
+#define hlist_entry(ptr, type, member) ((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
 
 #define hlist_for_each(pos, head) \
 	for (pos = (head)->first; pos ; pos = pos->next)
 
 #define hlist_for_each_safe(pos, n, head) \
-	for (pos = (head)->first; pos && ({ n = pos->next; 1; }); \
+	for (pos = (head)->first; pos && ( n = pos->next ); \
 	     pos = n)
 
-#define hlist_entry_safe(ptr, type, member) \
-	({ typeof(ptr) ____ptr = (ptr); \
-	   ____ptr ? hlist_entry(____ptr, type, member) : NULL; \
-	})
+#define hlist_entry_safe(ptr, type, member) (ptr==NULL?NULL:hlist_entry(ptr, type, member))
 
 /**
  * hlist_for_each_entry	- iterate over list of given type
@@ -351,10 +351,10 @@ void hlist_move_list(struct hlist_head *old, struct hlist_head *new);
  * @head:	the head for your list.
  * @member:	the name of the hlist_node within the struct.
  */
-#define hlist_for_each_entry(pos, head, member)				\
-	for (pos = hlist_entry_safe((head)->first, typeof(*(pos)), member);\
+#define hlist_for_each_entry(pos, head, type, member)			\
+	for (pos = hlist_entry_safe((head)->first, type, member);	\
 	     pos;							\
-	     pos = hlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
+	     pos = hlist_entry_safe((pos)->member.next, type, member))
 
 /**
  * hlist_for_each_entry_continue - iterate over a hlist continuing after current point

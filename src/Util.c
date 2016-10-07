@@ -9,6 +9,7 @@
 #include "hetao_in.h"
 
 /* 把当前进程转换为守护进程 */
+#if ( defined __linux ) || ( defined __unix )
 int BindDaemonServer( int (* ServerMain)( void *pv ) , void *pv )
 {
 	int	pid;
@@ -47,18 +48,24 @@ int BindDaemonServer( int (* ServerMain)( void *pv ) , void *pv )
 	
 	return ServerMain( pv );
 }
+#elif ( defined _WIN32 )
+#endif
 
 /* 检查目录存在 */
 int AccessDirectoryExist( char *pathdirname )
 {
-	struct stat	st ;
+	struct STAT	st ;
 	int		nret = 0 ;
 	
-	nret = stat( pathdirname , & st ) ;
+	nret = STAT( pathdirname , & st ) ;
 	if( nret == -1 )
 		return -1;
 	
+#if ( defined __linux ) || ( defined __unix )
 	if( S_ISDIR(st.st_mode) )
+#elif ( defined _WIN32 )
+	if( _S_IFDIR & st.st_mode )
+#endif
 		return 1;
 	else
 		return 0;
@@ -69,13 +76,14 @@ int AccessFileExist( char *pathfilename )
 {
 	int		nret = 0 ;
 	
-	nret = _ACCESS( pathfilename , _ACCESS_MODE ) ;
+	nret = ACCESS( pathfilename , ACCESS_MODE ) ;
 	if( nret == -1 )
 		return -1;
 	
 	return 1;
 }
 
+#if ( defined __linux ) || ( defined __unix )
 /* 当前进程绑定CPU */
 int BindCpuAffinity( int processor_no )
 {
@@ -88,6 +96,8 @@ int BindCpuAffinity( int processor_no )
 	nret = sched_setaffinity( 0 , sizeof(cpu_mask) , & cpu_mask ) ;
 	return nret;
 }
+#elif ( defined _WIN32 )
+#endif
 
 /* 哈希函数 */
 unsigned long CalcHash( char *str , int len )
@@ -104,3 +114,20 @@ unsigned long CalcHash( char *str , int len )
 	return ul;
 }
 
+#if ( defined _WIN32 )
+char *strndup (const char *s, size_t n)
+{
+  char *result;
+  size_t len = strlen (s);
+
+  if (n < len)
+    len = n;
+
+  result = (char *) malloc (len + 1);
+  if (!result)
+    return 0;
+
+  result[len] = '\0';
+  return (char *) memcpy (result, s, len);
+}
+#endif

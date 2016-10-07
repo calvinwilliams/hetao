@@ -10,7 +10,10 @@
 
 int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
+#if ( defined __linux ) || ( defined __unix )
 	struct epoll_event	event ;
+	
+	struct HttpBuffer	*b = NULL ;
 	
 	int			nret = 0 ;
 	
@@ -38,10 +41,69 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		}
 		else
 		{
-			ErrorLog( __FILE__ , __LINE__ , "ReceiveHttpRequestNonblock failed[%d] , errno[%d]" , nret , errno );
+			ErrorLog( __FILE__ , __LINE__ , "ReceiveHttpRequestNonblock failed[%d] , errno[%d]" , nret , ERRNO );
 			return 1;
 		}
 	}
+#elif ( defined _WIN32 )
+	struct HttpBuffer	*b = NULL ;
+	WSABUF			buf ;
+	DWORD			dwFlags ;
+	
+	int			nret = 0 ;
+	
+	/* 解析一把HTTP请求 */
+	nret = ParseHttpRequest( p_http_session->http ) ;
+	if( nret == FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER )
+	{
+		/* 没收完整 */
+		DebugLog( __FILE__ , __LINE__ , "ParseHttpRequest return FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER" );
+		
+		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , (int)GETSECONDSTAMP + p_env->http_options__timeout );
+		
+		/* 继续投递接收事件 */
+		b = GetHttpRequestBuffer( p_http_session->http );
+		buf.buf = GetHttpBufferBase( b , NULL ) + GetHttpBufferLength( b ) ;
+		buf.len = GetHttpBufferSize( b ) - 1 - GetHttpBufferLength( b ) ;
+		dwFlags = 0 ;
+		nret = WSARecv( p_http_session->netaddr.sock , & buf , 1 , NULL , & dwFlags , & (p_http_session->overlapped) , NULL ) ;
+		if( nret == SOCKET_ERROR )
+		{
+			if( WSAGetLastError() == ERROR_IO_PENDING )
+			{
+				DebugLog( __FILE__ , __LINE__ , "WSARecv io pending" );
+			}
+			else
+			{
+				ErrorLog( __FILE__ , __LINE__ , "WSARecv failed , errno[%d]" , ERRNO );
+				return 1;
+			}
+		}
+		else
+		{
+			InfoLog( __FILE__ , __LINE__ , "WSARecv ok" );
+		}
+	}
+	else if( nret )
+	{
+		/* 接收报错了 */
+		if( nret == FASTERHTTP_ERROR_TCP_CLOSE )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "http socket closed detected" );
+			return 1;
+		}
+		else if( nret == FASTERHTTP_INFO_TCP_CLOSE )
+		{
+			InfoLog( __FILE__ , __LINE__ , "http socket closed detected" );
+			return 1;
+		}
+		else
+		{
+			ErrorLog( __FILE__ , __LINE__ , "ParseHttpRequest failed[%d] , errno[%d]" , nret , ERRNO );
+			return 1;
+		}
+	}
+#endif
 	else
 	{
 		/* 收满一个HTTP请求 */
@@ -52,8 +114,6 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		char			*p_url = NULL ;
 		char			url[ 4096 + 1 ] ;
 		int			url_len ;
-		
-		struct HttpBuffer	*b = NULL ;
 		
 		DebugLog( __FILE__ , __LINE__ , "ReceiveHttpRequestNonblock done" );
 		
@@ -84,7 +144,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 			else
 			{
 				p_url = NULL ;
-				list_for_each_entry( p_rewrite_url , & (p_http_session->p_virtualhost->rewrite_url_list.rewriteurl_node) , rewriteurl_node )
+				list_for_each_entry( p_rewrite_url , & (p_http_session->p_virtualhost->rewrite_url_list.rewriteurl_node) , struct RewriteUrl , rewriteurl_node )
 				{
 					strcpy( url , p_rewrite_url->template );
 					url_len = p_rewrite_url->template_len ;
@@ -98,7 +158,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 					}
 					else if( nret == -1 )
 					{
-						ErrorLog( __FILE__ , __LINE__ , "RegexReplaceString[%.*s][%s][%s] failed[%d] , errno[%d]" , GetHttpHeaderLen_URI(p_http_session->http) , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , p_rewrite_url->pattern , p_rewrite_url->template , nret , errno );
+						ErrorLog( __FILE__ , __LINE__ , "RegexReplaceString[%.*s][%s][%s] failed[%d] , errno[%d]" , GetHttpHeaderLen_URI(p_http_session->http) , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , p_rewrite_url->pattern , p_rewrite_url->template , nret , ERRNO );
 						return HTTP_BAD_REQUEST;
 					}
 					else
@@ -113,6 +173,11 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 				}
 			}
 			
+#if ( defined _WIN32 )
+			if( p_url[url_len-1] == '/' || p_url[url_len-1] == '\\' )
+				url_len--;
+#endif
+			
 			/* 处理HTTP请求 */
 			nret = ProcessHttpRequest( p_env , p_http_session , p_http_session->p_virtualhost->wwwroot , p_url , url_len ) ;
 			if( nret == HTTP_OK )
@@ -125,7 +190,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 				nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
 				if( nret )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
+					ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , ERRNO );
 					return 1;
 				}
 			}
@@ -148,7 +213,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 			nret = FormatHttpResponseStartLine( HTTP_FORBIDDEN , p_http_session->http , 1 ) ;
 			if( nret )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
+				ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , ERRNO );
 				return 1;
 			}
 		}
@@ -161,6 +226,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 			DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer [%d]bytes" , GetHttpBufferLength(b) );
 		}
 		
+#if ( defined __linux ) || ( defined __unix )
 		/* 注册epoll写事件 */
 		memset( & event , 0x00 , sizeof(struct epoll_event) );
 		event.events = EPOLLOUT | EPOLLERR ;
@@ -168,12 +234,38 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
 		if( nret == -1 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , ERRNO );
 			return -1;
 		}
+#elif ( defined _WIN32 )
+		p_http_session->flag = HTTPSESSION_FLAGS_SENDING ;
 		
-		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->http_options__timeout );
-		UpdateHttpSessionElapseTreeNode( p_env , p_http_session , GETSECONDSTAMP + p_env->http_options__elapse );
+		/* 投递发送事件 */
+		b = GetHttpResponseBuffer( p_http_session->http );
+		buf.buf = GetHttpBufferBase( b , NULL ) ;
+		buf.len = GetHttpBufferLength( b ) ;
+		dwFlags = 0 ;
+		nret = WSASend( p_http_session->netaddr.sock , & buf , 1 , NULL , dwFlags , & (p_http_session->overlapped) , NULL ) ;
+		if( nret == SOCKET_ERROR )
+		{
+			if( WSAGetLastError() == ERROR_IO_PENDING )
+			{
+				DebugLog( __FILE__ , __LINE__ , "WSASend io pending" );
+			}
+			else
+			{
+				ErrorLog( __FILE__ , __LINE__ , "WSASend failed , errno[%d]" , ERRNO );
+				return 1;
+			}
+		}
+		else
+		{
+			InfoLog( __FILE__ , __LINE__ , "WSASend ok" );
+		}
+#endif
+		
+		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , (int)GETSECONDSTAMP + p_env->http_options__timeout );
+		UpdateHttpSessionElapseTreeNode( p_env , p_http_session , (int)GETSECONDSTAMP + p_env->http_options__elapse );
 		
 		/* 直接来一发 */
 		/*
@@ -187,7 +279,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 			}
 			else if( nret < 0 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "OnSendingSocket failed[%d] , errno[%d]" , nret , errno );
+				ErrorLog( __FILE__ , __LINE__ , "OnSendingSocket failed[%d] , errno[%d]" , nret , ERRNO );
 				return nret;
 			}
 			else

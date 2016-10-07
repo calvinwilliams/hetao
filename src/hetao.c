@@ -8,10 +8,17 @@
 
 #include "hetao_in.h"
 
+#if ( defined _WIN32 )
+static	WSADATA		wsd;
+#endif
+
 static void usage()
 {
 	printf( "hetao v%s build %s %s\n" , __HETAO_VERSION , __DATE__ , __TIME__ );
 	printf( "USAGE : hetao hetao.conf\n" );
+#if ( defined _WIN32 )
+	printf( "        hetao hetao.conf [--install-service | --uninstall-service ]\n" );
+#endif
 	return;
 }
 
@@ -22,16 +29,34 @@ int main( int argc , char *argv[] )
 	
 	int			nret = 0 ;
 	
-	umask(0);
+	/* 设置标准输出无缓冲 */
+	setbuf( stdout , NULL );
 	
-	if( argc == 1 + 1 )
+	/* 设置随机数种子 */
+	srand( (unsigned)time(NULL) );
+	
+	/* 设置文件掩码0 */
+	UMASK(0);
+	
+	if( argc == 1 + 1 || ( argc == 1 + 2 && ( STRCMP( argv[2] , == , "--service" ) || STRCMP( argv[2] , == , "--child" ) ) ) )
 	{
+#if ( defined __linux ) || ( defined __unix )
+#elif ( defined _WIN32 )
+#else
+		printf( "不支持的操作系统\n" );
+		return 1;
+#endif
+
+#if ( defined _WIN32 )
+		if( WSAStartup( MAKEWORD(2,2) , & wsd ) != 0 )
+			return 1;
+#endif
 		/* 申请环境结构内存 */
 		p_env = (struct HetaoEnv *)malloc( sizeof(struct HetaoEnv) ) ;
 		if( p_env == NULL )
 		{
 			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
-				printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
+				printf( "alloc failed[%d] , errno[%d]\n" , nret , ERRNO );
 			return 1;
 		}
 		memset( p_env , 0x00 , sizeof(struct HetaoEnv) );
@@ -43,7 +68,7 @@ int main( int argc , char *argv[] )
 		if( p_conf == NULL )
 		{
 			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
-				printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
+				printf( "alloc failed[%d] , errno[%d]\n" , nret , ERRNO );
 			return 1;
 		}
 		memset( p_conf , 0x00 , sizeof(hetao_conf) );
@@ -75,7 +100,7 @@ int main( int argc , char *argv[] )
 		/* 重新设置主日志 */
 		CloseLogFile();
 		
-		SetLogFile( p_conf->error_log );
+		SetLogFile( p_env->error_log );
 		SetLogLevel( p_env->log_level );
 		SETPID
 		SETTID
@@ -93,11 +118,61 @@ int main( int argc , char *argv[] )
 			return -nret;
 		}
 		
+#if ( defined __linux ) || ( defined __unix )
 		return -BindDaemonServer( & MonitorProcess , p_env );
-		/*
-		return -MonitorProcess( p_env );
-		*/
+#elif ( defined _WIN32 )
+		if( argc == 1 + 2 && STRCMP( argv[2] , == , "--service" ) )
+		{
+			return -RunService();
+		}
+		else if( argc == 1 + 2 && STRCMP( argv[2] , == , "--child" ) )
+		{
+			return -WorkerProcess( p_env );
+		}
+		else
+		{
+			return -MonitorProcess( p_env );
+		}
+#endif
 	}
+#if ( defined _WIN32 )
+	else if( argc == 1 + 2 )
+	{
+		if( STRCMP( argv[2] , == , "--install-service" ) )
+		{
+			nret = InstallService( argv[1] ) ;
+			if( nret )
+			{
+				printf( "安装WINDOWS服务失败[%d]errno[%d]\n" , nret , ERRNO );
+				exit(1);
+			}
+			else
+			{
+				printf( "安装WINDOWS服务成功\n" );
+				exit(0);
+			}
+		}
+		else if( STRCMP( argv[2] , == , "--uninstall-service" ) )
+		{
+			nret = UninstallService() ;
+			if( nret )
+			{
+				printf( "卸载WINDOWS服务失败[%d]errno[%d]\n" , nret , ERRNO );
+				exit(1);
+			}
+			else
+			{
+				printf( "卸载WINDOWS服务成功\n" );
+				exit(0);
+			}
+		}
+		else
+		{
+			usage();
+			exit(9);
+		}
+	}
+#endif
 	else
 	{
 		usage();

@@ -1,0 +1,214 @@
+{
+	"worker_processes" : 1 ,
+	"cpu_affinity" : 1 ,
+	"accept_mutex" : 1 ,
+	
+	"error_log" : "$ProgramFiles$/hetao/log/error.log" ,
+	"log_level" : ERROR ,
+	
+	"user" : "nobody" ,
+	
+	"limits" :
+	{
+		"max_http_session_count" : 100000 ,
+		"max_file_cache" : 1024000 ,
+		"max_connections_per_ip" : -1
+	} ,
+	
+	"listen" :
+	{
+		"ip" : "" ,
+		"port" : 80 ,
+		"website" :
+		{
+			"domain" : "" ,
+			"wwwroot" : "$ProgramFiles$/hetao/www" ,
+			"index" : "/index.html,/index.htm" ,
+			"access_log" : "$ProgramFiles$/hetao/log/access.log"
+		}
+	} ,
+	
+	/*
+	"listen" :
+	{
+		"ip" : "" ,
+		"port" : 80 ,
+		"website" :
+		{
+			"domain" : "www.test.com" ,
+			"wwwroot" : "/var/hetao/www.test.com" ,
+			"index" : "/index.html,/index.htm" ,
+			"access_log" : "/var/hetao/log/www_test_com_access.log"
+		} ,
+		"website" :
+		{
+			"domain" : "www.test2.com" ,
+			"wwwroot" : "/var/hetao/www.test2.com" ,
+			"index" : "/index.html,/index.htm" ,
+			"access_log" : "/var/hetao/log/www_test2_com_access.log"
+		}
+	} ,
+	*/
+	
+	/*
+	"listen" :
+	{
+		"ip" : "" ,
+		"port" : 80 ,
+		"website" :
+		{
+			"domain" : "" ,
+			"wwwroot" : "$ProgramFiles$/hetao/www" ,
+			"index" : "/index.html,/index.htm" ,
+			"access_log" : "$ProgramFiles$/hetao/log/access.log" ,
+			"rewrite" : { "pattern":"/(.+)/(.+)" , "template":"/(2)/(1)" }
+		}
+	} ,
+	*/
+	
+	/*
+	"listen" :
+	{
+		"ip" : "" ,
+		"port" : 443 ,
+		"ssl" :
+		{
+			"certificate_file" : "/etc/hetao/certs/server.pem" ,
+			"certificate_key_file" : "/etc/hetao/certs/server.key"
+		} ,
+		"website" :
+		{
+			"domain" : "" ,
+			"wwwroot" : "$ProgramFiles$/hetao/www" ,
+			"index" : "/index.html,/index.htm" ,
+			"access_log" : "$ProgramFiles$/hetao/log/access.log"
+		}
+	} ,
+	*/
+	
+	/*
+	"listen" :
+	{
+		"ip" : "" ,
+		"port" : 80 ,
+		"website" :
+		{
+			"domain" : "" ,
+			"wwwroot" : "$ProgramFiles$/hetao/www" ,
+			"index" : "/index.html,/index.htm" ,
+			"access_log" : "$ProgramFiles$/hetao/log/access.log" ,
+			"forward" :
+			{
+				"forward_type" : "php" ,
+				"forward_rule" : "R" ,
+				"forward_server" : { "ip" : "192.168.6.111" , "port" : 8080 } ,
+				"forward_server" : { "ip" : "192.168.6.111" , "port" : 8080 } ,
+				"forward_server" : { "ip" : "192.168.6.111" , "port" : 8080 }
+			}
+		}
+	} ,
+	*/
+	
+	/*
+	"listen" :
+	{
+		"ip" : "" ,
+		"port" : 80 ,
+		"website" :
+		{
+			"domain" : "" ,
+			"wwwroot" : "$ProgramFiles$/hetao/www" ,
+			"index" : "/index.html,/index.htm" ,
+			"access_log" : "$ProgramFiles$/hetao/log/access.log" ,
+			"forward" :
+			{
+				"forward_type" : "php" ,
+				"forward_rule" : "R" ,
+				"ssl" :
+				{
+					"certificate_file" : "/etc/hetao/certs/server.crt"
+				} ,
+				"forward_server" : { "ip" : "192.168.6.111" , "port" : 1443 } ,
+				"forward_server" : { "ip" : "192.168.6.111" , "port" : 1443 } ,
+				"forward_server" : { "ip" : "192.168.6.111" , "port" : 1443 }
+			}
+		}
+	} ,
+	*/
+	
+	"tcp_options" :
+	{
+		"nodelay" : 1 ,
+		"nolinger" : -1
+	} ,
+	
+	"http_options" :
+	{
+		"compress_on" : 1 ,
+		"timeout" : 30 ,
+		"elapse" : 60 ,
+		"forward_disable" : 60
+	} ,
+	
+	"error_pages" :
+	{
+		"error_page_400" : "$ProgramFiles$/hetao/www/error_pages/error_page_400.html" ,
+		"error_page_401" : "$ProgramFiles$/hetao/www/error_pages/error_page_401.html" ,
+		"error_page_403" : "$ProgramFiles$/hetao/www/error_pages/error_page_403.html" ,
+		"error_page_404" : "$ProgramFiles$/hetao/www/error_pages/error_page_404.html" ,
+		"error_page_408" : "$ProgramFiles$/hetao/www/error_pages/error_page_408.html" ,
+		"error_page_500" : "$ProgramFiles$/hetao/www/error_pages/error_page_500.html" ,
+		"error_page_503" : "$ProgramFiles$/hetao/www/error_pages/error_page_503.html" ,
+		"error_page_505" : "$ProgramFiles$/hetao/www/error_pages/error_page_505.html"
+	} ,
+	
+	"mime_types" :
+	{
+		"mime_type" : { "type":"html htm shtml" , "mime":"text/html" , "compress_enable":"1" } ,
+		"mime_type" : { "type":"css" , "mime":"text/css" , "compress_enable":"0" } ,
+		"mime_type" : { "type":"xml" , "mime":"text/xml" , "compress_enable":"1" } ,
+		"mime_type" : { "type":"txt" , "mime":"text/plain" , "compress_enable":"1" } ,
+		"mime_type" : { "type":"gif" , "mime":"image/gif" } ,
+		"mime_type" : { "type":"jpeg jpg" , "mime":"image/jpeg" } ,
+		"mime_type" : { "type":"png" , "mime":"image/png" } ,
+		"mime_type" : { "type":"tif tiff" , "mime":"image/tiff" } ,
+		"mime_type" : { "type":"ico" , "mime":"image/x-ico" } ,
+		"mime_type" : { "type":"jng" , "mime":"image/x-jng" } ,
+		"mime_type" : { "type":"bmp" , "mime":"image/x-ms-bmp" } ,
+		"mime_type" : { "type":"svg svgz" , "mime":"image/svg+xml" , "compress_enable":"1" } ,
+		"mime_type" : { "type":"jar war ear" , "mime":"application/java-archive" } ,
+		"mime_type" : { "type":"json" , "mime":"application/json" , "compress_enable":"1" } ,
+		"mime_type" : { "type":"doc" , "mime":"application/msword" } ,
+		"mime_type" : { "type":"pdf" , "mime":"application/pdf" } ,
+		"mime_type" : { "type":"rtf" , "mime":"application/rtf" } ,
+		"mime_type" : { "type":"xls" , "mime":"application/vnd.ms-excel" } ,
+		"mime_type" : { "type":"ppt" , "mime":"application/vnd.ms-powerpoint" } ,
+		"mime_type" : { "type":"7z" , "mime":"application/x-7z-compressed" } ,
+		"mime_type" : { "type":"rar" , "mime":"application/x-rar-compressed" } ,
+		"mime_type" : { "type":"swf" , "mime":"application/x-shockwave-flash" } ,
+		"mime_type" : { "type":"xhtml" , "mime":"application/xhtml+xml" , "compress_enable":"1" } ,
+		"mime_type" : { "type":"bin exe dll iso img msi msp msm" , "mime":"application/octet-stream" } ,
+		"mime_type" : { "type":"zip" , "mime":"application/zip" } ,
+		"mime_type" : { "type":"docx" , "mime":"application/vnd.openxmlformats-officedocument.wordprocessingml.document" } ,
+		"mime_type" : { "type":"xlsx" , "mime":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" } ,
+		"mime_type" : { "type":"pptx" , "mime":"application/vnd.openxmlformats-officedocument.presentationml.presentation" } ,
+		"mime_type" : { "type":"mid midi kar" , "mime":"audio/midi" } ,
+		"mime_type" : { "type":"mp3" , "mime":"audio/mpeg" } ,
+		"mime_type" : { "type":"ogg" , "mime":"audio/ogg" } ,
+		"mime_type" : { "type":"m4a" , "mime":"audio/x-m4a" } ,
+		"mime_type" : { "type":"ra" , "mime":"audio/x-realaudio" } ,
+		"mime_type" : { "type":"3gpp 3gp" , "mime":"video/3gpp" } ,
+		"mime_type" : { "type":"ts" , "mime":"video/mp2t" } ,
+		"mime_type" : { "type":"mp4" , "mime":"video/mp4" } ,
+		"mime_type" : { "type":"mpeg mpg" , "mime":"video/mpeg" } ,
+		"mime_type" : { "type":"mov" , "mime":"video/quicktime" } ,
+		"mime_type" : { "type":"webm" , "mime":"video/webm" } ,
+		"mime_type" : { "type":"flv" , "mime":"video/x-flv" } ,
+		"mime_type" : { "type":"m4v" , "mime":"video/x-m4v" } ,
+		"mime_type" : { "type":"mng" , "mime":"video/x-mng" } ,
+		"mime_type" : { "type":"asx asf" , "mime":"video/x-ms-asf" } ,
+		"mime_type" : { "type":"wmv" , "mime":"video/x-ms-wmv" } ,
+		"mime_type" : { "type":"avi" , "mime":"video/x-msvideo" }
+	}
+}
+

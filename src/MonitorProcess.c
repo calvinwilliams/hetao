@@ -8,6 +8,8 @@
 
 #include "hetao_in.h"
 
+#if ( defined __linux ) || ( defined __unix )
+
 static signed char		g_SIGUSR1_flag = 0 ;
 static signed char		g_SIGUSR2_flag = 0 ;
 static signed char		g_SIGTERM_flag = 0 ;
@@ -82,7 +84,7 @@ static void sig_proc( struct HetaoEnv *p_env )
 		{
 			InfoLog( __FILE__ , __LINE__ , "execvp ..." );
 			execvp( "hetao" , g_p_env->argv );
-			FatalLog( __FILE__ , __LINE__ , "execvp failed , errno[%d]" , errno );
+			FatalLog( __FILE__ , __LINE__ , "execvp failed , errno[%d]" , ERRNO );
 			
 			exit(9);
 		}
@@ -104,6 +106,11 @@ static void sig_proc( struct HetaoEnv *p_env )
 	
 	return;
 }
+
+#elif ( defined _WIN32 )
+#endif
+
+#if ( defined __linux ) || ( defined __unix )
 
 int MonitorProcess( void *pv )
 {
@@ -147,7 +154,7 @@ int MonitorProcess( void *pv )
 		nret = pipe( p_env->process_info_array[i].pipe ) ;
 		if( nret )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "pipe failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "pipe failed , errno[%d]" , ERRNO );
 			return -1;
 		}
 		SetHttpCloseExec( p_env->process_info_array[i].pipe[0] );
@@ -162,7 +169,7 @@ int MonitorProcess( void *pv )
 		UPDATEDATETIMECACHEFIRST
 		if( pid == -1 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "fork failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "fork failed , errno[%d]" , ERRNO );
 			return -1;
 		}
 		else if( pid == 0 )
@@ -206,13 +213,13 @@ _WAITPID :
 		UPDATEDATETIMECACHEFIRST
 		if( pid == -1 )
 		{
-			if( errno == EINTR )
+			if( ERRNO == EINTR )
 			{
 				sig_proc( p_env );
 				goto _WAITPID;
 			}
 			
-			ErrorLog( __FILE__ , __LINE__ , "waitpid failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "waitpid failed , errno[%d]" , ERRNO );
 			return -1;
 		}
 		
@@ -251,7 +258,7 @@ _WAITPID :
 		nret = pipe( p_env->process_info_array[i].pipe ) ;
 		if( nret )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "pipe failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "pipe failed , errno[%d]" , ERRNO );
 			return -1;
 		}
 		SetHttpCloseExec( p_env->process_info_array[i].pipe[0] );
@@ -267,13 +274,13 @@ _FORK :
 		UPDATEDATETIMECACHEFIRST
 		if( p_env->process_info_array[i].pid == -1 )
 		{
-			if( errno == EINTR )
+			if( ERRNO == EINTR )
 			{
 				sig_proc( p_env );
 				goto _FORK;
 			}
 			
-			ErrorLog( __FILE__ , __LINE__ , "fork failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "fork failed , errno[%d]" , ERRNO );
 			return -1;
 		}
 		else if( p_env->process_info_array[i].pid == 0 )
@@ -319,3 +326,86 @@ _FORK :
 	return 0;
 }
 
+#elif ( defined _WIN32 )
+
+int MonitorProcess( void *pv )
+{
+#if 0
+	struct HetaoEnv	*p_env = (struct HetaoEnv *)pv ;
+	
+	HANDLE		*handles = NULL ;
+	int		i ;
+	char		szCommandLine[ MAX_PATH + 1 ] ;
+	
+	BOOL		bret ;
+	DWORD		dwret ;
+	
+	SETPID
+	SETTID
+	UPDATEDATETIMECACHEFIRST
+	InfoLog( __FILE__ , __LINE__ , "--- master begin ---" );
+	
+	handles = (HANDLE*)malloc( sizeof(HANDLE) * p_env->worker_processes ) ;
+	if( handles == NULL )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , szCommandLine , ERRNO );
+		return -1;
+	}
+	memset( handles , 0x00 , sizeof(HANDLE) * p_env->worker_processes );
+	
+	for( i = 0 ; i < p_env->worker_processes ; i++ )
+	{
+		memset( szCommandLine , 0x00 , sizeof(szCommandLine) );
+		SNPRINTF( szCommandLine , sizeof(szCommandLine)-1 , "%s %s --child" , p_env->argv[0] , p_env->argv[1] );
+		bret = CreateProcess( NULL , szCommandLine , NULL , NULL , FALSE , 0 , NULL , NULL , & (p_env->process_info_array[i].si) , & (p_env->process_info_array[i].pi) ) ;
+		if( bret == FALSE )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "CreateProcess[%s] failed , errno[%d]" , szCommandLine , ERRNO );
+			free( handles );
+			return -1;
+		}
+		else
+		{
+			InfoLog( __FILE__ , __LINE__ , "CreateProcess[%s] ok" , szCommandLine );
+			handles[i] = p_env->process_info_array[i].pi.hProcess ;
+		}
+	}
+	
+	while(1)
+	{
+		dwret = WaitForMultipleObjects( p_env->worker_processes , handles , FALSE , INFINITE ) ;
+		if( dwret == WAIT_FAILED )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "WaitForMultipleObjects failed , errno[%d]" , ERRNO );
+			free( handles );
+			return -1;
+		}
+		
+		i = dwret - WAIT_OBJECT_0 ;
+		
+		memset( szCommandLine , 0x00 , sizeof(szCommandLine) );
+		SNPRINTF( szCommandLine , sizeof(szCommandLine)-1 , "%s %s --child" , p_env->argv[0] , p_env->argv[1] );
+		bret = CreateProcess( NULL , szCommandLine , NULL , NULL , FALSE , 0 , NULL , NULL , & (p_env->process_info_array[i].si) , & (p_env->process_info_array[i].pi) ) ;
+		if( bret == FALSE )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "CreateProcess[%s] failed , errno[%d]" , szCommandLine , ERRNO );
+			free( handles );
+			return -1;
+		}
+		else
+		{
+			InfoLog( __FILE__ , __LINE__ , "CreateProcess[%s] ok" , szCommandLine );
+			handles[i] = p_env->process_info_array[i].pi.hProcess ;
+		}
+		
+		Sleep( 1000 );
+	}
+	
+	free( handles );
+	
+	return 0;
+#endif
+	return WorkerProcess( pv );
+}
+
+#endif
