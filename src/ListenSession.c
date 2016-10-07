@@ -28,7 +28,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 		p_listen_session = (struct ListenSession *)malloc( sizeof(struct ListenSession) ) ;
 		if( p_listen_session == NULL )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 			return -1;
 		}
 		memset( p_listen_session , 0x00 , sizeof(struct ListenSession) );
@@ -37,6 +37,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 		
 		list_add( & (p_listen_session->list) , & (p_env->listen_session_list.list) );
 		
+#if ( defined __linux ) || ( defined __unix )
 		p_netaddr = GetListener( old_netaddr_array , old_netaddr_array_count , p_conf->listen[k].ip , p_conf->listen[k].port ) ;
 		if( p_netaddr )
 		{
@@ -47,15 +48,27 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 		}
 		else
 		{
+#endif
 			/* 上一辈侦听信息中没有本次侦听相同地址，老老实实创建新的侦听端口 */
+#if ( defined __linux ) || ( defined __unix )
 			p_listen_session->netaddr.sock = socket( AF_INET , SOCK_STREAM , IPPROTO_TCP ) ;
 			if( p_listen_session->netaddr.sock == -1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "socket failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "socket failed , errno[%d]" , ERRNO );
 				return -1;
 			}
+#elif ( defined _WIN32 )
+			p_listen_session->netaddr.sock = WSASocket( AF_INET , SOCK_STREAM , 0 , NULL , 0 , WSA_FLAG_OVERLAPPED ) ;
+			if( p_listen_session->netaddr.sock == -1 )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "socket failed , errno[%d]" , ERRNO );
+				return -1;
+			}
+#endif
 			
+#if ( defined __linux ) || ( defined __unix )
 			SetHttpNonblock( p_listen_session->netaddr.sock );
+#endif
 			SetHttpReuseAddr( p_listen_session->netaddr.sock );
 			
 			strncpy( p_listen_session->netaddr.ip , p_conf->listen[k].ip , sizeof(p_listen_session->netaddr.ip)-1 );
@@ -64,20 +77,22 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 			nret = bind( p_listen_session->netaddr.sock , (struct sockaddr *) & (p_listen_session->netaddr.addr) , sizeof(struct sockaddr) ) ;
 			if( nret == -1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "bind[%s:%d] failed , errno[%d]" , p_conf->listen[k].ip , p_conf->listen[k].port , errno );
+				ErrorLog( __FILE__ , __LINE__ , "bind[%s:%d] failed , errno[%d]" , p_conf->listen[k].ip , p_conf->listen[k].port , ERRNO );
 				return -1;
 			}
 			
 			nret = listen( p_listen_session->netaddr.sock , 10240 ) ;
 			if( nret == -1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "listen failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "listen failed , errno[%d]" , ERRNO );
 				return -1;
 			}
 			
 			DebugLog( __FILE__ , __LINE__ , "[%s:%d] listen #%d#" , p_conf->listen[k].ip , p_conf->listen[k].port , p_listen_session->netaddr.sock );
 			p_env->listen_session_count++;
+#if ( defined __linux ) || ( defined __unix )
 		}
+#endif
 		
 		/* 创建SSL环境 */
 		if( p_conf->listen[k].ssl.certificate_file[0] )
@@ -93,14 +108,14 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 			p_listen_session->ssl_ctx = SSL_CTX_new( SSLv23_method() ) ;
 			if( p_listen_session->ssl_ctx == NULL )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_new failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_new failed , errno[%d]" , ERRNO );
 				return -1;
 			}
 			
 			nret = SSL_CTX_use_certificate_file( p_listen_session->ssl_ctx , p_conf->listen[k].ssl.certificate_file , SSL_FILETYPE_PEM ) ;
 			if( nret <= 0 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file failed , errno[%d]" , ERRNO );
 				return -1;
 			}
 			else
@@ -111,7 +126,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 			nret = SSL_CTX_use_PrivateKey_file( p_listen_session->ssl_ctx , p_conf->listen[k].ssl.certificate_key_file , SSL_FILETYPE_PEM ) ;
 			if( nret <= 0 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_PrivateKey_file failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_PrivateKey_file failed , errno[%d]" , ERRNO );
 				return -1;
 			}
 			else
@@ -137,10 +152,11 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 			p_virtualhost = (struct VirtualHost *)malloc( sizeof(struct VirtualHost) ) ;
 			if( p_virtualhost == NULL )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 				return -1;
 			}
 			memset( p_virtualhost , 0x00 , sizeof(struct VirtualHost) );
+			p_virtualhost->type = DATASESSION_TYPE_HTMLCACHE ;
 			strncpy( p_virtualhost->domain , p_conf->listen[k].website[i].domain , sizeof(p_virtualhost->domain)-1 );
 			p_virtualhost->domain_len = strlen(p_virtualhost->domain) ;
 			strncpy( p_virtualhost->wwwroot , p_conf->listen[k].website[i].wwwroot , sizeof(p_virtualhost->wwwroot)-1 );
@@ -149,7 +165,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 			p_virtualhost->access_log_fd = OPEN( p_virtualhost->access_log , O_CREAT_WRONLY_APPEND ) ;
 			if( p_virtualhost->access_log_fd == -1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "open access log[%s] failed , errno[%d]" , p_virtualhost->access_log , errno );
+				ErrorLog( __FILE__ , __LINE__ , "open access log[%s] failed , errno[%d]" , p_virtualhost->access_log , ERRNO );
 				return -1;
 			}
 			SetHttpCloseExec( p_virtualhost->access_log_fd );
@@ -183,7 +199,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 				p_rewrite_url = (struct RewriteUrl *)malloc( sizeof(struct RewriteUrl) ) ;
 				if( p_rewrite_url == NULL )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "malloc failed[%d] , errno[%d]" , errno );
+					ErrorLog( __FILE__ , __LINE__ , "malloc failed[%d] , errno[%d]" , ERRNO );
 					return -1;
 				}
 				memset( p_rewrite_url , 0x00 , sizeof(struct RewriteUrl) );
@@ -221,14 +237,14 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 				p_virtualhost->forward_ssl_ctx = SSL_CTX_new( SSLv23_method() ) ;
 				if( p_virtualhost->forward_ssl_ctx == NULL )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_new failed , errno[%d]" , errno );
+					ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_new failed , errno[%d]" , ERRNO );
 					return -1;
 				}
 				
 				nret = SSL_CTX_use_certificate_file( p_virtualhost->forward_ssl_ctx , p_conf->listen[k].website[i].forward.ssl.certificate_file , SSL_FILETYPE_PEM ) ;
 				if( nret <= 0 )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file failed , errno[%d]" , errno );
+					ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file failed , errno[%d]" , ERRNO );
 					return -1;
 				}
 				else
@@ -249,7 +265,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 					p_forward_server = (struct ForwardServer *)malloc( sizeof(struct ForwardServer) ) ;
 					if( p_forward_server == NULL )
 					{
-						ErrorLog( __FILE__ , __LINE__ , "malloc failed[%d] , errno[%d]" , errno );
+						ErrorLog( __FILE__ , __LINE__ , "malloc failed[%d] , errno[%d]" , ERRNO );
 						return -1;
 					}
 					memset( p_forward_server , 0x00 , sizeof(struct ForwardServer) );
@@ -265,7 +281,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 			nret = PushVirtualHostHashNode( p_listen_session , p_virtualhost ) ;
 			if( nret )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "PushVirtualHostHashNode[%s][%s] failed[%d] , errno[%d]" , p_virtualhost->domain , p_virtualhost->wwwroot , nret , errno );
+				ErrorLog( __FILE__ , __LINE__ , "PushVirtualHostHashNode[%s][%s] failed[%d] , errno[%d]" , p_virtualhost->domain , p_virtualhost->wwwroot , nret , ERRNO );
 				return -1;
 			}
 			else

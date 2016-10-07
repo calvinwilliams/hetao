@@ -21,7 +21,7 @@ int InitMimeTypeHash( struct HetaoEnv *p_env , hetao_conf *p_config )
 	p_env->mimetype_hash = (struct hlist_head *)malloc( sizeof(struct hlist_head) * p_env->mimetype_hashsize ) ;
 	if( p_env->mimetype_hash == NULL )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 		return -1;
 	}
 	memset( p_env->mimetype_hash , 0x00 , sizeof(struct hlist_head) * p_env->mimetype_hashsize );
@@ -39,7 +39,7 @@ int InitMimeTypeHash( struct HetaoEnv *p_env , hetao_conf *p_config )
 			p_mimetype = (struct MimeType *)malloc( sizeof(struct MimeType) ) ;
 			if( p_mimetype == NULL )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 				return -1;
 			}
 			memset( p_mimetype , 0x00 , sizeof(struct MimeType) );
@@ -97,7 +97,7 @@ int PushMimeTypeHashNode( struct HetaoEnv *p_env , struct MimeType *p_mimetype )
 	
 	index = CalcHash(p_mimetype->type,p_mimetype->type_len) % (p_env->mimetype_hashsize) ;
 	p_hlist_head = p_env->mimetype_hash + index ;
-	hlist_for_each_entry( p , p_hlist_head , mimetype_node )
+	hlist_for_each_entry( p , p_hlist_head , struct MimeType , mimetype_node )
 	{
 		if( STRCMP( p->type , == , p_mimetype->type ) )
 			return 1;
@@ -115,7 +115,7 @@ struct MimeType *QueryMimeTypeHashNode( struct HetaoEnv *p_env , char *type , in
 	
 	index = CalcHash(type,type_len) % (p_env->mimetype_hashsize) ;
 	p_hlist_head = p_env->mimetype_hash + index ;
-	hlist_for_each_entry( p , p_hlist_head , mimetype_node )
+	hlist_for_each_entry( p , p_hlist_head , struct MimeType , mimetype_node )
 	{
 		if( p->type_len == type_len && STRNCMP( p->type , == , type , type_len ) )
 			return p;

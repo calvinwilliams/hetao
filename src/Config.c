@@ -10,8 +10,8 @@
 
 struct HetaoEnv	*g_p_env = NULL ;
 
-char	__HETAO_VERSION_0_8_0[] = "0.8.0" ;
-char	*__HETAO_VERSION = __HETAO_VERSION_0_8_0 ;
+char	__HETAO_VERSION_0_9_0[] = "0.9.0" ;
+char	*__HETAO_VERSION = __HETAO_VERSION_0_9_0 ;
 
 char *strndup(const char *s, size_t n);
 
@@ -39,7 +39,7 @@ static int StringExpandEnvval( char *buf , int buf_size )
 		env_name = strndup( p1+1 , p2-p1-1 ) ;
 		if( env_name == NULL )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "strndup failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "strndup failed , errno[%d]" , ERRNO );
 			return -1;
 		}
 		
@@ -70,6 +70,14 @@ static int StringExpandEnvval( char *buf , int buf_size )
 		free( env_name );
 	}
 	
+#if ( defined _WIN32 )
+	for( p1 = buf ; (*p1) ; p1++ )
+	{
+		if( (*p1) == '\\' )
+			(*p1) = '/' ;
+	}
+#endif
+	
 	return 0;
 }
 
@@ -97,36 +105,36 @@ static int ConvertLogLevel_atoi( char *log_level_desc , int *p_log_level )
 static char *StrdupEntireFile( char *pathfilename , int *p_file_size )
 {
 	struct stat	st ;
-	char		*p_html_content = NULL ;
+	char		*p_file_content = NULL ;
 	FILE		*fp = NULL ;
 	int		nret = 0 ;
 	
 	nret = stat( pathfilename , & st ) ;
 	if( nret == -1 )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "stat[%s] failed , errno[%d]" , pathfilename , errno );
+		ErrorLog( __FILE__ , __LINE__ , "stat[%s] failed , errno[%d]" , pathfilename , ERRNO );
 		return NULL;
 	}
 	
-	p_html_content = (char*)malloc( st.st_size+1 ) ;
-	if( p_html_content == NULL )
+	p_file_content = (char*)malloc( st.st_size+1 ) ;
+	if( p_file_content == NULL )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 		return NULL;
 	}
-	memset( p_html_content , 0x00 , st.st_size+1 );
+	memset( p_file_content , 0x00 , st.st_size+1 );
 	
-	fp = fopen( pathfilename , "r" ) ;
+	fp = fopen( pathfilename , "rb" ) ;
 	if( fp == NULL )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "fopen[%s] failed , errno[%d]" , pathfilename , errno );
+		ErrorLog( __FILE__ , __LINE__ , "fopen[%s] failed , errno[%d]" , pathfilename , ERRNO );
 		return NULL;
 	}
 	
-	nret = fread( p_html_content , st.st_size , 1 , fp ) ;
+	nret = fread( p_file_content , st.st_size , 1 , fp ) ;
 	if( nret != 1 )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "fread failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "fread failed , errno[%d]" , ERRNO );
 		return NULL;
 	}
 	
@@ -134,7 +142,7 @@ static char *StrdupEntireFile( char *pathfilename , int *p_file_size )
 	
 	if( p_file_size )
 		(*p_file_size) = (int)(st.st_size) ;
-	return p_html_content;
+	return p_file_content;
 }
 
 int LoadConfig( char *config_pathfilename , hetao_conf *p_config , struct HetaoEnv *p_env )
@@ -150,23 +158,25 @@ int LoadConfig( char *config_pathfilename , hetao_conf *p_config , struct HetaoE
 	if( buf == NULL )
 		return -1;
 	
-	/* 预设缺省值 */
-	p_config->worker_processes = sysconf(_SC_NPROCESSORS_ONLN) ;
-	
-	p_config->limits.max_http_session_count = MAX_HTTP_SESSION_COUNT_DEFAULT ;
-	
 	/* 解析配置文件 */
 	nret = DSCDESERIALIZE_JSON_hetao_conf( NULL , buf , & file_size , p_config ) ;
 	free( buf );
 	if( nret )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_hetao_conf failed[%d][%d] , errno[%d]" , nret , DSCGetErrorLine_hetao_conf() , errno );
+		ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_hetao_conf failed[%d][%d] , errno[%d]" , nret , DSCGetErrorLine_hetao_conf() , ERRNO );
 		return -1;
 	}
 	
+	/* 修正子进程数量 */
 	if( p_config->worker_processes <= 0 )
 	{
+#if ( defined __linux ) || ( defined __unix )
 		p_config->worker_processes = sysconf(_SC_NPROCESSORS_ONLN) ;
+#elif ( defined _WIN32 )
+		SYSTEM_INFO	systeminfo ;
+		GetSystemInfo( & systeminfo );
+		p_config->worker_processes = systeminfo.dwNumberOfProcessors ;
+#endif
 	}
 	
 	/* 展开主日志名中的环境变量 */
@@ -185,12 +195,15 @@ int LoadConfig( char *config_pathfilename , hetao_conf *p_config , struct HetaoE
 	/* 检查用户名 */
 	if( p_config->user[0] )
 	{
+#if ( defined __linux ) || ( defined __unix )
 		p_env->pwd = getpwnam( p_config->user ) ;
 		if( p_env->pwd == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "user[%s] not found" , p_config->user );
 			return nret;
 		}
+#elif ( defined _WIN32 )
+#endif
 	}
 	
 	/* 展开日志文件名中的环境变量 */
@@ -394,6 +407,7 @@ int LoadConfig( char *config_pathfilename , hetao_conf *p_config , struct HetaoE
 	p_env->worker_processes = p_config->worker_processes ;
 	p_env->cpu_affinity = p_config->cpu_affinity ;
 	p_env->accept_mutex = p_config->accept_mutex ;
+	strcpy( p_env->error_log , p_config->error_log );
 	p_env->limits__max_http_session_count = p_config->limits.max_http_session_count ;
 	p_env->limits__max_file_cache = p_config->limits.max_file_cache ;
 	p_env->limits__max_connections_per_ip = p_config->limits.max_connections_per_ip ;

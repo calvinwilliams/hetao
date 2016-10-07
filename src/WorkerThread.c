@@ -11,6 +11,8 @@
 static signed char		g_exit_flag = 0 ;
 signed char			g_second_elapse = 0 ;
 
+#if ( defined __linux ) || ( defined __unix )
+
 void *WorkerThread( void *pv )
 {
 	struct HetaoEnv		*p_env = (struct HetaoEnv *)pv ;
@@ -39,7 +41,7 @@ void *WorkerThread( void *pv )
 	p_env->p_this_process_info->epoll_fd = epoll_create( 1024 ) ;
 	if( p_env->p_this_process_info->epoll_fd == -1 )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "[%d]epoll_create failed , errno[%d]" , p_env->process_info_index , errno );
+		ErrorLog( __FILE__ , __LINE__ , "[%d]epoll_create failed , errno[%d]" , p_env->process_info_index , ERRNO );
 		return NULL;
 	}
 	else
@@ -57,7 +59,7 @@ void *WorkerThread( void *pv )
 	nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_ADD , p_env->p_this_process_info->pipe[0] , & event ) ;
 	if( nret == -1 )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "epoll_ctl #%d# failed , errno[%d]" , p_env->p_this_process_info->epoll_fd , errno );
+		ErrorLog( __FILE__ , __LINE__ , "epoll_ctl #%d# failed , errno[%d]" , p_env->p_this_process_info->epoll_fd , ERRNO );
 		return NULL;
 	}
 	
@@ -67,7 +69,7 @@ void *WorkerThread( void *pv )
 	p_env->htmlcache_inotify_fd = inotify_init() ;
 	if( p_env->htmlcache_inotify_fd == -1 )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "inotify_init failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "inotify_init failed , errno[%d]" , ERRNO );
 		return NULL;
 	}
 	SetHttpCloseExec( p_env->htmlcache_inotify_fd );
@@ -78,7 +80,7 @@ void *WorkerThread( void *pv )
 	nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_ADD , p_env->htmlcache_inotify_fd , & event ) ;
 	if( nret == -1 )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , ERRNO );
 		return NULL;
 	}
 	else
@@ -99,7 +101,7 @@ void *WorkerThread( void *pv )
 			nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_ADD , p_listen_session->netaddr.sock , & event ) ;
 			if( nret == -1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "epoll_ctl add listen failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "epoll_ctl add listen failed , errno[%d]" , ERRNO );
 				return NULL;
 			}
 			else
@@ -118,7 +120,7 @@ void *WorkerThread( void *pv )
 		p_env->p_this_process_info->epoll_nfds = epoll_wait( p_env->p_this_process_info->epoll_fd , events , MAX_EPOLL_EVENTS , 1000 ) ;
 		if( p_env->p_this_process_info->epoll_nfds == -1 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "[%d]epoll_wait failed , errno[%d]" , p_env->process_info_index , errno );
+			ErrorLog( __FILE__ , __LINE__ , "[%d]epoll_wait failed , errno[%d]" , p_env->process_info_index , ERRNO );
 			return NULL;
 		}
 		else
@@ -177,11 +179,11 @@ void *WorkerThread( void *pv )
 					nret = OnAcceptingSocket( p_env , p_listen_session ) ;
 					if( nret > 0 )
 					{
-						WarnLog( __FILE__ , __LINE__ , "OnAcceptingSocket warn[%d] , errno[%d]" , nret , errno );
+						WarnLog( __FILE__ , __LINE__ , "OnAcceptingSocket warn[%d] , errno[%d]" , nret , ERRNO );
 					}
 					else if( nret < 0 )
 					{
-						ErrorLog( __FILE__ , __LINE__ , "OnAcceptingSocket failed[%d] , errno[%d]" , nret , errno );
+						ErrorLog( __FILE__ , __LINE__ , "OnAcceptingSocket failed[%d] , errno[%d]" , nret , ERRNO );
 						return NULL;
 					}
 					else
@@ -213,7 +215,7 @@ void *WorkerThread( void *pv )
 								nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_listen_session->netaddr.sock , NULL ) ;
 								if( nret == -1 )
 								{
-									ErrorLog( __FILE__ , __LINE__ , "[%d]epoll_ctl failed , errno[%d]" , p_env->process_info_index , errno );
+									ErrorLog( __FILE__ , __LINE__ , "[%d]epoll_ctl failed , errno[%d]" , p_env->process_info_index , ERRNO );
 									return NULL;
 								}
 								else
@@ -227,7 +229,7 @@ void *WorkerThread( void *pv )
 								nret = epoll_ctl( p_process_info_with_min_balance->epoll_fd , EPOLL_CTL_ADD , p_listen_session->netaddr.sock , & event ) ;
 								if( nret == -1 )
 								{
-									ErrorLog( __FILE__ , __LINE__ , "[%d]epoll_ctl failed , errno[%d]" , p_process_info_with_min_balance-p_env->process_info_array , errno );
+									ErrorLog( __FILE__ , __LINE__ , "[%d]epoll_ctl failed , errno[%d]" , p_process_info_with_min_balance-p_env->process_info_array , ERRNO );
 									return NULL;
 								}
 								else
@@ -275,7 +277,7 @@ void *WorkerThread( void *pv )
 						}
 						else if( nret < 0 )
 						{
-							ErrorLog( __FILE__ , __LINE__ , "OnReceivingSocket failed[%d] , errno[%d]" , nret , errno );
+							ErrorLog( __FILE__ , __LINE__ , "OnReceivingSocket failed[%d] , errno[%d]" , nret , ERRNO );
 							return NULL;
 						}
 						else
@@ -293,7 +295,7 @@ void *WorkerThread( void *pv )
 						}
 						else if( nret < 0 )
 						{
-							ErrorLog( __FILE__ , __LINE__ , "OnReceivingForward failed[%d] , errno[%d]" , nret , errno );
+							ErrorLog( __FILE__ , __LINE__ , "OnReceivingForward failed[%d] , errno[%d]" , nret , ERRNO );
 							return NULL;
 						}
 						else
@@ -317,7 +319,7 @@ void *WorkerThread( void *pv )
 						}
 						else if( nret < 0 )
 						{
-							ErrorLog( __FILE__ , __LINE__ , "OnSendingSocket failed[%d] , errno[%d]" , nret , errno );
+							ErrorLog( __FILE__ , __LINE__ , "OnSendingSocket failed[%d] , errno[%d]" , nret , ERRNO );
 							return NULL;
 						}
 						else
@@ -327,7 +329,7 @@ void *WorkerThread( void *pv )
 					}
 					else
 					{
-						if( p_http_session->forward_flags & HTTPSESSION_FLAGS_CONNECTED )
+						if( p_http_session->forward_flags == HTTPSESSION_FLAGS_CONNECTED )
 						{
 							nret = OnSendingForward( p_env , p_http_session ) ;
 							if( nret > 0 )
@@ -337,7 +339,7 @@ void *WorkerThread( void *pv )
 							}
 							else if( nret < 0 )
 							{
-								ErrorLog( __FILE__ , __LINE__ , "OnSendingForward failed[%d] , errno[%d]" , nret , errno );
+								ErrorLog( __FILE__ , __LINE__ , "OnSendingForward failed[%d] , errno[%d]" , nret , ERRNO );
 								return NULL;
 							}
 							else
@@ -345,7 +347,7 @@ void *WorkerThread( void *pv )
 								DebugLog( __FILE__ , __LINE__ , "OnSendingForward ok" );
 							}
 						}
-						else if( p_http_session->forward_flags & HTTPSESSION_FLAGS_CONNECTING )
+						else if( p_http_session->forward_flags == HTTPSESSION_FLAGS_CONNECTING )
 						{
 							nret = OnConnectingForward( p_env , p_http_session ) ;
 							if( nret > 0 )
@@ -355,7 +357,7 @@ void *WorkerThread( void *pv )
 							}
 							else if( nret < 0 )
 							{
-								ErrorLog( __FILE__ , __LINE__ , "OnConnectingForward failed[%d] , errno[%d]" , nret , errno );
+								ErrorLog( __FILE__ , __LINE__ , "OnConnectingForward failed[%d] , errno[%d]" , nret , ERRNO );
 								return NULL;
 							}
 							else
@@ -386,7 +388,7 @@ void *WorkerThread( void *pv )
 					}
 					else
 					{
-						if( p_http_session->forward_flags & HTTPSESSION_FLAGS_CONNECTING )
+						if( p_http_session->forward_flags == HTTPSESSION_FLAGS_CONNECTING )
 						{
 							nret = OnConnectingForward( p_env , p_http_session ) ;
 							if( nret > 0 )
@@ -396,7 +398,7 @@ void *WorkerThread( void *pv )
 							}
 							else if( nret < 0 )
 							{
-								ErrorLog( __FILE__ , __LINE__ , "OnConnectingForward failed[%d] , errno[%d]" , nret , errno );
+								ErrorLog( __FILE__ , __LINE__ , "OnConnectingForward failed[%d] , errno[%d]" , nret , ERRNO );
 								return NULL;
 							}
 							else
@@ -424,7 +426,7 @@ void *WorkerThread( void *pv )
 				nret = HtmlCacheEventHander( p_env ) ;
 				if( nret )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "HtmlCacheEventHander failed[%d] , errno[%d]" , nret , errno );
+					ErrorLog( __FILE__ , __LINE__ , "HtmlCacheEventHander failed[%d] , errno[%d]" , nret , ERRNO );
 					return NULL;
 				}
 				else
@@ -499,7 +501,7 @@ void *WorkerThread( void *pv )
 									p_virtualhost->access_log_fd = OPEN( p_virtualhost->access_log , O_CREAT_WRONLY_APPEND ) ;
 									if( p_virtualhost->access_log_fd == -1 )
 									{
-										ErrorLog( __FILE__ , __LINE__ ,  "open access log[%s] failed , errno[%d]" , p_virtualhost->access_log , errno );
+										ErrorLog( __FILE__ , __LINE__ ,  "open access log[%s] failed , errno[%d]" , p_virtualhost->access_log , ERRNO );
 										return NULL;
 									}
 									else
@@ -514,7 +516,7 @@ void *WorkerThread( void *pv )
 				}
 				else
 				{
-					ErrorLog( __FILE__ , __LINE__ ,  "read pipe failed , errno[%d]" , errno );
+					ErrorLog( __FILE__ , __LINE__ ,  "read pipe failed , errno[%d]" , ERRNO );
 					return NULL;
 				}
 			}
@@ -526,3 +528,412 @@ void *WorkerThread( void *pv )
 	return NULL;
 }
 
+#elif ( defined _WIN32 )
+
+void *WorkerThread( void *pv )
+{
+	struct HetaoEnv		*p_env = (struct HetaoEnv *)pv ;
+	
+	DWORD			transfer_bytes ;
+	struct DataSession	*p_data_session = NULL ;
+	struct ListenSession	*p_listen_session = NULL ;
+	struct HttpSession	*p_http_session = NULL ;
+	
+	int			i ;
+	struct hlist_head	*p_hlist_head = NULL ;
+	struct VirtualHost	*p_virtualhost = NULL ;
+	DWORD			dwByteRet ;
+	
+	struct HttpBuffer	*b = NULL ;
+	
+	int			nret = 0 ;
+	BOOL			bret = TRUE ;
+	HANDLE			hret = NULL ;
+	
+	SetLogFile( p_env->error_log );
+	SetLogLevel( p_env->log_level );
+	SETPID
+	SETTID
+	UPDATEDATETIMECACHEFIRST
+	InfoLog( __FILE__ , __LINE__ , "--- worker[%d] begin ---" , p_env->process_info_index );
+	
+	/* 创建完成端口 */
+	p_env->iocp = CreateIoCompletionPort( INVALID_HANDLE_VALUE, 0, 0, 0 ) ;
+	if( p_env->iocp == NULL )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
+		return NULL;
+	}
+	else
+	{
+		DebugLog( __FILE__ , __LINE__ , "CreateIoCompletionPort ok" );
+	}
+	
+	/* 装载所有侦听的所有虚拟主机 */
+	list_for_each_entry( p_listen_session , & (p_env->listen_session_list.list) , struct ListenSession , list )
+	{
+		/* 得到AcceptEx函数指针 */
+		{
+			GUID	accept_ex_guid = WSAID_ACCEPTEX ;
+			DWORD	bytes = 0 ;
+			nret = WSAIoctl( p_listen_session->netaddr.sock , SIO_GET_EXTENSION_FUNCTION_POINTER , & accept_ex_guid , sizeof(accept_ex_guid) , & (p_listen_session->lpfnAcceptEx) , sizeof(p_listen_session->lpfnAcceptEx) , & bytes , NULL , NULL ) ;
+			if( nret == SOCKET_ERROR )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "WSAIoctl failed , errno[%d]" , ERRNO );
+				return NULL;
+			}
+		}
+		
+		/* 得到ConnectEx函数指针 */
+		{
+			GUID	connect_ex_guid = WSAID_CONNECTEX ;
+			DWORD	bytes = 0 ;
+			nret = WSAIoctl( p_listen_session->netaddr.sock , SIO_GET_EXTENSION_FUNCTION_POINTER , & connect_ex_guid , sizeof(connect_ex_guid) , & (p_env->lpfnConnectEx) , sizeof(p_env->lpfnConnectEx) , & bytes , NULL , NULL ) ;
+			if( nret == SOCKET_ERROR )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "WSAIoctl failed , errno[%d]" , ERRNO );
+				return NULL;
+			}
+		}
+		
+		p_listen_session->accept_socket = WSASocket( AF_INET , SOCK_STREAM , 0 , NULL , 0 , WSA_FLAG_OVERLAPPED ) ;
+		if( p_listen_session->accept_socket == -1 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "WSASocket failed , errno[%d]" , ERRNO );
+			return NULL;
+		}
+		
+		hret = CreateIoCompletionPort( (HANDLE)(p_listen_session->netaddr.sock) , p_env->iocp , (DWORD)p_listen_session , 0 ) ;
+		if( hret == NULL )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
+			return NULL;
+		}
+		
+		/* 投递accept事件 */
+		bret = p_listen_session->lpfnAcceptEx( p_listen_session->netaddr.sock , p_listen_session->accept_socket , p_listen_session->acceptex_buf , 0 , sizeof(struct sockaddr_in)+16 , sizeof(struct sockaddr_in)+16 , NULL , & (p_listen_session->overlapped) ) ;
+		if( bret != TRUE )
+		{
+			if( WSAGetLastError() == ERROR_IO_PENDING )
+			{
+				DebugLog( __FILE__ , __LINE__ , "AcceptEx io pending" );
+			}
+			else
+			{
+				ErrorLog( __FILE__ , __LINE__ , "AcceptEx failed , errno[%d]" , ERRNO );
+				return NULL;
+			}
+		}
+		
+		/* 投递目录变动事件 */
+		for( i = 0 , p_hlist_head = p_listen_session->virtualhost_hash ; i < p_listen_session->virtualhost_hashsize ; i++ , p_hlist_head++ )
+		{
+			hlist_for_each_entry( p_virtualhost , p_hlist_head , struct VirtualHost , virtualhost_node )
+			{
+				p_virtualhost->directory_changes_handler = CreateFile( p_virtualhost->wwwroot , GENERIC_READ | GENERIC_WRITE , FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE , NULL , OPEN_EXISTING , FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED , NULL ) ;
+				if( p_virtualhost->directory_changes_handler == INVALID_HANDLE_VALUE )
+				{
+					ErrorLog( __FILE__ , __LINE__ , "CreateFile[%s] failed , errno[%d]" , p_virtualhost->wwwroot , ERRNO );
+					return NULL;
+				}
+				
+				hret = CreateIoCompletionPort( p_virtualhost->directory_changes_handler , p_env->iocp , (DWORD)p_virtualhost , 0 ) ;
+				if( hret == NULL )
+				{
+					ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
+					return NULL;
+				}
+				
+				bret = ReadDirectoryChangesW( p_virtualhost->directory_changes_handler , p_virtualhost->directory_changes_buffer , sizeof(p_virtualhost->directory_changes_buffer) , TRUE , FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_SECURITY , & dwByteRet , & (p_virtualhost->overlapped) , NULL ) ;
+				if( bret == FALSE )
+				{
+					ErrorLog( __FILE__ , __LINE__ , "ReadDirectoryChangesW[%s] failed , errno[%d]" , p_virtualhost->wwwroot , ERRNO );
+					return NULL;
+				}
+			}
+		}
+	}
+	
+	while(1)
+	{
+		InfoLog( __FILE__ , __LINE__ , "[%d]GetQueuedCompletionStatus ... [%d][%d][%d,%d]" , p_env->process_info_index , p_env->listen_session_count , p_env->htmlcache_session_count , p_env->http_session_used_count , p_env->http_session_unused_count );
+		SetLastError( 0 );
+		bret = GetQueuedCompletionStatus( p_env->iocp , & transfer_bytes , (LPDWORD) & p_data_session , (LPOVERLAPPED *) & p_data_session , 1000 ) ;
+		if( bret == FALSE && ERRNO != WAIT_TIMEOUT )
+		{
+			FatalLog( __FILE__ , __LINE__ , "[%d]GetQueuedCompletionStatus failed , errno[%d]" , p_env->process_info_index , ERRNO );
+			continue;
+		}
+		else
+		{
+			InfoLog( __FILE__ , __LINE__ , "[%d]GetQueuedCompletionStatus ok [%d][%d][%d,%d]" , p_env->process_info_index , p_env->listen_session_count , p_env->htmlcache_session_count , p_env->http_session_used_count , p_env->http_session_unused_count );
+		}
+		
+		/* 定时器线程点亮了秒漏事件，检查超时的HTTP通讯会话，关闭之 */
+		if( g_second_elapse == 1 )
+		{
+			struct HttpSession	*p_http_session = NULL ;
+			
+			while(1)
+			{
+				p_http_session = GetExpireHttpSessionTimeoutTreeNode( p_env ) ;
+				if( p_http_session == NULL )
+					break;
+				
+				ErrorLog( __FILE__ , __LINE__ , "SESSION TIMEOUT --------- client_ip[%s]" , p_http_session->netaddr.ip );
+				SetHttpSessionUnused( p_env , p_http_session );
+			}
+			
+			while(1)
+			{
+				p_http_session = GetExpireHttpSessionElapseTreeNode( p_env ) ;
+				if( p_http_session == NULL )
+					break;
+				
+				ErrorLog( __FILE__ , __LINE__ , "SESSION ELAPSE --------- client_ip[%s]" , p_http_session->netaddr.ip );
+				SetHttpSessionUnused( p_env , p_http_session );
+			}
+			
+			g_second_elapse = 0 ;
+		}
+		
+		if( ERRNO == WAIT_TIMEOUT )
+			continue;
+		
+		/* 处理投递事件 */
+		switch( p_data_session->type )
+		{
+			case DATASESSION_TYPE_LISTEN:
+				DebugLog( __FILE__ , __LINE__ , "DATASESSION_TYPE_LISTEN" );
+				p_listen_session = (struct ListenSession *)p_data_session ;
+				
+				nret = OnAcceptingSocket( p_env , p_listen_session ) ;
+				if( nret )
+				{
+					FatalLog( __FILE__ , __LINE__ , "OnAcceptingSocket failed , errno[%d]" , ERRNO );
+					return NULL;
+				}
+				
+				break;
+			case DATASESSION_TYPE_HTTP:
+				DebugLog( __FILE__ , __LINE__ , "DATASESSION_TYPE_HTTP" );
+				p_http_session = (struct HttpSession *)p_data_session ;
+				
+				if( p_http_session->forward_flags == 0 )
+				{
+					if( p_http_session->flag == HTTPSESSION_FLAGS_RECEIVING )
+					{
+						if( transfer_bytes > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "socket received[%d]bytes" , transfer_bytes );
+							
+							b = GetHttpRequestBuffer(p_http_session->http) ;
+							OffsetHttpBufferFillPtr( b , transfer_bytes );
+							if( GetHttpBufferLengthUnfilled( b ) <= 0 )
+							{
+								nret = ReallocHttpBuffer( b , -1 ) ;
+								if( nret )
+								{
+									ErrorLog( __FILE__ , __LINE__ , "ReallocHttpBuffer failed , errno[%d]" , ERRNO );
+									SetHttpSessionUnused( p_env , p_http_session );
+									return NULL;
+								}
+							}
+							
+							nret = OnReceivingSocket( p_env , p_http_session ) ;
+							if( nret > 0 )
+							{
+								InfoLog( __FILE__ , __LINE__ , "OnReceivingSocket done" );
+								SetHttpSessionUnused( p_env , p_http_session );
+							}
+							else if( nret < 0 )
+							{
+								ErrorLog( __FILE__ , __LINE__ , "OnReceivingSocket failed , errno[%d]" , ERRNO );
+								SetHttpSessionUnused( p_env , p_http_session );
+								return NULL;
+							}
+							else
+							{
+								DebugLog( __FILE__ , __LINE__ , "OnReceivingSocket ok" );
+							}
+						}
+						else
+						{
+							InfoLog( __FILE__ , __LINE__ , "http socket closed on receiving" );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+					}
+					else if( p_http_session->flag == HTTPSESSION_FLAGS_SENDING )
+					{
+						if( transfer_bytes > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "socket sended[%d]bytes" , transfer_bytes );
+							
+							if( GetHttpBufferLengthUnprocessed( GetHttpResponseBuffer(p_http_session->http) ) > 0 )
+								OffsetHttpBufferProcessPtr( GetHttpResponseBuffer(p_http_session->http) , transfer_bytes );
+							else
+								OffsetHttpBufferProcessPtr( GetHttpAppendBuffer(p_http_session->http) , transfer_bytes );
+							
+							nret = OnSendingSocket( p_env , p_http_session ) ;
+							if( nret > 0 )
+							{
+								InfoLog( __FILE__ , __LINE__ , "OnSendingSocket done" );
+								SetHttpSessionUnused( p_env , p_http_session );
+							}
+							else if( nret < 0 )
+							{
+								ErrorLog( __FILE__ , __LINE__ , "OnSendingSocket failed , errno[%d]" , ERRNO );
+								SetHttpSessionUnused( p_env , p_http_session );
+								return NULL;
+							}
+							else
+							{
+								DebugLog( __FILE__ , __LINE__ , "OnSendingSocket ok" );
+							}
+						}
+						else
+						{
+							InfoLog( __FILE__ , __LINE__ , "http socket closed on sending" );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+					}
+					else
+					{
+						ErrorLog( __FILE__ , __LINE__ , "p_http_session->flag[%d] invalid" , p_http_session->flag );
+					}
+				}
+				else if( p_http_session->forward_flags == HTTPSESSION_FLAGS_CONNECTING )
+				{
+					nret = OnConnectingForward( p_env , p_http_session ) ;
+					if( nret > 0 )
+					{
+						InfoLog( __FILE__ , __LINE__ , "OnConnectingForward done" );
+						SetHttpSessionUnused( p_env , p_http_session );
+					}
+					else if( nret < 0 )
+					{
+						ErrorLog( __FILE__ , __LINE__ , "OnConnectingForward failed , errno[%d]" , ERRNO );
+						SetHttpSessionUnused( p_env , p_http_session );
+						return NULL;
+					}
+					else
+					{
+						DebugLog( __FILE__ , __LINE__ , "OnConnectingForward ok" );
+					}
+				}
+				else if( p_http_session->forward_flags == HTTPSESSION_FLAGS_CONNECTED )
+				{
+					if( p_http_session->flag == HTTPSESSION_FLAGS_SENDING )
+					{
+						if( transfer_bytes > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "socket sended[%d]bytes" , transfer_bytes );
+							
+							OffsetHttpBufferProcessPtr( GetHttpRequestBuffer(p_http_session->forward_http) , transfer_bytes );
+							
+							nret = OnSendingForward( p_env , p_http_session ) ;
+							if( nret > 0 )
+							{
+								InfoLog( __FILE__ , __LINE__ , "OnSendingForward done" );
+								SetHttpSessionUnused( p_env , p_http_session );
+							}
+							else if( nret < 0 )
+							{
+								ErrorLog( __FILE__ , __LINE__ , "OnSendingForward failed , errno[%d]" , ERRNO );
+								SetHttpSessionUnused( p_env , p_http_session );
+								return NULL;
+							}
+							else
+							{
+								DebugLog( __FILE__ , __LINE__ , "OnSendingForward ok" );
+							}
+						}
+						else
+						{
+							InfoLog( __FILE__ , __LINE__ , "http socket closed on sending" );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+					}
+					else if( p_http_session->flag == HTTPSESSION_FLAGS_RECEIVING )
+					{
+						if( transfer_bytes > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "socket received[%d]bytes" , transfer_bytes );
+							
+							b = GetHttpResponseBuffer(p_http_session->forward_http) ;
+							OffsetHttpBufferFillPtr( b , transfer_bytes );
+							if( GetHttpBufferLengthUnfilled( b ) <= 0 )
+							{
+								nret = ReallocHttpBuffer( b , -1 ) ;
+								if( nret )
+								{
+									ErrorLog( __FILE__ , __LINE__ , "ReallocHttpBuffer failed , errno[%d]" , ERRNO );
+									SetHttpSessionUnused( p_env , p_http_session );
+									return NULL;
+								}
+							}
+							
+							nret = OnReceivingForward( p_env , p_http_session ) ;
+							if( nret > 0 )
+							{
+								InfoLog( __FILE__ , __LINE__ , "OnReceivingForward done" );
+								SetHttpSessionUnused( p_env , p_http_session );
+							}
+							else if( nret < 0 )
+							{
+								ErrorLog( __FILE__ , __LINE__ , "OnReceivingForward failed , errno[%d]" , ERRNO );
+								SetHttpSessionUnused( p_env , p_http_session );
+								return NULL;
+							}
+							else
+							{
+								DebugLog( __FILE__ , __LINE__ , "OnReceivingForward ok" );
+							}
+						}
+						else
+						{
+							InfoLog( __FILE__ , __LINE__ , "http forward socket closed on receiving" );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+					}
+					else
+					{
+						ErrorLog( __FILE__ , __LINE__ , "p_http_session->flag[%d] invalid" , p_http_session->flag );
+					}
+				}
+				else
+				{
+					FatalLog( __FILE__ , __LINE__ , "Unknow p_http_session->forward_flags[0x%X]" , p_http_session->forward_flags );
+					return NULL;
+				}
+				
+				break;
+			case DATASESSION_TYPE_HTMLCACHE:
+				DebugLog( __FILE__ , __LINE__ , "DATASESSION_TYPE_HTMLCACHE" );
+				p_virtualhost = (struct VirtualHost *)p_data_session ;
+				
+				nret = DirectoryWatcherEventHander( p_env , p_virtualhost ) ;
+				if( nret )
+				{
+					FatalLog( __FILE__ , __LINE__ , "DirectoryWatcherEventHander failed , errno[%d]" , ERRNO );
+					return NULL;
+				}
+				
+				bret = ReadDirectoryChangesW( p_virtualhost->directory_changes_handler , p_virtualhost->directory_changes_buffer , sizeof(p_virtualhost->directory_changes_buffer) , TRUE , FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_SECURITY , & dwByteRet , & (p_virtualhost->overlapped) , NULL ) ;
+				if( bret == FALSE )
+				{
+					FatalLog( __FILE__ , __LINE__ , "ReadDirectoryChangesW failed , errno[%d]" , ERRNO );
+					return NULL;
+				}
+				
+				break;
+			default :
+				FatalLog( __FILE__ , __LINE__ , "Unknow event type[%c]" , p_data_session->type );
+				return NULL;
+		}
+	}
+	
+	return NULL;
+}
+
+#endif

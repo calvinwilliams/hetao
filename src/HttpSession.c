@@ -28,7 +28,7 @@ int IncreaseHttpSessions( struct HetaoEnv *p_env , int http_session_incre_count 
 	p_http_session_array = (struct HttpSession *)malloc( sizeof(struct HttpSession) * http_session_incre_count ) ;
 	if( p_http_session_array == NULL )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 		return -1;
 	}
 	memset( p_http_session_array , 0x00 , sizeof(struct HttpSession) * http_session_incre_count );
@@ -38,20 +38,20 @@ int IncreaseHttpSessions( struct HetaoEnv *p_env , int http_session_incre_count 
 		p_http_session->http = CreateHttpEnv() ;
 		if( p_http_session->http == NULL )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "CreateHttpEnv failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "CreateHttpEnv failed , errno[%d]" , ERRNO );
 			return -1;
 		}
 		SetHttpTimeout( p_http_session->http , -1 );
 		p_http_session->http_buf = AllocHttpBuffer2( 0 , NULL ) ;
 		if( p_http_session->http_buf == NULL )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "AllocHttpBuffer2 failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "AllocHttpBuffer2 failed , errno[%d]" , ERRNO );
 			return -1;
 		}
 		p_http_session->forward_http = CreateHttpEnv() ;
 		if( p_http_session->forward_http == NULL )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "CreateHttpEnv failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "CreateHttpEnv failed , errno[%d]" , ERRNO );
 			return -1;
 		}
 		SetHttpTimeout( p_http_session->forward_http , -1 );
@@ -96,20 +96,20 @@ struct HttpSession *FetchHttpSessionUnused( struct HetaoEnv *p_env , unsigned in
 	list_del( & (p_http_session->list) );
 	
 	/* 加入到工作HTTP通讯会话树中 */
-	p_http_session->timeout_timestamp = GETSECONDSTAMP + p_env->http_options__timeout ;
+	p_http_session->timeout_timestamp = (int)GETSECONDSTAMP + p_env->http_options__timeout ;
 	nret = AddHttpSessionTimeoutTreeNode( p_env , p_http_session ) ;
 	if( nret )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "AddTimeoutTreeNode failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "AddTimeoutTreeNode failed , errno[%d]" , ERRNO );
 		list_add_tail( & (p_http_session->list) , & (p_env->http_session_unused_list.list) );
 		return NULL;
 	}
 	
-	p_http_session->elapse_timestamp = GETSECONDSTAMP + p_env->http_options__elapse ;
+	p_http_session->elapse_timestamp = (int)GETSECONDSTAMP + p_env->http_options__elapse ;
 	nret = AddHttpSessionElapseTreeNode( p_env , p_http_session ) ;
 	if( nret )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "AddHttpSessionElapseTreeNode failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "AddHttpSessionElapseTreeNode failed , errno[%d]" , ERRNO );
 		RemoveHttpSessionTimeoutTreeNode( p_env , p_http_session );
 		list_add_tail( & (p_http_session->list) , & (p_env->http_session_unused_list.list) );
 		return NULL;
@@ -129,15 +129,19 @@ void SetHttpSessionUnused( struct HetaoEnv *p_env , struct HttpSession *p_http_s
 	
 	DebugLog( __FILE__ , __LINE__ , "reset http session[%p] http env[%p]" , p_http_session , p_http_session->http );
 	
+	p_http_session->flag = 0 ;
+	
 	/* 清理HTTP通讯会话 */
+#if ( defined __linux ) || ( defined __unix )
 	epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->netaddr.sock , NULL );
+#endif
 	if( p_http_session->ssl )
 	{
 		SSL_shutdown( p_http_session->ssl ) ;
 		SSL_free( p_http_session->ssl ) ;
 		p_http_session->ssl = NULL ;
 	}
-	close( p_http_session->netaddr.sock );
+	CLOSESOCKET( p_http_session->netaddr.sock );
 	ResetHttpEnv( p_http_session->http );
 	p_http_session->p_virtualhost = NULL ;
 	
@@ -185,9 +189,11 @@ void SetHttpSessionUnused_05( struct HetaoEnv *p_env , struct HttpSession *p_htt
 
 void SetHttpSessionUnused_02( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
+#if ( defined __linux ) || ( defined __unix )
 	epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->forward_sock , NULL ) ;
+#endif
 	p_http_session->p_forward_server->connection_count--;
-	close( p_http_session->forward_sock );
+	CLOSESOCKET( p_http_session->forward_netaddr.sock );
 	ResetHttpEnv( p_http_session->forward_http );
 	p_http_session->forward_flags = 0 ;
 	

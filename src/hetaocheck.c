@@ -22,7 +22,7 @@ int main( int argc , char *argv[] )
 	
 	int			nret = 0 ;
 	
-	umask(0);
+	UMASK(0);
 	
 	if( argc == 1 + 1 )
 	{

@@ -28,15 +28,13 @@
    rbtree, if necessary.
  */
 
-#if defined(container_of)
-#undef container_of
-#endif
+#ifndef container_of
 #define container_of(ptr, type, member) ((type *)( (char *)(ptr) - offsetof(type,member) ))
-
-#if defined(offsetof)
-#undef offsetof
 #endif
+
+#ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#endif
 
 #undef NULL
 #if defined(__cplusplus)
@@ -52,7 +50,7 @@ struct rb_node
 #define	RB_BLACK	1
 	struct rb_node *rb_right;
 	struct rb_node *rb_left;
-} __attribute__((aligned(sizeof(long))));
+} __attribute__;
 /* The alignment might seem pointless, but allegedly CRIS needs it */
 
 struct rb_root
@@ -68,11 +66,11 @@ struct rb_root
 #define rb_set_red(r)  do { (r)->rb_parent_color &= ~1; } while (0)
 #define rb_set_black(r)  do { (r)->rb_parent_color |= 1; } while (0)
 
-static inline void rb_set_parent(struct rb_node *rb, struct rb_node *p)
+static void rb_set_parent(struct rb_node *rb, struct rb_node *p)
 {
 	rb->rb_parent_color = (rb->rb_parent_color & 3) | (unsigned long)p;
 }
-static inline void rb_set_color(struct rb_node *rb, int color)
+static void rb_set_color(struct rb_node *rb, int color)
 {
 	rb->rb_parent_color = (rb->rb_parent_color & ~1) | color;
 }
@@ -84,7 +82,7 @@ static inline void rb_set_color(struct rb_node *rb, int color)
 #define RB_EMPTY_NODE(node)	(rb_parent(node) == node)
 #define RB_CLEAR_NODE(node)	(rb_set_parent(node, node))
 
-static inline void rb_init_node(struct rb_node *rb)
+static void rb_init_node(struct rb_node *rb)
 {
 	rb->rb_parent_color = 0;
 	rb->rb_right = NULL;
@@ -113,7 +111,7 @@ extern struct rb_node *rb_last(const struct rb_root *);
 extern void rb_replace_node(struct rb_node *victim, struct rb_node *new, 
 		struct rb_root *root);
 
-static inline void rb_link_node(struct rb_node * node, struct rb_node * parent,
+static void rb_link_node(struct rb_node * node, struct rb_node * parent,
 		struct rb_node ** rb_link)
 {
 	node->rb_parent_color = (unsigned long )parent;

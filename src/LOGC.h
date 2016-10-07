@@ -20,17 +20,46 @@
 #include <sys/types.h>
 #include <errno.h>
 
-#if ( defined _WIN32 )
+#if ( defined __unix ) || ( defined _AIX ) || ( defined __linux__ ) || ( defined __hpux )
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/epoll.h>
+#ifndef EPOLLRDHUP
+#define EPOLLRDHUP	0x2000
+#endif
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/inotify.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/sem.h>
+#include <dirent.h>
+#include <pwd.h>
+#include <syslog.h>
+#define __USE_GNU
+#include <sched.h>
+#include <pthread.h>
+#include <dlfcn.h>
+#elif ( defined _WIN32 )
+#include <winsock2.h>
+#include <stdio.h>
+#include <time.h>
+#include <sys/types.h>
+#include <io.h>
 #include <windows.h>
 #include <share.h>
 #include <io.h>
 #include <fcntl.h>
-#elif ( defined __unix ) || ( defined _AIX ) || ( defined __linux__ ) || ( defined __hpux )
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <syslog.h>
-#include <pthread.h>
 #endif
 
 #ifdef __cplusplus
@@ -54,8 +83,7 @@ extern "C" {
 /* 跨平台宏 */
 #if ( defined __linux__ ) || ( defined __unix ) || ( defined _AIX )
 #define TLS		__thread
-#define VSNPRINTF	vsnprintf
-#define SNPRINTF	snprintf
+#define STRDUP		strdup
 #define OPEN		open
 #define O_CREAT_WRONLY_APPEND	O_CREAT | O_WRONLY | O_APPEND , S_IRWXU | S_IRWXG | S_IRWXO
 #define READ		read
@@ -64,8 +92,24 @@ extern "C" {
 #define PROCESSID	(unsigned long)getpid()
 #define THREADID	(unsigned long)pthread_self()
 #define NEWLINE		"\n"
+#define VSNPRINTF	vsnprintf
+#define SNPRINTF	snprintf
+#define CLOSESOCKET	close
+#define CLOSESOCKET2(_fd1_,_fd2_)	close(_fd1_),close(_fd2_);
+#define ERRNO		errno
+#define SOCKLEN_T	socklen_t
+#define GETTIMEOFDAY(_tv_)	gettimeofday(&(_tv_),NULL)
+#define LOCALTIME(_tt_,_stime_) \
+	localtime_r(&(_tt_),&(_stime_));
+#define STAT		stat
+#define FSTAT		fstat
+#define FILENO		fileno
+#define ACCESS		access
+#define ACCESS_MODE	R_OK
+#define UMASK		umask
 #elif ( defined _WIN32 )
 #define TLS		__declspec( thread )
+#define STRDUP		_strdup
 #define VSNPRINTF	_vsnprintf
 #define SNPRINTF	_snprintf
 #define OPEN		_open
@@ -76,6 +120,44 @@ extern "C" {
 #define PROCESSID	(unsigned long)GetCurrentProcessId()
 #define THREADID	(unsigned long)GetCurrentThreadId()
 #define NEWLINE		"\r\n"
+#define CLOSESOCKET	closesocket
+#define CLOSESOCKET2(_fd1_,_fd2_)	closesocket(_fd1_),closesocket(_fd2_);
+#define ERRNO		GetLastError()
+#define EWOULDBLOCK	WSAEWOULDBLOCK
+#define ECONNABORTED	WSAECONNABORTED
+#define EINPROGRESS	WSAEINPROGRESS
+#define ECONNRESET	WSAECONNRESET
+#define ENOTCONN	WSAENOTCONN
+#define EISCONN		WSAEISCONN
+#define SOCKLEN_T	int
+#define GETTIMEOFDAY(_tv_) \
+	{ \
+		SYSTEMTIME stNow ; \
+		GetLocalTime( & stNow ); \
+		(_tv_).tv_usec = stNow.wMilliseconds * 1000 ; \
+		time( & ((_tv_).tv_sec) ); \
+	}
+#define SYSTEMTIME2TIMEVAL_USEC(_syst_,_tv_) \
+		(_tv_).tv_usec = (_syst_).wMilliseconds * 1000 ;
+#define SYSTEMTIME2TM(_syst_,_stime_) \
+		(_stime_).tm_year = (_syst_).wYear - 1900 ; \
+		(_stime_).tm_mon = (_syst_).wMonth - 1 ; \
+		(_stime_).tm_mday = (_syst_).wDay ; \
+		(_stime_).tm_hour = (_syst_).wHour ; \
+		(_stime_).tm_min = (_syst_).wMinute ; \
+		(_stime_).tm_sec = (_syst_).wSecond ;
+#define LOCALTIME(_tt_,_stime_) \
+	{ \
+		SYSTEMTIME	stNow ; \
+		GetLocalTime( & stNow ); \
+		_SYSTEMTIME2TM( stNow , (_stime_) ); \
+	}
+#define STAT		_stat
+#define FSTAT		_fstat
+#define FILENO		_fileno
+#define ACCESS		_access
+#define ACCESS_MODE	04
+#define UMASK		_umask
 #endif
 
 /* 简单日志函数 */

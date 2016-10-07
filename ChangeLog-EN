@@ -1,3 +1,6 @@
+0.9.0		2016-10-07	calvin
+		* ÒÆÖ²µ½WINDOWS£¬»ùÓÚIOCP
+
 0.8.0		2016-09-19	calvin
 		* Add connections limit per ip
 		*** Configuration file format is not compatible between 0.7.4 and 0.8.0 ***

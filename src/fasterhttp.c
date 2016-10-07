@@ -108,7 +108,7 @@ void _DumpHexBuffer( FILE *fp , char *buf , long buflen )
 		{
 			if( row_offset * 16 + col_offset < buflen )
 			{
-				if( isprint( (int)*(buf+row_offset*16+col_offset) ) )
+				if( isprint( (int)(unsigned char)*(buf+row_offset*16+col_offset) ) )
 				{
 					fprintf( fp , "%c" , *((unsigned char *)buf+row_offset*16+col_offset) );
 				}
@@ -452,7 +452,7 @@ static int SendHttpBuffer( SOCKET sock , SSL *ssl , struct HttpEnv *e , struct H
 	if( e->init_timeout >= 0 )
 	{
 #if ( defined _WIN32 )
-		time( & (t1.tv_sec) );
+		t1.tv_sec = (long)time( NULL ) ;
 #elif ( defined __unix ) || ( defined __linux__ )
 		gettimeofday( & t1 , NULL );
 #endif
@@ -475,7 +475,7 @@ static int SendHttpBuffer( SOCKET sock , SSL *ssl , struct HttpEnv *e , struct H
 		len = (int)SSL_write( ssl , b->process_ptr , b->fill_ptr-b->process_ptr ) ;
 	if( len == -1 )
 	{
-		if( errno == EAGAIN || errno == EWOULDBLOCK )
+		if( ERRNO == EAGAIN || ERRNO == EWOULDBLOCK )
 			return FASTERHTTP_INFO_TCP_SEND_WOULDBLOCK;
 		return FASTERHTTP_ERROR_TCP_SEND;
 	}
@@ -488,7 +488,7 @@ _DumpHexBuffer( stdout , b->process_ptr , len );
 	if( e->init_timeout >= 0 )
 	{
 #if ( defined _WIN32 )
-		time( & (t2.tv_sec) );
+		t2.tv_sec = (long)time( NULL ) ;
 #elif ( defined __unix ) || ( defined __linux__ )
 		gettimeofday( & t2 , NULL );
 #endif
@@ -516,7 +516,7 @@ static int SendHttpBuffer1( SOCKET sock , SSL *ssl , struct HttpEnv *e , struct 
 	if( e->init_timeout >= 0 )
 	{
 #if ( defined _WIN32 )
-		time( & (t1.tv_sec) );
+		t1.tv_sec = (long)time( NULL ) ;
 #elif ( defined __unix ) || ( defined __linux__ )
 		gettimeofday( & t1 , NULL );
 #endif
@@ -539,7 +539,7 @@ static int SendHttpBuffer1( SOCKET sock , SSL *ssl , struct HttpEnv *e , struct 
 		len = (int)SSL_write( ssl , b->process_ptr , 10 ) ;
 	if( len == -1 )
 	{
-		if( errno == EAGAIN || errno == EWOULDBLOCK )
+		if( ERRNO == EAGAIN || ERRNO == EWOULDBLOCK )
 			return FASTERHTTP_INFO_TCP_SEND_WOULDBLOCK;
 		return FASTERHTTP_ERROR_TCP_SEND;
 	}
@@ -552,7 +552,7 @@ _DumpHexBuffer( stdout , b->process_ptr , len );
 	if( e->init_timeout >= 0 )
 	{
 #if ( defined _WIN32 )
-		time( & (t2.tv_sec) );
+		t2.tv_sec = (long)time( NULL ) ;
 #elif ( defined __unix ) || ( defined __linux__ )
 		gettimeofday( & t2 , NULL );
 #endif
@@ -587,7 +587,7 @@ static int ReceiveHttpBuffer( SOCKET sock , SSL *ssl , struct HttpEnv *e , struc
 	if( e->init_timeout >= 0 )
 	{
 #if ( defined _WIN32 )
-		time( & (t1.tv_sec) );
+		t1.tv_sec = (long)time( NULL ) ;
 #elif ( defined __unix ) || ( defined __linux__ )
 		gettimeofday( & t1 , NULL );
 #endif
@@ -629,7 +629,7 @@ _DumpHexBuffer( stdout , b->fill_ptr , len );
 	if( e->init_timeout >= 0 )
 	{
 #if ( defined _WIN32 )
-		time( & (t2.tv_sec) );
+		t2.tv_sec = (long)time( NULL ) ;
 #elif ( defined __unix ) || ( defined __linux__ )
 		gettimeofday( & t2 , NULL );
 #endif
@@ -661,7 +661,7 @@ static int ReceiveHttpBuffer1( SOCKET sock , SSL *ssl , struct HttpEnv *e , stru
 	if( e->init_timeout >= 0 )
 	{
 #if ( defined _WIN32 )
-		time( & (t1.tv_sec) );
+		t1.tv_sec = (long)time( NULL ) ;
 #elif ( defined __unix ) || ( defined __linux__ )
 		gettimeofday( & t1 , NULL );
 #endif
@@ -698,7 +698,7 @@ static int ReceiveHttpBuffer1( SOCKET sock , SSL *ssl , struct HttpEnv *e , stru
 	if( e->init_timeout >= 0 )
 	{
 #if ( defined _WIN32 )
-		time( & (t2.tv_sec) );
+		t2.tv_sec = (long)time( NULL ) ;
 #elif ( defined __unix ) || ( defined __linux__ )
 		gettimeofday( & t2 , NULL );
 #endif
@@ -2213,9 +2213,7 @@ int ParseHttpResponse( struct HttpEnv *e )
 	int		nret = 0 ;
 	
 	nret = ParseHttpBuffer( e , & (e->response_buffer) ) ;
-	if( nret == FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER )
-		return FASTERHTTP_ERROR_HTTP_TRUNCATE;
-	else if( nret )
+	if( nret )
 		return nret;
 	
 	return 0;
@@ -2226,9 +2224,7 @@ int ParseHttpRequest( struct HttpEnv *e )
 	int		nret = 0 ;
 	
 	nret = ParseHttpBuffer( e , & (e->request_buffer) ) ;
-	if( nret == FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER )
-		return FASTERHTTP_ERROR_HTTP_TRUNCATE;
-	else if( nret )
+	if( nret )
 		return nret;
 	
 	return 0;
@@ -2556,6 +2552,11 @@ int GetHttpBufferLength( struct HttpBuffer *b )
 	return b->fill_ptr-b->base;
 }
 
+int GetHttpBufferSize( struct HttpBuffer *b )
+{
+	return b->buf_size;
+}
+
 int StrcpyHttpBuffer( struct HttpBuffer *b , char *str )
 {
 	int		len ;
@@ -2750,7 +2751,7 @@ int StrcatHttpBufferFromFile( struct HttpBuffer *b , char *pathfilename , int *p
 				return nret;
 		}
 		
-		fp = fopen( pathfilename , "r" ) ;
+		fp = fopen( pathfilename , "rb" ) ;
 		if( fp == NULL )
 			return FASTERHTTP_ERROR_FILE_NOT_FOUND;
 		
@@ -2944,6 +2945,60 @@ void AppendHttpBuffer( struct HttpEnv *e , struct HttpBuffer *b )
 	return;
 }
 
+void OffsetHttpBufferFillPtr( struct HttpBuffer *b , int offset )
+{
+	b->fill_ptr += offset ;
+	return;
+}
+
+int GetHttpBufferLengthFilled( struct HttpBuffer *b )
+{
+	if( b )
+		return b->fill_ptr-b->base;
+	else
+		return 0;
+}
+
+int GetHttpBufferLengthUnfilled( struct HttpBuffer *b )
+{
+	if( b )
+		return b->buf_size-1-(b->fill_ptr-b->base);
+	else
+		return 0;
+}
+
+void OffsetHttpBufferProcessPtr( struct HttpBuffer *b , int offset )
+{
+	b->process_ptr += offset ;
+	return;
+}
+
+int GetHttpBufferLengthProcessed( struct HttpBuffer *b )
+{
+	if( b )
+		return b->process_ptr-b->base;
+	else
+		return 0;
+}
+
+int GetHttpBufferLengthUnprocessed( struct HttpBuffer *b )
+{
+	if( b )
+		return b->fill_ptr-b->process_ptr;
+	else
+		return 0;
+}
+
+#ifndef STAT
+#if ( defined __linux__ ) || ( defined __unix ) || ( defined _AIX )
+#define STAT		stat
+#define FSTAT		fstat
+#elif ( defined _WIN32 )
+#define STAT		_stat
+#define FSTAT		_fstat
+#endif
+#endif
+
 int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct HttpUri *p_httpuri )
 {
 	char		*uri_end = uri + uri_len ;
@@ -2952,7 +3007,7 @@ int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct HttpUri *p_ht
 	char		*p_question_mark ;
 	
 	char		pathfilename[ 256 + 1 ] ;
-	struct stat	st ;
+	struct STAT	st ;
 	
 	char		*p = NULL ;
 	
@@ -2993,16 +3048,20 @@ int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct HttpUri *p_ht
 				/* "mydir" */
 				if( wwwroot == NULL )
 				{
-					return 1;
+					return 0001;
 				}
 				else
 				{
 					memset( pathfilename , 0x00 , sizeof(pathfilename) );
-					snprintf( pathfilename , sizeof(pathfilename) , "%s/%.*s" , wwwroot , uri_len , uri );
-					nret = stat( pathfilename , & st ) ;
+					SNPRINTF( pathfilename , sizeof(pathfilename) , "%s/%.*s" , wwwroot , uri_len , uri );
+#if ( defined _WIN32 )
+					if( pathfilename[strlen(pathfilename)-1] == '/' || pathfilename[strlen(pathfilename)-1] == '\\' )
+						pathfilename[strlen(pathfilename)-1] = '\0' ;
+#endif
+					nret = STAT( pathfilename , & st ) ;
 					if( nret == -1 )
 					{
-						return -1;
+						return -0001;
 					}
 					else if( STAT_DIRECTORY(st) )
 					{
@@ -3036,11 +3095,15 @@ int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct HttpUri *p_ht
 			{
 				/* "mydir?id=123" */
 				memset( pathfilename , 0x00 , sizeof(pathfilename) );
-				snprintf( pathfilename , sizeof(pathfilename) , "%s/%.*s" , wwwroot , (int)(p_question_mark-uri) , uri );
-				nret = stat( pathfilename , & st ) ;
+				SNPRINTF( pathfilename , sizeof(pathfilename) , "%s/%.*s" , wwwroot , (int)(p_question_mark-uri) , uri );
+#if ( defined _WIN32 )
+					if( pathfilename[strlen(pathfilename)-1] == '/' || pathfilename[strlen(pathfilename)-1] == '\\' )
+						pathfilename[strlen(pathfilename)-1] = '\0' ;
+#endif
+				nret = STAT( pathfilename , & st ) ;
 				if( nret == -1 )
 				{
-					return -1;
+					return -0011;
 				}
 				else if( STAT_DIRECTORY(st) )
 				{
@@ -3111,16 +3174,20 @@ int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct HttpUri *p_ht
 				/* "/mydir" */
 				if( wwwroot == NULL )
 				{
-					return 1;
+					return 1001;
 				}
 				else
 				{
 					memset( pathfilename , 0x00 , sizeof(pathfilename) );
-					snprintf( pathfilename , sizeof(pathfilename) , "%s%.*s" , wwwroot , uri_len , uri );
-					nret = stat( pathfilename , & st ) ;
+					SNPRINTF( pathfilename , sizeof(pathfilename) , "%s%.*s" , wwwroot , uri_len , uri );
+#if ( defined _WIN32 )
+					if( pathfilename[strlen(pathfilename)-1] == '/' || pathfilename[strlen(pathfilename)-1] == '\\' )
+						pathfilename[strlen(pathfilename)-1] = '\0' ;
+#endif
+					nret = STAT( pathfilename , & st ) ;
 					if( nret == -1 )
 					{
-						return -1;
+						return -1001;
 					}
 					else if( STAT_DIRECTORY(st) )
 					{
@@ -3154,11 +3221,15 @@ int SplitHttpUri( char *wwwroot , char *uri , int uri_len , struct HttpUri *p_ht
 			{
 				/* "/mydir?id=123" */
 				memset( pathfilename , 0x00 , sizeof(pathfilename) );
-				snprintf( pathfilename , sizeof(pathfilename) , "%s%.*s" , wwwroot , (int)(p_question_mark-uri) , uri );
-				nret = stat( pathfilename , & st ) ;
+				SNPRINTF( pathfilename , sizeof(pathfilename) , "%s%.*s" , wwwroot , (int)(p_question_mark-uri) , uri );
+#if ( defined _WIN32 )
+					if( pathfilename[strlen(pathfilename)-1] == '/' || pathfilename[strlen(pathfilename)-1] == '\\' )
+						pathfilename[strlen(pathfilename)-1] = '\0' ;
+#endif
+				nret = STAT( pathfilename , & st ) ;
 				if( nret == -1 )
 				{
-					return -1;
+					return -1011;
 				}
 				else if( STAT_DIRECTORY(st) )
 				{

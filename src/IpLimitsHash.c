@@ -18,7 +18,7 @@ int InitIpLimitsHash( struct HetaoEnv *p_env )
 	p_env->iplimits_hash = (struct hlist_head *)malloc( sizeof(struct hlist_head) * IP_LIMITS_HASHSIZE ) ;
 	if( p_env->iplimits_hash == NULL )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 		return -1;
 	}
 	memset( p_env->iplimits_hash , 0x00 , sizeof(struct hlist_head) * IP_LIMITS_HASHSIZE );
@@ -64,7 +64,7 @@ int IncreaseIpLimitsHashNode( struct HetaoEnv *p_env , unsigned int ip )
 	index = ip % IP_LIMITS_HASHSIZE ;
 	DebugLog( __FILE__ , __LINE__ , "IpLimits[%d]=CalcHash[%u][%u]" , index , ip , IP_LIMITS_HASHSIZE );
 	p_hlist_head = p_env->iplimits_hash + index ;
-	hlist_for_each_entry( p , p_hlist_head , iplimits_node )
+	hlist_for_each_entry( p , p_hlist_head , struct IpLimits , iplimits_node )
 	{
 		if( p->ip == ip )
 		{

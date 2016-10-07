@@ -66,7 +66,16 @@ int SelectForwardAddress( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 
 int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
+#if ( defined __linux ) || ( defined __unix )
 	struct epoll_event	event ;
+#elif ( defined _WIN32 )
+	struct HttpBuffer	*b = NULL ;
+	WSABUF			buf ;
+	DWORD			dwBytesSent ;
+	DWORD			dwFlags ;
+	HANDLE			hret ;
+	BOOL			bret ;
+#endif
 	
 	char			*request_base = NULL ;
 	int			request_len ;
@@ -76,74 +85,126 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 	
 	p_http_session->forward_flags = 0 ;
 	
+	memset( & (p_http_session->forward_netaddr) , 0x00 , sizeof(struct NetAddress) );
+	
 	/* 创建转发连接 */
-	p_http_session->forward_sock = socket( AF_INET , SOCK_STREAM , IPPROTO_TCP ) ;
-	if( p_http_session->forward_sock == -1 )
+#if ( defined __linux ) || ( defined __unix )
+	p_http_session->forward_netaddr.sock = socket( AF_INET , SOCK_STREAM , IPPROTO_TCP ) ;
+	if( p_http_session->forward_netaddr.sock == -1 )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "socket failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "socket failed , errno[%d]" , ERRNO );
 		return HTTP_INTERNAL_SERVER_ERROR;
 	}
+#elif ( defined _WIN32 )
+	p_http_session->forward_netaddr.sock = WSASocket( AF_INET , SOCK_STREAM , 0 , NULL , 0 , WSA_FLAG_OVERLAPPED ) ;
+	if( p_http_session->forward_netaddr.sock == -1 )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "WSASocket failed , errno[%d]" , ERRNO );
+		return HTTP_INTERNAL_SERVER_ERROR;
+	}
+#endif
 	
-	SetHttpNonblock( p_http_session->forward_sock );
-	SetHttpNodelay( p_http_session->forward_sock , p_env->tcp_options__nodelay );
-	SetHttpLinger( p_http_session->forward_sock , p_env->tcp_options__nolinger );
+#if ( defined __linux ) || ( defined __unix )
+	SetHttpNonblock( p_http_session->forward_netaddr.sock );
+#endif
+	SetHttpNodelay( p_http_session->forward_netaddr.sock , p_env->tcp_options__nodelay );
+	SetHttpLinger( p_http_session->forward_netaddr.sock , p_env->tcp_options__nolinger );
+	
+#if ( defined _WIN32 )
+	SETNETADDRESS( p_http_session->forward_netaddr )
+	nret = bind( p_http_session->forward_netaddr.sock , (struct sockaddr *) & (p_http_session->forward_netaddr.addr) , sizeof(struct sockaddr) ) ;
+	if( nret == -1 )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "bind[%s:%d] failed , errno[%d]" , p_http_session->forward_netaddr.ip , p_http_session->forward_netaddr.port , ERRNO );
+		return HTTP_INTERNAL_SERVER_ERROR;
+	}
+#endif
 	
 	p_http_session->forward_flags |= HTTPSESSION_FLAGS_CONNECTING ;
 	p_http_session->p_forward_server->connection_count++;
 	UpdateLeastConnectionCountTreeNode( p_http_session->p_virtualhost , p_http_session->p_forward_server );
 	
+#if ( defined _WIN32 )
+	/* 绑定完成端口  */
+	hret = CreateIoCompletionPort( (HANDLE)(p_http_session->forward_netaddr.sock) , p_env->iocp , (DWORD)p_http_session , 0 ) ;
+	if( hret == NULL )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
+		return HTTP_INTERNAL_SERVER_ERROR;
+	}
+#endif
+	
 	/* 连接服务端 */
 	DebugLog( __FILE__ , __LINE__ , "connecting[%s:%d] ..." , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
-	nret = connect( p_http_session->forward_sock , (struct sockaddr *) & (p_http_session->p_forward_server->netaddr.addr) , sizeof(struct sockaddr) ) ;
+#if ( defined __linux ) || ( defined __unix )
+	nret = connect( p_http_session->forward_netaddr.sock , (struct sockaddr *) & (p_http_session->p_forward_server->netaddr.addr) , sizeof(struct sockaddr) ) ;
 	if( nret == -1 )
+#elif ( defined _WIN32 )
+	dwBytesSent = 0 ;
+	memset( & (p_http_session->overlapped) , 0x00 , sizeof(p_http_session->overlapped) );
+	bret = p_env->lpfnConnectEx( p_http_session->forward_netaddr.sock , (struct sockaddr *) & (p_http_session->p_forward_server->netaddr.addr) , sizeof(struct sockaddr) , NULL , 0 , & dwBytesSent , & (p_http_session->overlapped) ) ;
+	if( bret == FALSE )
+#endif
 	{
-		if( errno == EINPROGRESS )
+#if ( defined __linux ) || ( defined __unix )
+		if( ERRNO == EINPROGRESS )
+#elif ( defined _WIN32 )
+		if( WSAGetLastError() == ERROR_IO_PENDING )
+#endif
 		{
 			DebugLog( __FILE__ , __LINE__ , "connect[%s:%d] inprocess" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
 			
+#if ( defined __linux ) || ( defined __unix )
 			/* 注册epoll写事件 */
 			memset( & event , 0x00 , sizeof(struct epoll_event) );
 			event.events = EPOLLOUT | EPOLLERR ;
 			event.data.ptr = p_http_session ;
-			nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_ADD , p_http_session->forward_sock , & event ) ;
+			nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_ADD , p_http_session->forward_netaddr.sock , & event ) ;
 			if( nret == -1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , ERRNO );
 				SetHttpSessionUnused_05( p_env , p_http_session );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
+#endif
 		}
 		else
 		{
-			ErrorLog( __FILE__ , __LINE__ , "connect[%s:%d] failed , errno[%d]" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port , errno );
+			ErrorLog( __FILE__ , __LINE__ , "connect[%s:%d] failed , errno[%d]" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port , ERRNO );
 			return HTTP_SERVICE_UNAVAILABLE;
 		}
 	}
 	else
 	{
 		DebugLog( __FILE__ , __LINE__ , "connect[%s:%d] ok" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
-		
+		p_http_session->forward_flags = HTTPSESSION_FLAGS_CONNECTED ;
+#if ( defined _WIN32 )
+		setsockopt( p_http_session->forward_netaddr.sock , SOL_SOCKET , SO_UPDATE_CONNECT_CONTEXT , NULL , 0 );
+#endif
+				
+#if ( defined __linux ) || ( defined __unix )
 		/* SSL握手 */
 		if( p_http_session->p_virtualhost->forward_ssl_ctx )
 		{
 			p_http_session->forward_ssl = SSL_new( p_http_session->p_virtualhost->forward_ssl_ctx ) ;
 			if( p_http_session->forward_ssl == NULL )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "SSL_new failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "SSL_new failed , errno[%d]" , ERRNO );
 				SetHttpSessionUnused_05( p_env , p_http_session );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
 			
-			SSL_set_fd( p_http_session->forward_ssl , p_http_session->forward_sock );
+			SSL_set_fd( p_http_session->forward_ssl , p_http_session->forward_netaddr.sock );
 			
 			nret = SSL_connect( p_http_session->forward_ssl ) ;
 			if( nret == -1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "SSL_connect failed , errno[%d]" , errno );
+				ErrorLog( __FILE__ , __LINE__ , "SSL_connect failed , errno[%d]" , ERRNO );
 				SetHttpSessionUnused_05( p_env , p_http_session );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
 		}
+#endif
 		
 		/* 复制HTTP请求 */
 		request_base = GetHttpBufferBase( GetHttpRequestBuffer(p_http_session->http) , & request_len ) ;
@@ -151,24 +212,44 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 		nret = MemcatHttpBuffer( forward_b , request_base , request_len ) ;
 		if( nret )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "MemcatHttpBuffer failed , errno[%d]" , ERRNO );
 			SetHttpSessionUnused_05( p_env , p_http_session );
 			return HTTP_INTERNAL_SERVER_ERROR;
 		}
 		
+#if ( defined __linux ) || ( defined __unix )
 		/* 注册epoll写事件 */
 		memset( & event , 0x00 , sizeof(struct epoll_event) );
 		event.events = EPOLLOUT | EPOLLERR ;
 		event.data.ptr = p_http_session ;
-		nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_ADD , p_http_session->forward_sock , & event ) ;
+		nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_ADD , p_http_session->forward_netaddr.sock , & event ) ;
 		if( nret == -1 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , ERRNO );
 			SetHttpSessionUnused_05( p_env , p_http_session );
 			return HTTP_INTERNAL_SERVER_ERROR;
 		}
-		
-		p_http_session->forward_flags |= HTTPSESSION_FLAGS_CONNECTED ;
+#elif ( defined _WIN32 )
+		/* 投递发送事件 */
+		b = GetHttpResponseBuffer( p_http_session->forward_http );
+		buf.buf = GetHttpBufferBase( b , NULL ) ;
+		buf.len = GetHttpBufferLengthUnprocessed( b ) ;
+		dwFlags = 0 ;
+		nret = WSASend( p_http_session->forward_netaddr.sock , & buf , 1 , NULL , dwFlags , & (p_http_session->overlapped) , NULL ) ;
+		if( nret == SOCKET_ERROR )
+		{
+			if( WSAGetLastError() == ERROR_IO_PENDING )
+			{
+				DebugLog( __FILE__ , __LINE__ , "WSASend io pending" );
+			}
+			else
+			{
+				ErrorLog( __FILE__ , __LINE__ , "WSASend failed , errno[%d]" , ERRNO );
+				SetHttpSessionUnused_05( p_env , p_http_session );
+				return HTTP_INTERNAL_SERVER_ERROR;
+			}
+		}
+#endif
 	}
 	
 	return HTTP_OK;
@@ -177,13 +258,14 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
 #if ( defined __linux ) || ( defined __unix )
+	struct epoll_event	event ;
 	int			error , code ;
 #endif
-	_SOCKLEN_T		addr_len ;
+	SOCKLEN_T		addr_len ;
 
 	struct HttpBuffer	*b = NULL ;
-	
-	struct epoll_event	event ;
+	WSABUF			buf ;
+	DWORD			dwFlags ;
 	
 	char			*request_base = NULL ;
 	int			request_len ;
@@ -194,21 +276,33 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 	/* 检查非堵塞连接结果 */
 #if ( defined __linux ) || ( defined __unix )
 	addr_len = sizeof(int) ;
-	code = getsockopt( p_http_session->forward_sock , SOL_SOCKET , SO_ERROR , & error , & addr_len ) ;
+	code = getsockopt( p_http_session->forward_netaddr.sock , SOL_SOCKET , SO_ERROR , & error , & addr_len ) ;
 	if( code < 0 || error )
 #elif ( defined _WIN32 )
+	/*
 	addr_len = sizeof(struct sockaddr_in) ;
-	nret = connect( p_http_session->forward_sock , (struct sockaddr *) & (p_http_session->netaddr.sockaddr) , sizeof(struct sockaddr) ) ;
-	if( nret == -1 && errno == EISCONN )
+	nret = connect( p_http_session->forward_netaddr.sock , (struct sockaddr *) & (p_http_session->p_forward_server->netaddr.addr) , sizeof(struct sockaddr) ) ;
+	if( nret == -1 && ERRNO == EISCONN )
 	{
 		;
 	}
 	else
+	*/
+	
+	int			error ;
+	int			code ;
+	
+	addr_len = sizeof(int) ;
+	code = getsockopt( p_http_session->forward_netaddr.sock , SOL_SOCKET , SO_CONNECT_TIME , (char*) & error , & addr_len ) ;
+	if( code != NO_ERROR || error == 0xFFFFFFFF )
+	
 #endif
         {
-		ErrorLog( __FILE__ , __LINE__ , "connect[%s:%d] failed , errno[%d]" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port , errno );
+		ErrorLog( __FILE__ , __LINE__ , "connect[%s:%d] failed , errno[%d]" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port , ERRNO );
 		
-		epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->forward_sock , NULL );
+#if ( defined __linux ) || ( defined __unix )
+		epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_http_session->forward_netaddr.sock , NULL );
+#endif
 		SetHttpSessionUnused_02( p_env , p_http_session );
 		
 		p_http_session->p_forward_server->timestamp_to_valid = GETSECONDSTAMP + p_env->http_options__forward_disable ;
@@ -233,7 +327,7 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 					nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
 					if( nret )
 					{
-						ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
+						ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , ERRNO );
 					}
 					
 					break;
@@ -241,13 +335,13 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 			}
 			else
 			{
-				ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , errno );
+				ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , ERRNO );
 				
 				/* 格式化响应头和体，用出错状态码 */
 				nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
 				if( nret )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , errno );
+					ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , ERRNO );
 				}
 				
 				break;
@@ -257,6 +351,7 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 		b = GetHttpResponseBuffer(p_http_session->http) ;
 		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer [%d]bytes" , GetHttpBufferLength(b) );
 		
+#if ( defined __linux ) || ( defined __unix )
 		/* 恢复原连接事件 */
 		memset( & event , 0x00 , sizeof(struct epoll_event) );
 		event.events = EPOLLOUT | EPOLLERR ;
@@ -264,38 +359,72 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 		nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->netaddr.sock , & event ) ;
 		if( nret == -1 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , ERRNO );
 			return -1;
 		}
+#elif ( defined _WIN32 )
+		p_http_session->flag = HTTPSESSION_FLAGS_SENDING ;
+		
+		/* 投递发送事件 */
+		b = GetHttpResponseBuffer( p_http_session->http );
+		buf.buf = GetHttpBufferBase( b , NULL ) ;
+		buf.len = GetHttpBufferLength( b ) ;
+		dwFlags = 0 ;
+		nret = WSASend( p_http_session->netaddr.sock , & buf , 1 , NULL , dwFlags , & (p_http_session->overlapped) , NULL ) ;
+		if( nret == SOCKET_ERROR )
+		{
+			if( WSAGetLastError() == ERROR_IO_PENDING )
+			{
+				DebugLog( __FILE__ , __LINE__ , "WSASend io pending" );
+			}
+			else
+			{
+				ErrorLog( __FILE__ , __LINE__ , "WSASend failed , errno[%d]" , ERRNO );
+				return 1;
+			}
+		}
+		else
+		{
+			InfoLog( __FILE__ , __LINE__ , "WSASend ok" );
+		}
+#endif
 		
 		return 0;
         }
 	
 	DebugLog( __FILE__ , __LINE__ , "connect2[%s:%d] ok" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
+	p_http_session->forward_flags = HTTPSESSION_FLAGS_CONNECTED ;
+	/*
+#if ( defined _WIN32 )
+	setsockopt( p_http_session->forward_netaddr.sock , SOL_SOCKET , SO_UPDATE_CONNECT_CONTEXT , NULL , 0 );
+#endif
+	*/
 	
+#if ( defined __linux ) || ( defined __unix )
 	/* SSL握手 */
 	if( p_http_session->p_virtualhost->forward_ssl_ctx )
 	{
 		p_http_session->forward_ssl = SSL_new( p_http_session->p_virtualhost->forward_ssl_ctx ) ;
 		if( p_http_session->forward_ssl == NULL )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "SSL_new failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "SSL_new failed , errno[%d]" , ERRNO );
 			SetHttpSessionUnused_05( p_env , p_http_session );
 			return 1;
 		}
 		
-		SSL_set_fd( p_http_session->forward_ssl , p_http_session->forward_sock );
+		SSL_set_fd( p_http_session->forward_ssl , p_http_session->forward_netaddr.sock );
 		
 		SetHttpBlock( p_http_session->forward_sock );
 		nret = SSL_connect( p_http_session->forward_ssl ) ;
 		SetHttpNonblock( p_http_session->forward_sock );
 		if( nret == -1 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "SSL_connect failed , errno[%d]" , errno );
+			ErrorLog( __FILE__ , __LINE__ , "SSL_connect failed , errno[%d]" , ERRNO );
 			SetHttpSessionUnused_05( p_env , p_http_session );
 			return 1;
 		}
 	}
+#endif
 	
 	/* 复制HTTP请求 */
 	request_base = GetHttpBufferBase( GetHttpRequestBuffer(p_http_session->http) , & request_len ) ;
@@ -303,24 +432,49 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 	nret = MemcatHttpBuffer( forward_b , request_base , request_len ) ;
 	if( nret )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , ERRNO );
 		SetHttpSessionUnused_05( p_env , p_http_session );
 		return 1;
 	}
 	
+#if ( defined __linux ) || ( defined __unix )
 	/* 注册epoll写事件 */
 	memset( & event , 0x00 , sizeof(struct epoll_event) );
 	event.events = EPOLLOUT | EPOLLERR ;
 	event.data.ptr = p_http_session ;
-	nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->forward_sock , & event ) ;
+	nret = epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_MOD , p_http_session->forward_netaddr.sock , & event ) ;
 	if( nret == -1 )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , errno );
+		ErrorLog( __FILE__ , __LINE__ , "epoll_ctl failed , errno[%d]" , ERRNO );
 		SetHttpSessionUnused_05( p_env , p_http_session );
 		return -1;
 	}
+#elif ( defined _WIN32 )
+	p_http_session->flag = HTTPSESSION_FLAGS_SENDING ;
 	
-	p_http_session->forward_flags |= HTTPSESSION_FLAGS_CONNECTED ;
+	/* 投递发送事件 */
+	forward_b = GetHttpRequestBuffer( p_http_session->forward_http );
+	buf.buf = GetHttpBufferBase( forward_b , NULL ) ;
+	buf.len = GetHttpBufferLength( forward_b ) ;
+	dwFlags = 0 ;
+	nret = WSASend( p_http_session->forward_netaddr.sock , & buf , 1 , NULL , dwFlags , & (p_http_session->overlapped) , NULL ) ;
+	if( nret == SOCKET_ERROR )
+	{
+		if( WSAGetLastError() == ERROR_IO_PENDING )
+		{
+			DebugLog( __FILE__ , __LINE__ , "WSASend io pending" );
+		}
+		else
+		{
+			ErrorLog( __FILE__ , __LINE__ , "WSASend failed , errno[%d]" , ERRNO );
+			return 1;
+		}
+	}
+	else
+	{
+		InfoLog( __FILE__ , __LINE__ , "WSASend ok" );
+	}
+#endif
 	
 	return 0;
 }

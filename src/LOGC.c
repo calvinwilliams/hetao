@@ -88,21 +88,20 @@ void SetLogLevel( int log_level )
 
 static void _UpdateDateTimeCache( unsigned char index )
 {
+#if ( defined __linux__ ) || ( defined __unix ) || ( defined _AIX )
 	struct tm		stime ;
 	
-#if ( defined __linux__ ) || ( defined __unix ) || ( defined _AIX )
 	g_date_time_cache[index].second_stamp = time( NULL ) ;
 	localtime_r( &(g_date_time_cache[index].second_stamp) , & stime );
 	
-	snprintf( g_date_time_cache[index].date_and_time_str , sizeof(g_date_time_cache[index].date_and_time_str)-1 , "%04d-%02d-%02d %02d:%02d:%02d" , stime.tm_year+1900 , stime.tm_mon+1 , stime.tm_mday , stime.tm_hour , stime.tm_min , stime.tm_sec );
+	SNPRINTF( g_date_time_cache[index].date_and_time_str , sizeof(g_date_time_cache[index].date_and_time_str)-1 , "%04d-%02d-%02d %02d:%02d:%02d" , stime.tm_year+1900 , stime.tm_mon+1 , stime.tm_mday , stime.tm_hour , stime.tm_min , stime.tm_sec );
 #elif ( defined _WIN32 )
 	{
 	SYSTEMTIME	stNow ;
 	GetLocalTime( & stNow );
 	time( & (g_date_time_cache[index].second_stamp) );
+	SNPRINTF( g_date_time_cache[index].date_and_time_str , sizeof(g_date_time_cache[index].date_and_time_str)-1 , "%04d-%02d-%02d %02d:%02d:%02d" , stNow.wYear , stNow.wMonth , stNow.wDay , stNow.wHour , stNow.wMinute , stNow.wSecond );
 	}
-	
-	snprintf( g_date_time_cache[index].date_and_time_str , sizeof(g_date_time_cache[index].date_and_time_str)-1 , "%04d-%02d-%02d %02d:%02d:%02d" , stNow.wYear , stNow.wMonth , stNow.wDay , stNow.wHour , stNow.wMinute , stNow.wSecond );
 #endif
 	
 	
@@ -356,7 +355,7 @@ int WriteHexLogBaseV( int log_level , char *c_filename , long c_fileline , char 
 		{
 			if( row_offset * 16 + col_offset < buflen )
 			{
-				if( isprint( (int)*(buf+row_offset*16+col_offset) ) )
+				if( isprint( (int)(unsigned char)*(buf+row_offset*16+col_offset) ) )
 				{
 					len = SNPRINTF( hexlog_bufptr , hexlog_buf_remain_len , "%c" , *((unsigned char *)buf+row_offset*16+col_offset) ) ;
 					OFFSET_BUFPTR( hexlog_buffer , hexlog_bufptr , len , hexlog_buflen , hexlog_buf_remain_len );
