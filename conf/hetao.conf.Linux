@@ -31,14 +31,21 @@
 	/*
 	"listen" :
 	{
-		"ip" : "www.test.com" ,
+		"ip" : "" ,
 		"port" : 80 ,
 		"website" :
 		{
-			"domain" : "" ,
-			"wwwroot" : "/var/hetao/www" ,
+			"domain" : "www.test.com" ,
+			"wwwroot" : "/var/hetao/www.test.com" ,
 			"index" : "/index.html,/index.htm" ,
-			"access_log" : "/var/hetao/log/access.log"
+			"access_log" : "/var/hetao/log/www_test_com_access.log"
+		} ,
+		"website" :
+		{
+			"domain" : "www.test2.com" ,
+			"wwwroot" : "/var/hetao/www.test2.com" ,
+			"index" : "/index.html,/index.htm" ,
+			"access_log" : "/var/hetao/log/www_test2_com_access.log"
 		}
 	} ,
 	*/
@@ -55,6 +62,26 @@
 			"index" : "/index.html,/index.htm" ,
 			"access_log" : "/var/hetao/log/access.log" ,
 			"rewrite" : { "pattern":"/(.+)/(.+)" , "template":"/(2)/(1)" }
+		}
+	} ,
+	*/
+	
+	/*
+	"listen" :
+	{
+		"ip" : "" ,
+		"port" : 443 ,
+		"ssl" :
+		{
+			"certificate_file" : "/etc/hetao/certs/server.pem" ,
+			"certificate_key_file" : "/etc/hetao/certs/server.key"
+		} ,
+		"website" :
+		{
+			"domain" : "" ,
+			"wwwroot" : "/var/hetao/www" ,
+			"index" : "/index.html,/index.htm" ,
+			"access_log" : "/var/hetao/log/access.log"
 		}
 	} ,
 	*/
@@ -105,26 +132,6 @@
 				"forward_server" : { "ip" : "192.168.6.111" , "port" : 1443 } ,
 				"forward_server" : { "ip" : "192.168.6.111" , "port" : 1443 }
 			}
-		}
-	} ,
-	*/
-	
-	/*
-	"listen" :
-	{
-		"ip" : "" ,
-		"port" : 443 ,
-		"ssl" :
-		{
-			"certificate_file" : "/etc/hetao/certs/server.pem" ,
-			"certificate_key_file" : "/etc/hetao/certs/server.key"
-		} ,
-		"website" :
-		{
-			"domain" : "" ,
-			"wwwroot" : "/var/hetao/www" ,
-			"index" : "/index.html,/index.htm" ,
-			"access_log" : "/var/hetao/log/access.log"
 		}
 	} ,
 	*/

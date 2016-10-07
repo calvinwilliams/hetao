@@ -25,6 +25,15 @@ hetao安全机制：
 * 全局最大连接数限制
 * 最大单个文件缓存大小
 
+选择hetao的理由： 
+* hetao在Linux上的综合性能约比Nginx还要快三倍，尤其适合中小型静态文件
+* hetao是众多开源Web服务器中在WINDOWS版本唯一全部采用IOCP模型。Apache的WINDOWS版本是传统的Leader-Follow多进程模型，Nginx则是多线程select模型（玩具？）
+* hetao配置文件采用JSON标准格式，简洁易写，而且支持行注释和块注释。Apache配置格式比较复杂，Nginx配置格式多变怪异且不支持块注释
+* hetao设计精炼，代码结构简洁易读，代码量小，易于改造
+* hetao是中国国产原创，作者可随时联系交流<calvinwilliams@163.com>，中文资料较多
+
+------------------------------------------------------------
+
 压测结论：
 在开启Keep-Alive和gzip压缩、中型文件（约3.3KB）的场景下，hetao比nginx足足快了近3倍 ^_^
 
