@@ -1,5 +1,5 @@
-#ifndef _H_FASTERJSON_
-#define _H_FASTERJSON_
+#ifndef FASTERJSON_H
+#define FASTERJSON_H
 
 #ifdef __cplusplus
 extern "C" {

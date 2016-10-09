@@ -1,5 +1,8 @@
+0.9.1		2016-10-09	calvin
+		* WINDOWS版本支持HTTPS啦
+
 0.9.0		2016-10-07	calvin
-		* 移植到WINDOWS，基于IOCP
+		* 移植到WINDOWS，基于IOCP。暂时不支持HTTPS
 
 0.8.0		2016-09-19	calvin
 		* 新增IP限制连接数功能

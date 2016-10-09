@@ -13,7 +13,7 @@ int OnSendingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_sessio
 #if ( defined __linux ) || ( defined __unix )
 	struct epoll_event	event ;
 #elif ( defined _WIN32 )
-	struct HttpBuffer	*b = NULL ;
+	struct HttpBuffer	*forward_b = NULL ;
 	WSABUF			buf ;
 	DWORD			dwFlags ;
 #endif
@@ -35,12 +35,32 @@ int OnSendingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_sessio
 		return 1;
 	}
 #elif ( defined _WIN32 )
-	if( GetHttpBufferLengthUnprocessed( GetHttpResponseBuffer(p_http_session->http) ) > 0 )
+	if(
+		(
+			p_http_session->forward_ssl == NULL
+			&&
+			GetHttpBufferLengthUnprocessed( GetHttpResponseBuffer(p_http_session->http) ) > 0
+		)
+		||
+		(
+			p_http_session->forward_ssl
+			&&
+			BIO_ctrl_pending( p_http_session->forward_out_bio ) > 0
+		)
+	)
 	{
 		/* 继续投递发送事件 */
-		b = GetHttpResponseBuffer( p_http_session->forward_http );
-		buf.buf = GetHttpBufferBase( b , NULL ) + GetHttpBufferLengthProcessed( b ) ;
-		buf.len = GetHttpBufferLengthUnprocessed( b ) ;
+		if( p_http_session->forward_ssl == NULL )
+		{
+			forward_b = GetHttpResponseBuffer( p_http_session->forward_http );
+			buf.buf = GetHttpBufferBase( forward_b , NULL ) + GetHttpBufferLengthProcessed( forward_b ) ;
+			buf.len = GetHttpBufferLengthUnprocessed( forward_b ) ;
+		}
+		else
+		{
+			buf.buf = p_http_session->forward_out_bio_buffer ;
+			buf.len = BIO_read( p_http_session->forward_out_bio , p_http_session->forward_out_bio_buffer , sizeof(p_http_session->forward_out_bio_buffer)-1 ) ;
+		}
 		dwFlags = 0 ;
 		nret = WSASend( p_http_session->forward_netaddr.sock , & buf , 1 , NULL , dwFlags , & (p_http_session->overlapped) , NULL ) ;
 		if( nret == SOCKET_ERROR )
@@ -76,9 +96,17 @@ int OnSendingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_sessio
 		p_http_session->flag = HTTPSESSION_FLAGS_RECEIVING ;
 		
 		/* 投递接收事件 */
-		b = GetHttpResponseBuffer( p_http_session->forward_http );
-		buf.buf = GetHttpBufferBase( b , NULL ) ;
-		buf.len = GetHttpBufferSize( b ) - 1 ;
+		if( p_http_session->forward_ssl == NULL )
+		{
+			forward_b = GetHttpResponseBuffer( p_http_session->forward_http );
+			buf.buf = GetHttpBufferBase( forward_b , NULL ) ;
+			buf.len = GetHttpBufferSize( forward_b ) - 1 ;
+		}
+		else
+		{
+			buf.buf = p_http_session->forward_in_bio_buffer ;
+			buf.len = sizeof(p_http_session->forward_in_bio_buffer) - 1 ;
+		}
 		dwFlags = 0 ;
 		nret = WSARecv( p_http_session->forward_netaddr.sock , & buf , 1 , NULL , & dwFlags , & (p_http_session->overlapped) , NULL ) ;
 		if( nret == SOCKET_ERROR )

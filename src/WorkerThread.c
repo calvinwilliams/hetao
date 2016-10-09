@@ -657,7 +657,7 @@ void *WorkerThread( void *pv )
 	while(1)
 	{
 		InfoLog( __FILE__ , __LINE__ , "[%d]GetQueuedCompletionStatus ... [%d][%d][%d,%d]" , p_env->process_info_index , p_env->listen_session_count , p_env->htmlcache_session_count , p_env->http_session_used_count , p_env->http_session_unused_count );
-		SetLastError( 0 );
+		// SetLastError( 0 );
 		bret = GetQueuedCompletionStatus( p_env->iocp , & transfer_bytes , (LPDWORD) & p_data_session , (LPOVERLAPPED *) & p_data_session , 1000 ) ;
 		if( bret == FALSE && ERRNO != WAIT_TIMEOUT )
 		{
@@ -697,7 +697,9 @@ void *WorkerThread( void *pv )
 			g_second_elapse = 0 ;
 		}
 		
-		if( ERRNO == WAIT_TIMEOUT )
+		if( p_data_session == NULL )
+			continue;
+		if( bret == FALSE && ERRNO == WAIT_TIMEOUT )
 			continue;
 		
 		/* 处理投递事件 */
@@ -728,16 +730,25 @@ void *WorkerThread( void *pv )
 							DebugLog( __FILE__ , __LINE__ , "socket received[%d]bytes" , transfer_bytes );
 							
 							b = GetHttpRequestBuffer(p_http_session->http) ;
-							OffsetHttpBufferFillPtr( b , transfer_bytes );
-							if( GetHttpBufferLengthUnfilled( b ) <= 0 )
+							if( p_http_session->ssl == NULL )
 							{
-								nret = ReallocHttpBuffer( b , -1 ) ;
-								if( nret )
+								OffsetHttpBufferFillPtr( b , transfer_bytes );
+								if( GetHttpBufferLengthUnfilled( b ) <= 0 )
 								{
-									ErrorLog( __FILE__ , __LINE__ , "ReallocHttpBuffer failed , errno[%d]" , ERRNO );
-									SetHttpSessionUnused( p_env , p_http_session );
-									return NULL;
+									nret = ReallocHttpBuffer( b , -1 ) ;
+									if( nret )
+									{
+										ErrorLog( __FILE__ , __LINE__ , "ReallocHttpBuffer failed , errno[%d]" , ERRNO );
+										SetHttpSessionUnused( p_env , p_http_session );
+										return NULL;
+									}
 								}
+							}
+							else
+							{
+								BIO_write( p_http_session->in_bio , p_http_session->in_bio_buffer , transfer_bytes );
+								transfer_bytes = SSL_read( p_http_session->ssl , p_http_session->out_bio_buffer , sizeof(p_http_session->out_bio_buffer)-1 ) ;
+								MemcatHttpBuffer( b , p_http_session->out_bio_buffer , transfer_bytes );
 							}
 							
 							nret = OnReceivingSocket( p_env , p_http_session ) ;
@@ -769,10 +780,13 @@ void *WorkerThread( void *pv )
 						{
 							DebugLog( __FILE__ , __LINE__ , "socket sended[%d]bytes" , transfer_bytes );
 							
-							if( GetHttpBufferLengthUnprocessed( GetHttpResponseBuffer(p_http_session->http) ) > 0 )
-								OffsetHttpBufferProcessPtr( GetHttpResponseBuffer(p_http_session->http) , transfer_bytes );
-							else
-								OffsetHttpBufferProcessPtr( GetHttpAppendBuffer(p_http_session->http) , transfer_bytes );
+							if( p_http_session->ssl == NULL )
+							{
+								if( GetHttpBufferLengthUnprocessed( GetHttpResponseBuffer(p_http_session->http) ) > 0 )
+									OffsetHttpBufferProcessPtr( GetHttpResponseBuffer(p_http_session->http) , transfer_bytes );
+								else
+									OffsetHttpBufferProcessPtr( GetHttpAppendBuffer(p_http_session->http) , transfer_bytes );
+							}
 							
 							nret = OnSendingSocket( p_env , p_http_session ) ;
 							if( nret > 0 )
@@ -829,7 +843,10 @@ void *WorkerThread( void *pv )
 						{
 							DebugLog( __FILE__ , __LINE__ , "socket sended[%d]bytes" , transfer_bytes );
 							
-							OffsetHttpBufferProcessPtr( GetHttpRequestBuffer(p_http_session->forward_http) , transfer_bytes );
+							if( p_http_session->forward_ssl == NULL )
+							{
+								OffsetHttpBufferProcessPtr( GetHttpRequestBuffer(p_http_session->forward_http) , transfer_bytes );
+							}
 							
 							nret = OnSendingForward( p_env , p_http_session ) ;
 							if( nret > 0 )
@@ -861,16 +878,25 @@ void *WorkerThread( void *pv )
 							DebugLog( __FILE__ , __LINE__ , "socket received[%d]bytes" , transfer_bytes );
 							
 							b = GetHttpResponseBuffer(p_http_session->forward_http) ;
-							OffsetHttpBufferFillPtr( b , transfer_bytes );
-							if( GetHttpBufferLengthUnfilled( b ) <= 0 )
+							if( p_http_session->forward_ssl == NULL )
 							{
-								nret = ReallocHttpBuffer( b , -1 ) ;
-								if( nret )
+								OffsetHttpBufferFillPtr( b , transfer_bytes );
+								if( GetHttpBufferLengthUnfilled( b ) <= 0 )
 								{
-									ErrorLog( __FILE__ , __LINE__ , "ReallocHttpBuffer failed , errno[%d]" , ERRNO );
-									SetHttpSessionUnused( p_env , p_http_session );
-									return NULL;
+									nret = ReallocHttpBuffer( b , -1 ) ;
+									if( nret )
+									{
+										ErrorLog( __FILE__ , __LINE__ , "ReallocHttpBuffer failed , errno[%d]" , ERRNO );
+										SetHttpSessionUnused( p_env , p_http_session );
+										return NULL;
+									}
 								}
+							}
+							else
+							{
+								BIO_write( p_http_session->forward_in_bio , p_http_session->forward_in_bio_buffer , transfer_bytes );
+								transfer_bytes = SSL_read( p_http_session->forward_ssl , p_http_session->forward_out_bio_buffer , sizeof(p_http_session->forward_out_bio_buffer)-1 ) ;
+								MemcatHttpBuffer( b , p_http_session->forward_out_bio_buffer , transfer_bytes );
 							}
 							
 							nret = OnReceivingForward( p_env , p_http_session ) ;

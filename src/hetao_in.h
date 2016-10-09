@@ -6,8 +6,8 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-#ifndef _H_HETAO_IN_
-#define _H_HETAO_IN_
+#ifndef HETAO_IN_H
+#define HETAO_IN_H
 
 #if ( defined __linux ) || ( defined __unix )
 #elif ( defined _WIN32 )
@@ -203,13 +203,26 @@ struct HttpSession
 	struct HttpEnv		*http ;
 	struct HttpBuffer	*http_buf ;
 	SSL			*ssl ;
-	
+#if ( defined _WIN32 )
+	BIO			*in_bio ;
+	BIO			*out_bio ;
+	char			in_bio_buffer[ 4096 + 1 ] ;
+	char			out_bio_buffer[ 4096 + 1 ] ;
+	int			out_bio_len ;
+#endif
+
 	int			forward_flags ;
 	struct ForwardServer	*p_forward_server ;
-	//SOCKET			forward_sock ;
 	struct NetAddress	forward_netaddr ;
 	struct HttpEnv		*forward_http ;
 	SSL			*forward_ssl ;
+#if ( defined _WIN32 )
+	BIO			*forward_in_bio ;
+	BIO			*forward_out_bio ;
+	char			forward_in_bio_buffer[ 4096 + 1 ] ;
+	char			forward_out_bio_buffer[ 4096 + 1 ] ;
+	int			forward_out_bio_len ;
+#endif
 	
 	int			timeout_timestamp ;
 	struct rb_node		timeout_rbnode ;

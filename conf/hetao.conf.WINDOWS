@@ -126,7 +126,7 @@
 				"forward_rule" : "R" ,
 				"ssl" :
 				{
-					"certificate_file" : "/etc/hetao/certs/server.crt"
+					"certificate_file" : "$ProgramFiles$/hetao/certs/server.crt"
 				} ,
 				"forward_server" : { "ip" : "192.168.6.111" , "port" : 1443 } ,
 				"forward_server" : { "ip" : "192.168.6.111" , "port" : 1443 } ,

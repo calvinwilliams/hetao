@@ -182,7 +182,6 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 		setsockopt( p_http_session->forward_netaddr.sock , SOL_SOCKET , SO_UPDATE_CONNECT_CONTEXT , NULL , 0 );
 #endif
 				
-#if ( defined __linux ) || ( defined __unix )
 		/* SSL握手 */
 		if( p_http_session->p_virtualhost->forward_ssl_ctx )
 		{
@@ -203,8 +202,13 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 				SetHttpSessionUnused_05( p_env , p_http_session );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
-		}
+			
+#if ( defined _WIN32 )
+			p_http_session->forward_in_bio = BIO_new(BIO_s_mem()) ;
+			p_http_session->forward_out_bio = BIO_new(BIO_s_mem()) ;
+			SSL_set_bio( p_http_session->forward_ssl , p_http_session->forward_in_bio , p_http_session->forward_out_bio );
 #endif
+		}
 		
 		/* 复制HTTP请求 */
 		request_base = GetHttpBufferBase( GetHttpRequestBuffer(p_http_session->http) , & request_len ) ;
@@ -231,9 +235,19 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 		}
 #elif ( defined _WIN32 )
 		/* 投递发送事件 */
-		b = GetHttpResponseBuffer( p_http_session->forward_http );
-		buf.buf = GetHttpBufferBase( b , NULL ) ;
-		buf.len = GetHttpBufferLengthUnprocessed( b ) ;
+		if( p_http_session->forward_ssl == NULL )
+		{
+			forward_b = GetHttpRequestBuffer( p_http_session->forward_http );
+			buf.buf = GetHttpBufferBase( forward_b , NULL ) ;
+			buf.len = GetHttpBufferLengthUnprocessed( forward_b ) ;
+		}
+		else
+		{
+			forward_b = GetHttpRequestBuffer( p_http_session->forward_http );
+			SSL_write( p_http_session->forward_ssl , GetHttpBufferBase( forward_b , NULL ) , GetHttpBufferLength( forward_b ) );
+			buf.buf = p_http_session->forward_out_bio_buffer ;
+			buf.len = BIO_read( p_http_session->forward_out_bio , p_http_session->forward_out_bio_buffer , sizeof(p_http_session->forward_out_bio_buffer)-1 ) ;
+		}
 		dwFlags = 0 ;
 		nret = WSASend( p_http_session->forward_netaddr.sock , & buf , 1 , NULL , dwFlags , & (p_http_session->overlapped) , NULL ) ;
 		if( nret == SOCKET_ERROR )
@@ -368,9 +382,19 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 		p_http_session->flag = HTTPSESSION_FLAGS_SENDING ;
 		
 		/* 投递发送事件 */
-		b = GetHttpResponseBuffer( p_http_session->http );
-		buf.buf = GetHttpBufferBase( b , NULL ) ;
-		buf.len = GetHttpBufferLength( b ) ;
+		if( p_http_session->ssl == NULL )
+		{
+			b = GetHttpResponseBuffer( p_http_session->http );
+			buf.buf = GetHttpBufferBase( b , NULL ) ;
+			buf.len = GetHttpBufferLength( b ) ;
+		}
+		else
+		{
+			b = GetHttpResponseBuffer( p_http_session->http );
+			SSL_write( p_http_session->ssl , GetHttpBufferBase( b , NULL ) , GetHttpBufferLength( b ) );
+			buf.buf = p_http_session->out_bio_buffer ;
+			buf.len = BIO_read( p_http_session->out_bio , p_http_session->out_bio_buffer , sizeof(p_http_session->out_bio_buffer)-1 ) ;
+		}
 		dwFlags = 0 ;
 		nret = WSASend( p_http_session->netaddr.sock , & buf , 1 , NULL , dwFlags , & (p_http_session->overlapped) , NULL ) ;
 		if( nret == SOCKET_ERROR )
@@ -396,13 +420,7 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 	
 	DebugLog( __FILE__ , __LINE__ , "connect2[%s:%d] ok" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
 	p_http_session->forward_flags = HTTPSESSION_FLAGS_CONNECTED ;
-	/*
-#if ( defined _WIN32 )
-	setsockopt( p_http_session->forward_netaddr.sock , SOL_SOCKET , SO_UPDATE_CONNECT_CONTEXT , NULL , 0 );
-#endif
-	*/
 	
-#if ( defined __linux ) || ( defined __unix )
 	/* SSL握手 */
 	if( p_http_session->p_virtualhost->forward_ssl_ctx )
 	{
@@ -425,8 +443,13 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 			SetHttpSessionUnused_05( p_env , p_http_session );
 			return 1;
 		}
-	}
+		
+#if ( defined _WIN32 )
+		p_http_session->forward_in_bio = BIO_new(BIO_s_mem()) ;
+		p_http_session->forward_out_bio = BIO_new(BIO_s_mem()) ;
+		SSL_set_bio( p_http_session->forward_ssl , p_http_session->forward_in_bio , p_http_session->forward_out_bio );
 #endif
+	}
 	
 	/* 复制HTTP请求 */
 	request_base = GetHttpBufferBase( GetHttpRequestBuffer(p_http_session->http) , & request_len ) ;
@@ -455,9 +478,19 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 	p_http_session->flag = HTTPSESSION_FLAGS_SENDING ;
 	
 	/* 投递发送事件 */
-	forward_b = GetHttpRequestBuffer( p_http_session->forward_http );
-	buf.buf = GetHttpBufferBase( forward_b , NULL ) ;
-	buf.len = GetHttpBufferLength( forward_b ) ;
+	if( p_http_session->forward_ssl == NULL )
+	{
+		forward_b = GetHttpRequestBuffer( p_http_session->forward_http );
+		buf.buf = GetHttpBufferBase( forward_b , NULL ) ;
+		buf.len = GetHttpBufferLength( forward_b ) ;
+	}
+	else
+	{
+		forward_b = GetHttpRequestBuffer( p_http_session->forward_http );
+		SSL_write( p_http_session->forward_ssl , GetHttpBufferBase( forward_b , NULL ) , GetHttpBufferLength( forward_b ) );
+		buf.buf = p_http_session->forward_out_bio_buffer ;
+		buf.len = BIO_read( p_http_session->forward_out_bio , p_http_session->forward_out_bio_buffer , sizeof(p_http_session->forward_out_bio_buffer)-1 ) ;
+	}
 	dwFlags = 0 ;
 	nret = WSASend( p_http_session->forward_netaddr.sock , & buf , 1 , NULL , dwFlags , & (p_http_session->overlapped) , NULL ) ;
 	if( nret == SOCKET_ERROR )

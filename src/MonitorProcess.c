@@ -10,15 +10,15 @@
 
 #if ( defined __linux ) || ( defined __unix )
 
-static signed char		g_SIGUSR1_flag = 0 ;
-static signed char		g_SIGUSR2_flag = 0 ;
-static signed char		g_SIGTERM_flag = 0 ;
+static sig_atomic_t		g_SIGUSR1_flag = 0 ;
+static sig_atomic_t		g_SIGUSR2_flag = 0 ;
+static sig_atomic_t		g_SIGTERM_flag = 0 ;
 static signed char		g_exit_flag = 0 ;
 
 static void sig_set_flag( int sig_no )
 {
 	UPDATEDATETIMECACHEFIRST
-	InfoLog( __FILE__ , __LINE__ , "recv signal[%d]" , sig_no );
+	/* InfoLog( __FILE__ , __LINE__ , "recv signal[%d]" , sig_no ); */
 	
 	/* 信号回调函数，只是设置标志变量 */
 	if( sig_no == SIGUSR1 )
