@@ -1,5 +1,5 @@
-#ifndef _H_LOGC_
-#define _H_LOGC_
+#ifndef LOGC_H
+#define LOGC_H
 
 /*
  * iLOG3Lite - log function library written in c

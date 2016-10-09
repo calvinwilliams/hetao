@@ -37,16 +37,35 @@ int OnSendingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session
 		return 1;
 	}
 #elif ( defined _WIN32 )
-	if( GetHttpBufferLengthUnprocessed( GetHttpResponseBuffer(p_http_session->http) ) > 0 || GetHttpBufferLengthUnprocessed( GetHttpAppendBuffer(p_http_session->http) ) > 0 )
+	if(	(
+			p_http_session->ssl == NULL
+			&&
+			( GetHttpBufferLengthUnprocessed( GetHttpResponseBuffer(p_http_session->http) ) > 0 || GetHttpBufferLengthUnprocessed( GetHttpAppendBuffer(p_http_session->http) ) > 0 )
+		)
+		||
+		(
+			p_http_session->ssl
+			&&
+			BIO_ctrl_pending( p_http_session->out_bio ) > 0
+		)
+	)
 	{
 		/* 继续投递发送事件 */
-		b = GetHttpResponseBuffer( p_http_session->http );
-		if( GetHttpBufferLengthUnprocessed(b) == 0 )
+		if( p_http_session->ssl == NULL )
 		{
-			b = GetHttpAppendBuffer(p_http_session->http) ;
+			b = GetHttpResponseBuffer( p_http_session->http );
+			if( GetHttpBufferLengthUnprocessed(b) == 0 )
+			{
+				b = GetHttpAppendBuffer(p_http_session->http) ;
+			}
+			buf.buf = GetHttpBufferBase( b , NULL ) + GetHttpBufferLengthProcessed( b ) ;
+			buf.len = GetHttpBufferLengthUnprocessed( b ) ;
 		}
-		buf.buf = GetHttpBufferBase( b , NULL ) + GetHttpBufferLengthProcessed( b ) ;
-		buf.len = GetHttpBufferLengthUnprocessed( b ) ;
+		else
+		{
+			buf.buf = p_http_session->out_bio_buffer ;
+			buf.len = BIO_read( p_http_session->out_bio , p_http_session->out_bio_buffer , sizeof(p_http_session->out_bio_buffer)-1 ) ;
+		}
 		dwFlags = 0 ;
 		nret = WSASend( p_http_session->netaddr.sock , & buf , 1 , NULL , dwFlags , & (p_http_session->overlapped) , NULL ) ;
 		if( nret == SOCKET_ERROR )
@@ -135,8 +154,16 @@ int OnSendingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session
 			
 			/* 投递接收事件 */
 			b = GetHttpRequestBuffer( p_http_session->http );
-			buf.buf = GetHttpBufferBase( b , NULL ) ;
-			buf.len = GetHttpBufferSize( b ) - 1 ;
+			if( p_http_session->ssl == NULL )
+			{
+				buf.buf = GetHttpBufferBase( b , NULL ) ;
+				buf.len = GetHttpBufferSize( b ) - 1 ;
+			}
+			else
+			{
+				buf.buf = p_http_session->in_bio_buffer ;
+				buf.len = sizeof(p_http_session->in_bio_buffer) - 1 ;
+			}
 			dwFlags = 0 ;
 			nret = WSARecv( p_http_session->netaddr.sock , & buf , 1 , NULL , & dwFlags , & (p_http_session->overlapped) , NULL ) ;
 			if( nret == SOCKET_ERROR )

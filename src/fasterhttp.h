@@ -3,8 +3,8 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-#ifndef _H_FASTERHTTP_
-#define _H_FASTERHTTP_
+#ifndef FASTERHTTP_H
+#define FASTERHTTP_H
 
 #ifdef __cplusplus
 extern "C" {

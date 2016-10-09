@@ -62,9 +62,17 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , (int)GETSECONDSTAMP + p_env->http_options__timeout );
 		
 		/* 继续投递接收事件 */
-		b = GetHttpRequestBuffer( p_http_session->http );
-		buf.buf = GetHttpBufferBase( b , NULL ) + GetHttpBufferLength( b ) ;
-		buf.len = GetHttpBufferSize( b ) - 1 - GetHttpBufferLength( b ) ;
+		if( p_http_session->ssl == NULL )
+		{
+			b = GetHttpRequestBuffer( p_http_session->http );
+			buf.buf = GetHttpBufferBase( b , NULL ) + GetHttpBufferLength( b ) ;
+			buf.len = GetHttpBufferSize( b ) - 1 - GetHttpBufferLength( b ) ;
+		}
+		else
+		{
+			buf.buf = p_http_session->in_bio_buffer ;
+			buf.len = sizeof(p_http_session->in_bio_buffer) - 1 ;
+		}
 		dwFlags = 0 ;
 		nret = WSARecv( p_http_session->netaddr.sock , & buf , 1 , NULL , & dwFlags , & (p_http_session->overlapped) , NULL ) ;
 		if( nret == SOCKET_ERROR )
@@ -241,9 +249,21 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		p_http_session->flag = HTTPSESSION_FLAGS_SENDING ;
 		
 		/* 投递发送事件 */
-		b = GetHttpResponseBuffer( p_http_session->http );
-		buf.buf = GetHttpBufferBase( b , NULL ) ;
-		buf.len = GetHttpBufferLength( b ) ;
+		if( p_http_session->ssl == NULL )
+		{
+			b = GetHttpResponseBuffer( p_http_session->http );
+			buf.buf = GetHttpBufferBase( b , NULL ) ;
+			buf.len = GetHttpBufferLength( b ) ;
+		}
+		else
+		{
+			b = GetHttpResponseBuffer( p_http_session->http );
+			SSL_write( p_http_session->ssl , GetHttpBufferBase( b , NULL ) , GetHttpBufferLength( b ) );
+			b = GetHttpAppendBuffer( p_http_session->http );
+			SSL_write( p_http_session->ssl , GetHttpBufferBase( b , NULL ) , GetHttpBufferLength( b ) );
+			buf.buf = p_http_session->out_bio_buffer ;
+			buf.len = BIO_read( p_http_session->out_bio , p_http_session->out_bio_buffer , sizeof(p_http_session->out_bio_buffer)-1 ) ;
+		}
 		dwFlags = 0 ;
 		nret = WSASend( p_http_session->netaddr.sock , & buf , 1 , NULL , dwFlags , & (p_http_session->overlapped) , NULL ) ;
 		if( nret == SOCKET_ERROR )
