@@ -102,7 +102,7 @@ int OnSendingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session
 		
 		DebugLog( __FILE__ , __LINE__ , "SendHttpResponseNonblock done" );
 		
-		if( p_http_session->p_virtualhost )
+		if( p_http_session->p_virtualhost && p_http_session->p_virtualhost->access_log_fd != -1 )
 		{
 			/* 输出事件日志 */
 			host = QueryHttpHeaderPtr( e , "Host" , & host_len ) ;

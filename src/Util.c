@@ -45,8 +45,8 @@ int BindDaemonServer( int (* ServerMain)( void *pv ) , void *pv )
 #elif ( defined _WIN32 )
 #endif
 
-/* 检查目录存在 */
-int AccessDirectoryExist( char *pathdirname )
+/* 检查是否是目录 */
+int IsDirectory( char *pathdirname )
 {
 	struct STAT	st ;
 	int		nret = 0 ;
@@ -63,6 +63,26 @@ int AccessDirectoryExist( char *pathdirname )
 		return 1;
 	else
 		return 0;
+}
+
+/* 检查是否是文件 */
+int IsFile( char *pathdirname )
+{
+	struct STAT	st ;
+	int		nret = 0 ;
+	
+	nret = STAT( pathdirname , & st ) ;
+	if( nret == -1 )
+		return -1;
+	
+#if ( defined __linux ) || ( defined __unix )
+	if( S_ISDIR(st.st_mode) )
+#elif ( defined _WIN32 )
+	if( _S_IFDIR & st.st_mode )
+#endif
+		return 0;
+	else
+		return 1;
 }
 
 /* 检查文件存在 */

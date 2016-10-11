@@ -103,7 +103,7 @@
 	"mime_types" :
 	{
 		"mime_type" : { "type":"html htm shtml" , "mime":"text/html" , "compress_enable":"1" } ,
-		"mime_type" : { "type":"css" , "mime":"text/css" , "compress_enable":"0" } ,
+		"mime_type" : { "type":"css" , "mime":"text/css" , "compress_enable":"1" } ,
 		"mime_type" : { "type":"xml" , "mime":"text/xml" , "compress_enable":"1" } ,
 		"mime_type" : { "type":"txt" , "mime":"text/plain" , "compress_enable":"1" } ,
 		"mime_type" : { "type":"gif" , "mime":"image/gif" } ,

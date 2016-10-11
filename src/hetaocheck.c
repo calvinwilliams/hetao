@@ -56,19 +56,37 @@ int main( int argc , char *argv[] )
 		SETTID
 		UPDATEDATETIMECACHEFIRST
 		
+		/* 设置缺省配置 */
+		SetDefaultConfig( p_conf );
+		
 		/* 装载配置 */
 		strncpy( p_env->config_pathfilename , argv[1] , sizeof(p_env->config_pathfilename)-1 );
 		nret = LoadConfig( p_env->config_pathfilename , p_conf , p_env ) ;
-		free( p_conf );
 		if( nret )
 		{
 			printf( "FAILED[%d]\n" , nret );
-		}
-		else
-		{
-			printf( "OK\n" );
+			free( p_conf );
+			free( p_env );
+			return 1;
 		}
 		
+		/* 追加缺省配置 */
+		AppendDefaultConfig( p_conf );
+		
+		/* 转换配置 */
+		nret = ConvertConfig( p_conf , p_env ) ;
+		if( nret )
+		{
+			printf( "FAILED[%d]\n" , nret );
+			free( p_conf );
+			free( p_env );
+			return 1;
+		}
+		
+		printf( "OK\n" );
+		
+		/* 释放环境 */
+		free( p_conf );
 		free( p_env );
 		
 		/* 关闭主日志 */

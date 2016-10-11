@@ -146,7 +146,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 		p_listen_session->virtualhost_count = 0 ;
 		for( i = 0 ; i < p_conf->listen[k]._website_count ; i++ )
 		{
-			if( p_conf->listen[k].website[i].wwwroot[0] == '\0' || p_conf->listen[k].website[i].access_log[0] == '\0' )
+			if( p_conf->listen[k].website[i].wwwroot[0] == '\0' )
 				continue;
 			
 			p_virtualhost = (struct VirtualHost *)malloc( sizeof(struct VirtualHost) ) ;
@@ -162,13 +162,20 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 			strncpy( p_virtualhost->wwwroot , p_conf->listen[k].website[i].wwwroot , sizeof(p_virtualhost->wwwroot)-1 );
 			strncpy( p_virtualhost->index , p_conf->listen[k].website[i].index , sizeof(p_virtualhost->index)-1 );
 			strncpy( p_virtualhost->access_log , p_conf->listen[k].website[i].access_log , sizeof(p_virtualhost->access_log)-1 );
-			p_virtualhost->access_log_fd = OPEN( p_virtualhost->access_log , O_CREAT_WRONLY_APPEND ) ;
-			if( p_virtualhost->access_log_fd == -1 )
+			if(  p_virtualhost->access_log[0] )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "open access log[%s] failed , errno[%d]" , p_virtualhost->access_log , ERRNO );
-				return -1;
+				p_virtualhost->access_log_fd = OPEN( p_virtualhost->access_log , O_CREAT_WRONLY_APPEND ) ;
+				if( p_virtualhost->access_log_fd == -1 )
+				{
+					ErrorLog( __FILE__ , __LINE__ , "open access log[%s] failed , errno[%d]" , p_virtualhost->access_log , ERRNO );
+					return -1;
+				}
+				SetHttpCloseExec( p_virtualhost->access_log_fd );
 			}
-			SetHttpCloseExec( p_virtualhost->access_log_fd );
+			else
+			{
+				p_virtualhost->access_log_fd = -1 ;
+			}
 			
 			/* ´´½¨rewriteÁ´±í */
 			memset( & (p_virtualhost->rewrite_url_list) , 0x00 , sizeof(struct RewriteUrl) );
