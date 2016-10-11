@@ -10,8 +10,6 @@
 
 int OnConnectingSslForward( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
-	X509			*x509 = NULL ;
-	char			*line = NULL ;
 #if ( defined __linux ) || ( defined __unix )
 	struct epoll_event	event ;
 #elif ( defined _WIN32 )
