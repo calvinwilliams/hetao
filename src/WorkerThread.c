@@ -139,7 +139,7 @@ void *WorkerThread( void *pv )
 				if( p_http_session == NULL )
 					break;
 				
-				ErrorLog( __FILE__ , __LINE__ , "SESSION TIMEOUT --------- client_ip[%s]" , p_http_session->netaddr.ip );
+				WarnLog( __FILE__ , __LINE__ , "SESSION TIMEOUT --------- client_ip[%s]" , p_http_session->netaddr.ip );
 				SetHttpSessionUnused( p_env , p_http_session );
 			}
 			
@@ -149,7 +149,7 @@ void *WorkerThread( void *pv )
 				if( p_http_session == NULL )
 					break;
 				
-				ErrorLog( __FILE__ , __LINE__ , "SESSION ELAPSE --------- client_ip[%s]" , p_http_session->netaddr.ip );
+				WarnLog( __FILE__ , __LINE__ , "SESSION ELAPSE --------- client_ip[%s]" , p_http_session->netaddr.ip );
 				SetHttpSessionUnused( p_env , p_http_session );
 			}
 			
@@ -264,10 +264,28 @@ void *WorkerThread( void *pv )
 				
 				if( p_event->events & EPOLLIN )
 				{
-					/* HTTP接收事件。如果接收完成，则马上处理 */
+					/* HTTP接收事件 */
 					DebugLog( __FILE__ , __LINE__ , "EPOLLIN" );
 					
-					if( p_http_session->forward_flags == 0 )
+					if( p_http_session->ssl && p_http_session->ssl_connected == 0 )
+					{
+						nret = OnAcceptingSslSocket( p_env , p_http_session ) ;
+						if( nret > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket done[%d]" , nret );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket failed[%d] , errno[%d]" , nret , ERRNO );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket ok" );
+						}
+					}
+					else if( p_http_session->forward_flags == 0 )
 					{
 						nret = OnReceivingSocket( p_env , p_http_session ) ;
 						if( nret > 0 )
@@ -306,10 +324,28 @@ void *WorkerThread( void *pv )
 				}
 				else if( p_event->events & EPOLLOUT )
 				{
-					/* HTTP发送事件。如果设置了Keep-Alive则等待下一个HTTP请求 */
+					/* HTTP发送事件 */
 					DebugLog( __FILE__ , __LINE__ , "EPOLLOUT" );
 					
-					if( p_http_session->forward_flags == 0 )
+					if( p_http_session->ssl && p_http_session->ssl_connected == 0 )
+					{
+						nret = OnAcceptingSslSocket( p_env , p_http_session ) ;
+						if( nret > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket done[%d]" , nret );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket failed[%d] , errno[%d]" , nret , ERRNO );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket ok" );
+						}
+					}
+					else if( p_http_session->forward_flags == 0 )
 					{
 						nret = OnSendingSocket( p_env , p_http_session ) ;
 						if( nret > 0 )
@@ -657,7 +693,6 @@ void *WorkerThread( void *pv )
 	while(1)
 	{
 		InfoLog( __FILE__ , __LINE__ , "[%d]GetQueuedCompletionStatus ... [%d][%d][%d,%d]" , p_env->process_info_index , p_env->listen_session_count , p_env->htmlcache_session_count , p_env->http_session_used_count , p_env->http_session_unused_count );
-		// SetLastError( 0 );
 		bret = GetQueuedCompletionStatus( p_env->iocp , & transfer_bytes , (LPDWORD) & p_data_session , (LPOVERLAPPED *) & p_data_session , 1000 ) ;
 		if( bret == FALSE && ERRNO != WAIT_TIMEOUT )
 		{
@@ -680,7 +715,7 @@ void *WorkerThread( void *pv )
 				if( p_http_session == NULL )
 					break;
 				
-				ErrorLog( __FILE__ , __LINE__ , "SESSION TIMEOUT --------- client_ip[%s]" , p_http_session->netaddr.ip );
+				WarnLog( __FILE__ , __LINE__ , "SESSION TIMEOUT --------- client_ip[%s]" , p_http_session->netaddr.ip );
 				SetHttpSessionUnused( p_env , p_http_session );
 			}
 			
@@ -690,7 +725,7 @@ void *WorkerThread( void *pv )
 				if( p_http_session == NULL )
 					break;
 				
-				ErrorLog( __FILE__ , __LINE__ , "SESSION ELAPSE --------- client_ip[%s]" , p_http_session->netaddr.ip );
+				WarnLog( __FILE__ , __LINE__ , "SESSION ELAPSE --------- client_ip[%s]" , p_http_session->netaddr.ip );
 				SetHttpSessionUnused( p_env , p_http_session );
 			}
 			

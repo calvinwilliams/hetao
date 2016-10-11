@@ -203,6 +203,7 @@ struct HttpSession
 	struct HttpEnv		*http ;
 	struct HttpBuffer	*http_buf ;
 	SSL			*ssl ;
+	int			ssl_connected ;
 #if ( defined _WIN32 )
 	BIO			*in_bio ;
 	BIO			*out_bio ;
@@ -406,10 +407,6 @@ struct ForwardServer *TravelMinLeastConnectionCountTreeNode( struct VirtualHost 
 
 void FreeHtmlCacheSession( struct HtmlCacheSession *p_htmlcache_session , int free_flag );
 
-int OnSendingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
-int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
-int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_session );
-
 int DirectoryWatcherEventHander( struct HetaoEnv *p_env , struct VirtualHost *p_virtualhost );
 int HtmlCacheEventHander( struct HetaoEnv *p_env );
 
@@ -440,6 +437,12 @@ int AccessDirectoryExist( char *pathdirname );
 int AccessFileExist( char *pathfilename );
 int BindCpuAffinity( int processor_no );
 unsigned long CalcHash( char *str , int len );
+
+int OnSendingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
+int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_session );
+
+int OnAcceptingSslSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session );
 
 int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_session , char *pathname , char *filename , int filename_len );
 

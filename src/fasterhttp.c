@@ -567,6 +567,8 @@ _DumpHexBuffer( stdout , b->process_ptr , len );
 		return FASTERHTTP_INFO_TCP_SEND_WOULDBLOCK;
 }
 
+#include "LOGC.h"
+
 static int ReceiveHttpBuffer( SOCKET sock , SSL *ssl , struct HttpEnv *e , struct HttpBuffer *b , int wait_flag )
 {
 	struct timeval	t1 , t2 ;
@@ -2023,80 +2025,100 @@ int ReceiveHttpResponseNonblock( SOCKET sock , SSL *ssl , struct HttpEnv *e )
 {
 	int		nret = 0 ;
 	
-	nret = ReceiveHttpBuffer( sock , ssl , e , & (e->response_buffer) , 0 ) ;
-	if( nret )
+	while(1)
 	{
-		if( nret == FASTERHTTP_ERROR_TCP_CLOSE && CheckHttpKeepAlive(e) && e->parse_step == FASTERHTTP_PARSESTEP_BEGIN )
-			return FASTERHTTP_INFO_TCP_CLOSE;
-		else
+		nret = ReceiveHttpBuffer( sock , ssl , e , & (e->response_buffer) , 0 ) ;
+		if( nret )
+		{
+			if( nret == FASTERHTTP_ERROR_TCP_CLOSE && CheckHttpKeepAlive(e) && e->parse_step == FASTERHTTP_PARSESTEP_BEGIN )
+				return FASTERHTTP_INFO_TCP_CLOSE;
+			else
+				return nret;
+		}
+		
+		nret = ParseHttpBuffer( e , & (e->response_buffer) ) ;
+		if( nret == FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER )
+			;
+		else if( nret )
 			return nret;
+		else
+			return UncompressHttpBody( e , HTTP_HEADER_CONTENTENCODING );
 	}
-	
-	nret = ParseHttpBuffer( e , & (e->response_buffer) ) ;
-	if( nret )
-		return nret;
-	else
-		return UncompressHttpBody( e , HTTP_HEADER_CONTENTENCODING );
 }
 
 _WINDLL_FUNC int ReceiveHttpResponseNonblock1( SOCKET sock , SSL *ssl , struct HttpEnv *e )
 {
 	int		nret = 0 ;
 	
-	nret = ReceiveHttpBuffer1( sock , ssl , e , & (e->response_buffer) , 0 ) ;
-	if( nret )
+	while(1)
 	{
-		if( nret == FASTERHTTP_ERROR_TCP_CLOSE && CheckHttpKeepAlive(e) && e->parse_step == FASTERHTTP_PARSESTEP_BEGIN )
-			return FASTERHTTP_INFO_TCP_CLOSE;
-		else
+		nret = ReceiveHttpBuffer1( sock , ssl , e , & (e->response_buffer) , 0 ) ;
+		if( nret )
+		{
+			if( nret == FASTERHTTP_ERROR_TCP_CLOSE && CheckHttpKeepAlive(e) && e->parse_step == FASTERHTTP_PARSESTEP_BEGIN )
+				return FASTERHTTP_INFO_TCP_CLOSE;
+			else
+				return nret;
+		}
+		
+		nret = ParseHttpBuffer( e , & (e->response_buffer) ) ;
+		if( nret == FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER )
+			;
+		else if( nret )
 			return nret;
+		else
+			return UncompressHttpBody( e , HTTP_HEADER_CONTENTENCODING );
 	}
-	
-	nret = ParseHttpBuffer( e , & (e->response_buffer) ) ;
-	if( nret )
-		return nret;
-	else
-		return UncompressHttpBody( e , HTTP_HEADER_CONTENTENCODING );
 }
 
 int ReceiveHttpRequestNonblock( SOCKET sock , SSL *ssl , struct HttpEnv *e )
 {
 	int		nret = 0 ;
 	
-	nret = ReceiveHttpBuffer( sock , ssl , e , & (e->request_buffer) , 0 ) ;
-	if( nret )
+	while(1)
 	{
-		if( nret == FASTERHTTP_ERROR_TCP_CLOSE && CheckHttpKeepAlive(e) && e->parse_step == FASTERHTTP_PARSESTEP_BEGIN )
-			return FASTERHTTP_INFO_TCP_CLOSE;
-		else
+		nret = ReceiveHttpBuffer( sock , ssl , e , & (e->request_buffer) , 0 ) ;
+		if( nret )
+		{
+			if( nret == FASTERHTTP_ERROR_TCP_CLOSE && CheckHttpKeepAlive(e) && e->parse_step == FASTERHTTP_PARSESTEP_BEGIN )
+				return FASTERHTTP_INFO_TCP_CLOSE;
+			else
+				return nret;
+		}
+		
+		nret = ParseHttpBuffer( e , & (e->request_buffer) ) ;
+		if( nret == FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER )
+			;
+		else if( nret )
 			return nret;
+		else
+			return 0;
 	}
-	
-	nret = ParseHttpBuffer( e , & (e->request_buffer) ) ;
-	if( nret )
-		return nret;
-	else
-		return 0;
 }
 
 _WINDLL_FUNC int ReceiveHttpRequestNonblock1( SOCKET sock , SSL *ssl , struct HttpEnv *e )
 {
 	int		nret = 0 ;
 	
-	nret = ReceiveHttpBuffer1( sock , ssl , e , & (e->request_buffer) , 0 ) ;
-	if( nret )
+	while(1)
 	{
-		if( nret == FASTERHTTP_ERROR_TCP_CLOSE && CheckHttpKeepAlive(e) && e->parse_step == FASTERHTTP_PARSESTEP_BEGIN )
-			return FASTERHTTP_INFO_TCP_CLOSE;
-		else
+		nret = ReceiveHttpBuffer1( sock , ssl , e , & (e->request_buffer) , 0 ) ;
+		if( nret )
+		{
+			if( nret == FASTERHTTP_ERROR_TCP_CLOSE && CheckHttpKeepAlive(e) && e->parse_step == FASTERHTTP_PARSESTEP_BEGIN )
+				return FASTERHTTP_INFO_TCP_CLOSE;
+			else
+				return nret;
+		}
+		
+		nret = ParseHttpBuffer( e , & (e->request_buffer) ) ;
+		if( nret == FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER )
+			;
+		else if( nret )
 			return nret;
+		else
+			return 0;
 	}
-	
-	nret = ParseHttpBuffer( e , & (e->request_buffer) ) ;
-	if( nret )
-		return nret;
-	else
-		return 0;
 }
 
 int SendHttpResponseNonblock( SOCKET sock , SSL *ssl , struct HttpEnv *e )

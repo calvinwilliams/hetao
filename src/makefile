@@ -24,13 +24,14 @@ c_FILE		=	\
 			WorkerThread.c \
 			TimerThread.c \
 			OnAcceptingSocket.c \
+			OnAcceptingSslSocket.c \
 			OnReceivingSocket.c \
 			OnSendingSocket.c \
-			VirtualHostHash.c \
 			ProcessHttpRequest.c \
 			OnConnectingForward.c \
 			OnSendingForward.c \
 			OnReceivingForward.c \
+			VirtualHostHash.c \
 			HttpSession.c \
 			HtmlCacheSession.c \
 			HtmlCacheEventHander.c \

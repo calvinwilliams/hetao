@@ -231,7 +231,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		b = GetHttpAppendBuffer(p_http_session->http) ;
 		if( b )
 		{
-			DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer [%d]bytes" , GetHttpBufferLength(b) );
+			DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpAppendBuffer [%d]bytes" , GetHttpBufferLength(b) );
 		}
 		
 #if ( defined __linux ) || ( defined __unix )

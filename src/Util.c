@@ -27,9 +27,7 @@ int BindDaemonServer( int (* ServerMain)( void *pv ) , void *pv )
 			exit( 0 );	
 			break;
 	}
-
-	//setsid() ;
-
+	
 	pid = fork() ;
 	switch( pid )
 	{
@@ -41,10 +39,6 @@ int BindDaemonServer( int (* ServerMain)( void *pv ) , void *pv )
 			exit( 0 );
 			break;
 	}
-	
-	//setuid( getpid() ) ;
-	
-	//umask( 0 ) ;
 	
 	return ServerMain( pv );
 }
