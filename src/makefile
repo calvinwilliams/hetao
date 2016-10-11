@@ -29,6 +29,7 @@ c_FILE		=	\
 			OnSendingSocket.c \
 			ProcessHttpRequest.c \
 			OnConnectingForward.c \
+			OnConnectingSslForward.c \
 			OnSendingForward.c \
 			OnReceivingForward.c \
 			VirtualHostHash.c \

@@ -195,19 +195,18 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 			
 			SSL_set_fd( p_http_session->forward_ssl , p_http_session->forward_netaddr.sock );
 			
-			nret = SSL_connect( p_http_session->forward_ssl ) ;
+			SSL_set_connect_state( p_http_session->forward_ssl );
+			p_http_session->forward_ssl_connected = 0 ;
+			
+			nret = OnConnectingSslForward( p_env , p_http_session ) ;
 			if( nret == -1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "SSL_connect failed , errno[%d]" , ERRNO );
+				ErrorLog( __FILE__ , __LINE__ , "OnConnectingSslForward failed , errno[%d]" , ERRNO );
 				SetHttpSessionUnused_05( p_env , p_http_session );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
 			
-#if ( defined _WIN32 )
-			p_http_session->forward_in_bio = BIO_new(BIO_s_mem()) ;
-			p_http_session->forward_out_bio = BIO_new(BIO_s_mem()) ;
-			SSL_set_bio( p_http_session->forward_ssl , p_http_session->forward_in_bio , p_http_session->forward_out_bio );
-#endif
+			return 0;
 		}
 		
 		/* 复制HTTP请求 */
@@ -434,21 +433,18 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 		
 		SSL_set_fd( p_http_session->forward_ssl , p_http_session->forward_netaddr.sock );
 		
-		SetHttpBlock( p_http_session->forward_netaddr.sock );
-		nret = SSL_connect( p_http_session->forward_ssl ) ;
-		SetHttpNonblock( p_http_session->forward_netaddr.sock );
+		SSL_set_connect_state( p_http_session->forward_ssl );
+		p_http_session->forward_ssl_connected = 0 ;
+		
+		nret = OnConnectingSslForward( p_env , p_http_session ) ;
 		if( nret == -1 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "SSL_connect failed , errno[%d]" , ERRNO );
+			ErrorLog( __FILE__ , __LINE__ , "OnConnectingSslForward failed , errno[%d]" , ERRNO );
 			SetHttpSessionUnused_05( p_env , p_http_session );
 			return 1;
 		}
 		
-#if ( defined _WIN32 )
-		p_http_session->forward_in_bio = BIO_new(BIO_s_mem()) ;
-		p_http_session->forward_out_bio = BIO_new(BIO_s_mem()) ;
-		SSL_set_bio( p_http_session->forward_ssl , p_http_session->forward_in_bio , p_http_session->forward_out_bio );
-#endif
+		return 0;
 	}
 	
 	/* 复制HTTP请求 */

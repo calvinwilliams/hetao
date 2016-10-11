@@ -91,11 +91,10 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 				return 1;
 			}
 			
-			p_http_session->ssl_connected = 0 ;
-			
 			SSL_set_fd( p_http_session->ssl , p_http_session->netaddr.sock );
 			
 			SSL_set_accept_state( p_http_session->ssl );
+			p_http_session->ssl_accepted = 0 ;
 			
 			nret = OnAcceptingSslSocket( p_env , p_http_session ) ;
 			if( nret )

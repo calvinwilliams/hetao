@@ -48,7 +48,7 @@ int OnAcceptingSslSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 			DebugLog( __FILE__ , __LINE__ , "epoll_ctl #%d# mod #%d# EPOLLIN" , p_env->p_this_process_info->epoll_fd , p_http_session->netaddr.sock );
 		}
 		
-		p_http_session->ssl_connected = 1 ;
+		p_http_session->ssl_accepted = 1 ;
 		
 		return 0;
 	}

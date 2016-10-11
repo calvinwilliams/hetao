@@ -267,7 +267,7 @@ void *WorkerThread( void *pv )
 					/* HTTP接收事件 */
 					DebugLog( __FILE__ , __LINE__ , "EPOLLIN" );
 					
-					if( p_http_session->ssl && p_http_session->ssl_connected == 0 )
+					if( p_http_session->ssl && p_http_session->ssl_accepted == 0 )
 					{
 						nret = OnAcceptingSslSocket( p_env , p_http_session ) ;
 						if( nret > 0 )
@@ -283,6 +283,24 @@ void *WorkerThread( void *pv )
 						else
 						{
 							DebugLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket ok" );
+						}
+					}
+					else if( p_http_session->forward_ssl && p_http_session->forward_ssl_connected == 0 )
+					{
+						nret = OnConnectingSslForward( p_env , p_http_session ) ;
+						if( nret > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnConnectingSslForward done[%d]" , nret );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnConnectingSslForward failed[%d] , errno[%d]" , nret , ERRNO );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnConnectingSslForward ok" );
 						}
 					}
 					else if( p_http_session->forward_flags == 0 )
@@ -327,7 +345,7 @@ void *WorkerThread( void *pv )
 					/* HTTP发送事件 */
 					DebugLog( __FILE__ , __LINE__ , "EPOLLOUT" );
 					
-					if( p_http_session->ssl && p_http_session->ssl_connected == 0 )
+					if( p_http_session->ssl && p_http_session->ssl_accepted == 0 )
 					{
 						nret = OnAcceptingSslSocket( p_env , p_http_session ) ;
 						if( nret > 0 )
@@ -343,6 +361,24 @@ void *WorkerThread( void *pv )
 						else
 						{
 							DebugLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket ok" );
+						}
+					}
+					else if( p_http_session->forward_ssl && p_http_session->forward_ssl_connected == 0 )
+					{
+						nret = OnConnectingSslForward( p_env , p_http_session ) ;
+						if( nret > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnConnectingSslForward done[%d]" , nret );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnConnectingSslForward failed[%d] , errno[%d]" , nret , ERRNO );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnConnectingSslForward ok" );
 						}
 					}
 					else if( p_http_session->forward_flags == 0 )
