@@ -34,7 +34,7 @@ STRUCT	hetao_conf
 			STRUCT	rewrite	ARRAY	10
 			{
 				STRING	256	pattern
-				STRING	256	template
+				STRING	256	new_url
 			}
 			STRUCT	forward
 			{

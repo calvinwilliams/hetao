@@ -43,7 +43,7 @@ int FUNCNAME_DSCLOG_hetao_conf( hetao_conf *pst )
 				for( index[3] = 0 ; index[3] < pst->listen[index[1]].website[index[2]]._rewrite_count ; index[3]++ )
 				{
 				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].rewrite[index[3]].pattern[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].rewrite[index[3]].pattern );
-				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].rewrite[index[3]].template[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].rewrite[index[3]].template );
+				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].rewrite[index[3]].new_url[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].rewrite[index[3]].new_url );
 				}
 				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.forward_type[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.forward_type );
 				PREFIX_DSCLOG_hetao_conf "hetao_conf.listen[index[1]].website[index[2]].forward.forward_rule[%s]" NEWLINE_DSCLOG_hetao_conf , pst->listen[index[1]].website[index[2]].forward.forward_rule );

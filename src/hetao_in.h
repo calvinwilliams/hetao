@@ -82,8 +82,8 @@ struct DataSession
 struct RewriteUrl
 {
 	char			pattern[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].pattern ) ] ;
-	char			template[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].template ) ] ;
-	int			template_len ;
+	char			new_url[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].new_url ) ] ;
+	int			new_url_len ;
 	
 	pcre			*pattern_re ;
 	
@@ -334,7 +334,7 @@ struct HetaoEnv
 	struct ListenSession	listen_session_list ;
 	int			listen_session_count ;
 	
-	pcre			*template_re ;
+	pcre			*new_url_re ;
 	
 #if ( defined __linux ) || ( defined __unix )
 	int			htmlcache_inotify_fd ;
@@ -394,7 +394,7 @@ int AddHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , struct HtmlCacheS
 struct HtmlCacheSession *QueryHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , char *pathfilename );
 void RemoveHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session );
 
-int RegexReplaceString( pcre *pattern_re , char *url , int url_len , pcre *template_re , char *new_url , int *p_new_url_len , int new_url_size );
+int RegexReplaceString( pcre *pattern_re , char *url , int url_len , pcre *new_url_re , char *new_url , int *p_new_url_len , int new_url_size );
 
 int InitMimeTypeHash( struct HetaoEnv *p_env , hetao_conf *p_conf );
 void CleanMimeTypeHash( struct HetaoEnv *p_env );

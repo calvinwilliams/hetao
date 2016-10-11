@@ -234,15 +234,15 @@ int DSCSERIALIZE_JSON_hetao_conf( hetao_conf *pst , char *encoding , char *buf ,
 	}
 	len=SNPRINTF(buf,remain_len," ,\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"				"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	len=SNPRINTF(buf,remain_len,"\"template\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].website[index[2]].rewrite[index[3]].template[0]==127)
+	len=SNPRINTF(buf,remain_len,"\"new_url\" : "); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
+	if(pst->listen[index[1]].website[index[2]].rewrite[index[3]].new_url[0]==127)
 	{
 	len=SNPRINTF(buf,remain_len,"null"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
-	JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].rewrite[index[3]].template,strlen(pst->listen[index[1]].website[index[2]].rewrite[index[3]].template),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
+	JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].rewrite[index[3]].new_url,strlen(pst->listen[index[1]].website[index[2]].rewrite[index[3]].new_url),buf,len,remain_len); if(len<0)return -7; buf+=len; remain_len-=len;
 	len=SNPRINTF(buf,remain_len,"\""); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	len=SNPRINTF(buf,remain_len,"\n"); if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
@@ -773,15 +773,15 @@ int DSCSERIALIZE_JSON_DUP_hetao_conf( hetao_conf *pst , char *encoding , char **
 	}
 	while(1){len=SNPRINTF(buf,remain_len," ,\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"				");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	while(1){len=SNPRINTF(buf,remain_len,"\"template\" : ");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	if(pst->listen[index[1]].website[index[2]].rewrite[index[3]].template[0]==127)
+	while(1){len=SNPRINTF(buf,remain_len,"\"new_url\" : ");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	if(pst->listen[index[1]].website[index[2]].rewrite[index[3]].new_url[0]==127)
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"null");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} if(len<0||remain_len<len)return -1; buf+=len; remain_len-=len;
 	}
 	else
 	{
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
-	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].rewrite[index[3]].template,strlen(pst->listen[index[1]].website[index[2]].rewrite[index[3]].template),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
+	while(1){JSONESCAPE_EXPAND(pst->listen[index[1]].website[index[2]].rewrite[index[3]].new_url,strlen(pst->listen[index[1]].website[index[2]].rewrite[index[3]].new_url),buf,len,remain_len);if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	while(1){len=SNPRINTF(buf,remain_len,"\"");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
 	}
 	while(1){len=SNPRINTF(buf,remain_len,"\n");if(len<0||remain_len<=len){char *tmp=NULL;int buf_offset=buf-(*pp_base);int new_buf_size;if(buf_size<1024*1024*1024)new_buf_size=buf_size*2;else new_buf_size=buf_size+10*1024*1024;tmp=(char*)realloc(*pp_base,new_buf_size);if(tmp==NULL)return -2;else (*pp_base)=tmp,buf=(*pp_base)+buf_offset,remain_len+=new_buf_size-buf_size,buf_size=new_buf_size,memset(buf,0x00,remain_len+1);}else {break;}} buf+=len; remain_len-=len;
@@ -1175,9 +1175,9 @@ int CallbackOnJsonNode_hetao_conf( int type , char *jpath , int jpath_len , int 
 					/* pattern */
 					if( jpath_len == 31 && strncmp( jpath , "/listen/website/rewrite/pattern" , jpath_len ) == 0 )
 					{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].rewrite[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count]._rewrite_count].pattern,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].rewrite[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count]._rewrite_count].pattern)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
-					/* template */
-					if( jpath_len == 32 && strncmp( jpath , "/listen/website/rewrite/template" , jpath_len ) == 0 )
-					{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].rewrite[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count]._rewrite_count].template,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].rewrite[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count]._rewrite_count].template)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
+					/* new_url */
+					if( jpath_len == 31 && strncmp( jpath , "/listen/website/rewrite/new_url" , jpath_len ) == 0 )
+					{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].rewrite[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count]._rewrite_count].new_url,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].rewrite[pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count]._rewrite_count].new_url)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}
 					/* forward_type */
 					if( jpath_len == 36 && strncmp( jpath , "/listen/website/forward/forward_type" , jpath_len ) == 0 )
 					{JSONUNESCAPE_FOLD(content,content_len,pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward.forward_type,len,sizeof(pst->listen[pst->_listen_count].website[pst->listen[pst->_listen_count]._website_count].forward.forward_type)-1); if(len<0){_DSC_errline=__LINE__;return -7;}}

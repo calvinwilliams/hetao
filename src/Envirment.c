@@ -149,9 +149,9 @@ void CleanEnvirment( struct HetaoEnv *p_env )
 		CLOSE( p_env->process_info_array[i].epoll_fd );
 	}
 	
-	if( p_env->template_re )
+	if( p_env->new_url_re )
 	{
-		free( p_env->template_re );
+		free( p_env->new_url_re );
 	}
 	
 	DebugLog( __FILE__ , __LINE__ , "delete all listen_session" );

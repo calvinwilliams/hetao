@@ -181,25 +181,25 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 			memset( & (p_virtualhost->rewrite_url_list) , 0x00 , sizeof(struct RewriteUrl) );
 			INIT_LIST_HEAD( & (p_virtualhost->rewrite_url_list.rewriteurl_node) );
 			
-			if( p_conf->listen[k].website[i]._rewrite_count > 0 && p_env->template_re == NULL )
+			if( p_conf->listen[k].website[i]._rewrite_count > 0 && p_env->new_url_re == NULL )
 			{
-				if( p_env->template_re == NULL )
+				if( p_env->new_url_re == NULL )
 				{
-					p_env->template_re = pcre_compile( TEMPLATE_PATTERN , 0 , & error_desc , & error_offset , NULL ) ;
-					if( p_env->template_re == NULL )
+					p_env->new_url_re = pcre_compile( TEMPLATE_PATTERN , 0 , & error_desc , & error_offset , NULL ) ;
+					if( p_env->new_url_re == NULL )
 					{
 						ErrorLog( __FILE__ , __LINE__ , "pcre_compile[%s] failed[%s][%d]" , TEMPLATE_PATTERN , error_desc , error_offset );
 						return -1;
 					}
-					DebugLog( __FILE__ , __LINE__ , "create template pattern[%s]" , TEMPLATE_PATTERN );
+					DebugLog( __FILE__ , __LINE__ , "create new_url pattern[%s]" , TEMPLATE_PATTERN );
 				}
 			}	
 			
 			for( j = 0 ; j < p_conf->listen[k].website[i]._rewrite_count ; j++ )
 			{
-				if( p_conf->listen[k].website[i].rewrite[j].pattern[0] == '\0' || p_conf->listen[k].website[i].rewrite[j].template[0] == '\0' )
+				if( p_conf->listen[k].website[i].rewrite[j].pattern[0] == '\0' || p_conf->listen[k].website[i].rewrite[j].new_url[0] == '\0' )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "rewrite url invalid , pattern[%s] template[%s]" , p_conf->listen[k].website[i].rewrite[j].pattern , p_conf->listen[k].website[i].rewrite[j].template );
+					ErrorLog( __FILE__ , __LINE__ , "rewrite url invalid , pattern[%s] new_url[%s]" , p_conf->listen[k].website[i].rewrite[j].pattern , p_conf->listen[k].website[i].rewrite[j].new_url );
 					return -1;
 				}
 				
@@ -212,8 +212,8 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 				memset( p_rewrite_url , 0x00 , sizeof(struct RewriteUrl) );
 				
 				strcpy( p_rewrite_url->pattern , p_conf->listen[k].website[i].rewrite[j].pattern );
-				strcpy( p_rewrite_url->template , p_conf->listen[k].website[i].rewrite[j].template );
-				p_rewrite_url->template_len = strlen( p_rewrite_url->template ) ;
+				strcpy( p_rewrite_url->new_url , p_conf->listen[k].website[i].rewrite[j].new_url );
+				p_rewrite_url->new_url_len = strlen( p_rewrite_url->new_url ) ;
 				
 				p_rewrite_url->pattern_re = pcre_compile( p_rewrite_url->pattern , PCRE_MULTILINE , & error_desc , & error_offset , NULL ) ;
 				if( p_rewrite_url->pattern_re == NULL )
@@ -223,7 +223,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 				}
 				
 				list_add_tail( & (p_rewrite_url->rewriteurl_node) , & (p_virtualhost->rewrite_url_list.rewriteurl_node) );
-				DebugLog( __FILE__ , __LINE__ , "add rewrite[%s][%s]" , p_rewrite_url->pattern , p_rewrite_url->template );
+				DebugLog( __FILE__ , __LINE__ , "add rewrite[%s][%s]" , p_rewrite_url->pattern , p_rewrite_url->new_url );
 			}
 			
 			/* 创建反向代理链表 */
