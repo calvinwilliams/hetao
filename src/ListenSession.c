@@ -17,7 +17,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 	
 	struct VirtualHost	*p_virtualhost = NULL ;
 	
-	struct RewriteUrl	*p_rewrite_url = NULL ;
+	struct RewriteUri	*p_rewrite_uri = NULL ;
 	const char		*error_desc = NULL ;
 	int			error_offset ;
 	
@@ -178,52 +178,52 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 			}
 			
 			/* 创建rewrite链表 */
-			memset( & (p_virtualhost->rewrite_url_list) , 0x00 , sizeof(struct RewriteUrl) );
-			INIT_LIST_HEAD( & (p_virtualhost->rewrite_url_list.rewriteurl_node) );
+			memset( & (p_virtualhost->rewrite_uri_list) , 0x00 , sizeof(struct RewriteUri) );
+			INIT_LIST_HEAD( & (p_virtualhost->rewrite_uri_list.rewriteuri_node) );
 			
-			if( p_conf->listen[k].website[i]._rewrite_count > 0 && p_env->new_url_re == NULL )
+			if( p_conf->listen[k].website[i]._rewrite_count > 0 && p_env->new_uri_re == NULL )
 			{
-				if( p_env->new_url_re == NULL )
+				if( p_env->new_uri_re == NULL )
 				{
-					p_env->new_url_re = pcre_compile( TEMPLATE_PATTERN , 0 , & error_desc , & error_offset , NULL ) ;
-					if( p_env->new_url_re == NULL )
+					p_env->new_uri_re = pcre_compile( TEMPLATE_PATTERN , 0 , & error_desc , & error_offset , NULL ) ;
+					if( p_env->new_uri_re == NULL )
 					{
 						ErrorLog( __FILE__ , __LINE__ , "pcre_compile[%s] failed[%s][%d]" , TEMPLATE_PATTERN , error_desc , error_offset );
 						return -1;
 					}
-					DebugLog( __FILE__ , __LINE__ , "create new_url pattern[%s]" , TEMPLATE_PATTERN );
+					DebugLog( __FILE__ , __LINE__ , "create new_uri pattern[%s]" , TEMPLATE_PATTERN );
 				}
 			}	
 			
 			for( j = 0 ; j < p_conf->listen[k].website[i]._rewrite_count ; j++ )
 			{
-				if( p_conf->listen[k].website[i].rewrite[j].pattern[0] == '\0' || p_conf->listen[k].website[i].rewrite[j].new_url[0] == '\0' )
+				if( p_conf->listen[k].website[i].rewrite[j].pattern[0] == '\0' || p_conf->listen[k].website[i].rewrite[j].new_uri[0] == '\0' )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "rewrite url invalid , pattern[%s] new_url[%s]" , p_conf->listen[k].website[i].rewrite[j].pattern , p_conf->listen[k].website[i].rewrite[j].new_url );
+					ErrorLog( __FILE__ , __LINE__ , "rewrite uri invalid , pattern[%s] new_uri[%s]" , p_conf->listen[k].website[i].rewrite[j].pattern , p_conf->listen[k].website[i].rewrite[j].new_uri );
 					return -1;
 				}
 				
-				p_rewrite_url = (struct RewriteUrl *)malloc( sizeof(struct RewriteUrl) ) ;
-				if( p_rewrite_url == NULL )
+				p_rewrite_uri = (struct RewriteUri *)malloc( sizeof(struct RewriteUri) ) ;
+				if( p_rewrite_uri == NULL )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "malloc failed[%d] , errno[%d]" , ERRNO );
 					return -1;
 				}
-				memset( p_rewrite_url , 0x00 , sizeof(struct RewriteUrl) );
+				memset( p_rewrite_uri , 0x00 , sizeof(struct RewriteUri) );
 				
-				strcpy( p_rewrite_url->pattern , p_conf->listen[k].website[i].rewrite[j].pattern );
-				strcpy( p_rewrite_url->new_url , p_conf->listen[k].website[i].rewrite[j].new_url );
-				p_rewrite_url->new_url_len = strlen( p_rewrite_url->new_url ) ;
+				strcpy( p_rewrite_uri->pattern , p_conf->listen[k].website[i].rewrite[j].pattern );
+				strcpy( p_rewrite_uri->new_uri , p_conf->listen[k].website[i].rewrite[j].new_uri );
+				p_rewrite_uri->new_uri_len = strlen( p_rewrite_uri->new_uri ) ;
 				
-				p_rewrite_url->pattern_re = pcre_compile( p_rewrite_url->pattern , PCRE_MULTILINE , & error_desc , & error_offset , NULL ) ;
-				if( p_rewrite_url->pattern_re == NULL )
+				p_rewrite_uri->pattern_re = pcre_compile( p_rewrite_uri->pattern , PCRE_MULTILINE , & error_desc , & error_offset , NULL ) ;
+				if( p_rewrite_uri->pattern_re == NULL )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "pcre_compile[%s] failed[%s][%d]" , p_rewrite_url->pattern , error_desc , error_offset );
+					ErrorLog( __FILE__ , __LINE__ , "pcre_compile[%s] failed[%s][%d]" , p_rewrite_uri->pattern , error_desc , error_offset );
 					return -1;
 				}
 				
-				list_add_tail( & (p_rewrite_url->rewriteurl_node) , & (p_virtualhost->rewrite_url_list.rewriteurl_node) );
-				DebugLog( __FILE__ , __LINE__ , "add rewrite[%s][%s]" , p_rewrite_url->pattern , p_rewrite_url->new_url );
+				list_add_tail( & (p_rewrite_uri->rewriteuri_node) , & (p_virtualhost->rewrite_uri_list.rewriteuri_node) );
+				DebugLog( __FILE__ , __LINE__ , "add rewrite[%s][%s]" , p_rewrite_uri->pattern , p_rewrite_uri->new_uri );
 			}
 			
 			/* 创建反向代理链表 */

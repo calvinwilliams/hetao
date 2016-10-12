@@ -83,15 +83,15 @@ struct DataSession
 
 #define TEMPLATE_PATTERN	"(\\([0-9]+\\))"
 
-struct RewriteUrl
+struct RewriteUri
 {
 	char			pattern[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].pattern ) ] ;
-	char			new_url[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].new_url ) ] ;
-	int			new_url_len ;
+	char			new_uri[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].new_uri ) ] ;
+	int			new_uri_len ;
 	
 	pcre			*pattern_re ;
 	
-	struct list_head	rewriteurl_node ;
+	struct list_head	rewriteuri_node ;
 } ;
 
 /* 转发服务器结构 */
@@ -126,7 +126,7 @@ struct VirtualHost
 	int			domain_len ;
 	int			access_log_fd ;
 	
-	struct RewriteUrl	rewrite_url_list ;
+	struct RewriteUri	rewrite_uri_list ;
 	
 	char			forward_type[ sizeof( ((hetao_conf*)0)->listen[0].website[0].forward.forward_type ) ] ;
 	int			forward_type_len ;
@@ -345,7 +345,7 @@ struct HetaoEnv
 	struct ListenSession	listen_session_list ;
 	int			listen_session_count ;
 	
-	pcre			*new_url_re ;
+	pcre			*new_uri_re ;
 	
 #if ( defined __linux ) || ( defined __unix )
 	int			htmlcache_inotify_fd ;
@@ -406,7 +406,7 @@ int AddHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , struct HtmlCacheS
 struct HtmlCacheSession *QueryHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , char *pathfilename );
 void RemoveHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session );
 
-int RegexReplaceString( pcre *pattern_re , char *url , int url_len , pcre *new_url_re , char *new_url , int *p_new_url_len , int new_url_size );
+int RegexReplaceString( pcre *pattern_re , char *uri , int uri_len , pcre *new_uri_re , char *new_uri , int *p_new_uri_len , int new_uri_size );
 
 int InitMimeTypeHash( struct HetaoEnv *p_env , hetao_conf *p_conf );
 void CleanMimeTypeHash( struct HetaoEnv *p_env );

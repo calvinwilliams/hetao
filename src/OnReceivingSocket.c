@@ -118,10 +118,10 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		char			*host = NULL ;
 		int			host_len ;
 		
-		struct RewriteUrl	*p_rewrite_url = NULL ;
-		char			*p_url = NULL ;
-		char			url[ 4096 + 1 ] ;
-		int			url_len ;
+		struct RewriteUri	*p_rewrite_uri = NULL ;
+		char			*p_uri = NULL ;
+		char			uri[ 4096 + 1 ] ;
+		int			uri_len ;
 		
 		DebugLog( __FILE__ , __LINE__ , "ReceiveHttpRequestNonblock done" );
 		
@@ -144,50 +144,50 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 			DebugLog( __FILE__ , __LINE__ , "QueryVirtualHostHashNode[%.*s] ok , wwwroot[%s]" , host_len , host , p_http_session->p_virtualhost->wwwroot );
 			
 			/* REWRITE */
-			if( p_env->new_url_re == NULL )
+			if( p_env->new_uri_re == NULL )
 			{
-				p_url = GetHttpHeaderPtr_URI(p_http_session->http,NULL) ;
-				url_len = GetHttpHeaderLen_URI(p_http_session->http) ;
+				p_uri = GetHttpHeaderPtr_URI(p_http_session->http,NULL) ;
+				uri_len = GetHttpHeaderLen_URI(p_http_session->http) ;
 			}
 			else
 			{
-				p_url = NULL ;
-				list_for_each_entry( p_rewrite_url , & (p_http_session->p_virtualhost->rewrite_url_list.rewriteurl_node) , struct RewriteUrl , rewriteurl_node )
+				p_uri = NULL ;
+				list_for_each_entry( p_rewrite_uri , & (p_http_session->p_virtualhost->rewrite_uri_list.rewriteuri_node) , struct RewriteUri , rewriteuri_node )
 				{
-					strcpy( url , p_rewrite_url->new_url );
-					url_len = p_rewrite_url->new_url_len ;
+					strcpy( uri , p_rewrite_uri->new_uri );
+					uri_len = p_rewrite_uri->new_uri_len ;
 					
-					nret = RegexReplaceString( p_rewrite_url->pattern_re , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , GetHttpHeaderLen_URI(p_http_session->http) , p_env->new_url_re , url , & url_len , sizeof(url) ) ;
+					nret = RegexReplaceString( p_rewrite_uri->pattern_re , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , GetHttpHeaderLen_URI(p_http_session->http) , p_env->new_uri_re , uri , & uri_len , sizeof(uri) ) ;
 					if( nret == 0 )
 					{
-						DebugLog( __FILE__ , __LINE__ , "RegexReplaceString[%.*s][%s][%s] ok[%.*s]" , GetHttpHeaderLen_URI(p_http_session->http) , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , p_rewrite_url->pattern , p_rewrite_url->new_url , url_len , url );
-						p_url = url ;
+						DebugLog( __FILE__ , __LINE__ , "RegexReplaceString[%.*s][%s][%s] ok[%.*s]" , GetHttpHeaderLen_URI(p_http_session->http) , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , p_rewrite_uri->pattern , p_rewrite_uri->new_uri , uri_len , uri );
+						p_uri = uri ;
 						break;
 					}
 					else if( nret == -1 )
 					{
-						ErrorLog( __FILE__ , __LINE__ , "RegexReplaceString[%.*s][%s][%s] failed[%d] , errno[%d]" , GetHttpHeaderLen_URI(p_http_session->http) , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , p_rewrite_url->pattern , p_rewrite_url->new_url , nret , ERRNO );
+						ErrorLog( __FILE__ , __LINE__ , "RegexReplaceString[%.*s][%s][%s] failed[%d] , errno[%d]" , GetHttpHeaderLen_URI(p_http_session->http) , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , p_rewrite_uri->pattern , p_rewrite_uri->new_uri , nret , ERRNO );
 						return HTTP_BAD_REQUEST;
 					}
 					else
 					{
-						DebugLog( __FILE__ , __LINE__ , "RegexReplaceString[%.*s][%s][%s] continue" , GetHttpHeaderLen_URI(p_http_session->http) , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , p_rewrite_url->pattern , p_rewrite_url->new_url );
+						DebugLog( __FILE__ , __LINE__ , "RegexReplaceString[%.*s][%s][%s] continue" , GetHttpHeaderLen_URI(p_http_session->http) , GetHttpHeaderPtr_URI(p_http_session->http,NULL) , p_rewrite_uri->pattern , p_rewrite_uri->new_uri );
 					}
 				}
-				if( p_url == NULL )
+				if( p_uri == NULL )
 				{
-					p_url = GetHttpHeaderPtr_URI(p_http_session->http,NULL) ;
-					url_len = GetHttpHeaderLen_URI(p_http_session->http) ;
+					p_uri = GetHttpHeaderPtr_URI(p_http_session->http,NULL) ;
+					uri_len = GetHttpHeaderLen_URI(p_http_session->http) ;
 				}
 			}
 			
 #if ( defined _WIN32 )
-			if( p_url[url_len-1] == '/' || p_url[url_len-1] == '\\' )
-				url_len--;
+			if( p_uri[uri_len-1] == '/' || p_uri[uri_len-1] == '\\' )
+				uri_len--;
 #endif
 			
 			/* ´¦ÀíHTTPÇëÇó */
-			nret = ProcessHttpRequest( p_env , p_http_session , p_http_session->p_virtualhost->wwwroot , p_url , url_len ) ;
+			nret = ProcessHttpRequest( p_env , p_http_session , p_http_session->p_virtualhost->wwwroot , p_uri , uri_len ) ;
 			if( nret == HTTP_OK )
 			{
 				DebugLog( __FILE__ , __LINE__ , "ProcessHttpRequest ok" );

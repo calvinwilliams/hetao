@@ -10,8 +10,8 @@
 
 struct HetaoEnv	*g_p_env = NULL ;
 
-char	__HETAO_VERSION_0_10_1[] = "0.10.1" ;
-char	*__HETAO_VERSION = __HETAO_VERSION_0_10_1 ;
+char	__HETAO_VERSION_0_10_2[] = "0.10.2" ;
+char	*__HETAO_VERSION = __HETAO_VERSION_0_10_2 ;
 
 char *strndup(const char *s, size_t n);
 
@@ -201,6 +201,7 @@ static int StringExpandEnvval( char *buf , int buf_size )
 		p1 = strchr( p1 , '$' ) ;
 		if( p1 == NULL )
 			break;
+		
 		p2 = strchr( p1+1 , '$' ) ;
 		if( p2 == NULL )
 			break;
@@ -314,10 +315,118 @@ static char *StrdupEntireFile( char *pathfilename , int *p_file_size )
 	return p_file_content;
 }
 
+/* 把字符串中的!include文件展开 */
+static char *StringExpandIncludeFile( char *config_pathfilename , char *buf , int *p_buf_size )
+{
+	char		include_config_pathfilename[ 256 + 1 ] ;
+	char		*p = NULL ;
+	
+	char		*p1 = NULL ;
+	char		*p2 = NULL ;
+	char		*p3 = NULL ;
+	char		*p4 = NULL ;
+	int		offset ;
+	int		len ;
+	
+	char		*p_include_file_content = NULL ;
+	int		include_file_size ;
+	
+	char		*tmp = NULL ;
+	
+	memset( include_config_pathfilename , 0x00 , sizeof(include_config_pathfilename) );
+	strcpy( include_config_pathfilename , config_pathfilename );
+	
+	p = strrchr( include_config_pathfilename , '/' ) ;
+	if( p )
+	{
+		p[1] = '\0' ;
+	}
+	else
+	{
+		p = strrchr( include_config_pathfilename , '\\' ) ;
+		if( p )
+		{
+			p[1] = '\0' ;
+		}
+		else
+		{
+			include_config_pathfilename[0] = '\0' ;
+		}
+	}
+	
+	while(1)
+	{
+		p1 = strstr( buf , "!include" ) ;
+		if( p1 == NULL )
+			break;
+		p2 = p1 + strlen("!include") ;
+		while( (*p2) )
+		{
+			if( (*p2) != ' ' )
+				break;
+			else
+				p2++;
+		}
+		if( (*p2) == '\0' )
+			return NULL;
+		
+		p4 = strchr( p2 , '\n' ) ;
+		if( p4 == NULL )
+		{
+			p4 = p2 + strlen(p2) - 1 ;
+			p3 = p4 ;
+		}
+		else
+		{
+			p3 = p4 - 1 ;
+		}
+		while( p2 <= p3 )
+		{
+			if( ! strchr( " \r" , (*p3) ) )
+				break;
+			else
+				p3--;
+		}
+		if( p2 > p3 )
+			return NULL;
+		
+		strncat( include_config_pathfilename , p2 , p3-p2+1 );
+		p_include_file_content = StrdupEntireFile( include_config_pathfilename , & include_file_size ) ;
+		if( p_include_file_content == NULL )
+		{
+			return NULL;
+		}
+		
+		offset = p1 - buf ;
+		len = p4 - p1 + 1 ;
+		
+		tmp = (char*)realloc( buf , (*p_buf_size) + (include_file_size-len) + 1 ) ;
+		if( tmp == NULL )
+		{
+			return NULL;
+		}
+		buf = tmp ;
+		(*p_buf_size) += (include_file_size-len) ;
+		
+		/*
+		aaa\n!include bbb\nccc
+		     ^offset
+		     |    len    |
+		*/
+		memmove( buf+offset+len+(include_file_size-len) , buf+offset+len , strlen(buf+offset+len)+1 );
+		memcpy( buf+offset , p_include_file_content , include_file_size );
+		
+		free( p_include_file_content );
+	}
+	
+	return buf;
+}
+
 int LoadConfig( char *config_pathfilename , hetao_conf *p_config , struct HetaoEnv *p_env )
 {
 	char		*buf = NULL ;
 	int		file_size ;
+	char		*tmp = NULL ;
 	
 	int		nret = 0 ;
 	
@@ -326,12 +435,22 @@ int LoadConfig( char *config_pathfilename , hetao_conf *p_config , struct HetaoE
 	if( buf == NULL )
 		return -1;
 	
+	/* 展开配置文件 */
+	tmp = StringExpandIncludeFile( config_pathfilename , buf , & file_size ) ;
+	if( tmp == NULL )
+	{
+		free( buf );
+		return -1;
+	}
+	buf = tmp ;
+	
 	/* 解析配置文件 */
 	nret = DSCDESERIALIZE_JSON_hetao_conf( NULL , buf , & file_size , p_config ) ;
 	free( buf );
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_hetao_conf failed[%d][%d] , errno[%d]" , nret , DSCGetErrorLine_hetao_conf() , ERRNO );
+		ErrorHexLog( __FILE__ , __LINE__ , buf , file_size , "buf[%d]bytes" , file_size );
 		return -1;
 	}
 	
