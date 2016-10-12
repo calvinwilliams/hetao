@@ -1,5 +1,5 @@
 0.9.2		2016-10-11	calvin
-		* Find synchronous call with SSL_accept and SSL_connect , refactored asynchronous mode in Linux
+		* Find synchronous call with SSL_accept and SSL_connect , refactored asynchronous mode
 		* Fixed a bug about Starving for SSL_read in fasterhttp
 
 0.9.1		2016-10-09	calvin
