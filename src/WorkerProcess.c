@@ -10,6 +10,7 @@
 
 extern signed char			g_worker_exit_flag ;
 
+#if ( defined _WIN32 )
 DWORD WINAPI WaitForParentProcessThread( LPVOID lpParameter )
 {
 	struct HetaoEnv	*p_env = (struct HetaoEnv *)lpParameter ;
@@ -22,6 +23,7 @@ DWORD WINAPI WaitForParentProcessThread( LPVOID lpParameter )
 	
 	return 0;
 }
+#endif
 
 int WorkerProcess( void *pv )
 {

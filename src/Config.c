@@ -281,8 +281,6 @@ static char *StrdupEntireFile( char *pathfilename , int *p_file_size )
 	int		file_size ;
 	FILE		*fp = NULL ;
 	
-	char		*p1 = NULL ;
-	char		*p2 = NULL ;
 	char		*tmp = NULL ;
 	
 	int		nret = 0 ;
