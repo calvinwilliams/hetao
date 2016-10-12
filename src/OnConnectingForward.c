@@ -111,6 +111,17 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 	SetHttpLinger( p_http_session->forward_netaddr.sock , p_env->tcp_options__nolinger );
 	
 #if ( defined _WIN32 )
+	/* 绑定完成端口  */
+	hret = CreateIoCompletionPort( (HANDLE)(p_http_session->forward_netaddr.sock) , p_env->iocp , (DWORD)p_http_session , 0 ) ;
+	if( hret == NULL )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
+		return HTTP_INTERNAL_SERVER_ERROR;
+	}
+#endif
+	
+#if ( defined _WIN32 )
+	/* 绑定端口，完成端口特殊需要 */
 	SETNETADDRESS( p_http_session->forward_netaddr )
 	nret = bind( p_http_session->forward_netaddr.sock , (struct sockaddr *) & (p_http_session->forward_netaddr.addr) , sizeof(struct sockaddr) ) ;
 	if( nret == -1 )
@@ -120,19 +131,9 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 	}
 #endif
 	
-	p_http_session->forward_flags |= HTTPSESSION_FLAGS_CONNECTING ;
+	p_http_session->forward_flags = HTTPSESSION_FLAGS_CONNECTING ;
 	p_http_session->p_forward_server->connection_count++;
 	UpdateLeastConnectionCountTreeNode( p_http_session->p_virtualhost , p_http_session->p_forward_server );
-	
-#if ( defined _WIN32 )
-	/* 绑定完成端口  */
-	hret = CreateIoCompletionPort( (HANDLE)(p_http_session->forward_netaddr.sock) , p_env->iocp , (DWORD)p_http_session , 0 ) ;
-	if( hret == NULL )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
-		return HTTP_INTERNAL_SERVER_ERROR;
-	}
-#endif
 	
 	/* 连接服务端 */
 	DebugLog( __FILE__ , __LINE__ , "connecting[%s:%d] ..." , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );

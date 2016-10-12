@@ -138,6 +138,10 @@ int OnReceivingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 		
 		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer [%d]bytes" , GetHttpBufferLength(b) );
 		
+		/* 复制响应码 */
+		CopyHttpHeader_STATUSCODE( p_http_session->http , p_http_session->forward_http );
+		
+		/* 关闭转发socket */
 		SetHttpSessionUnused_02( p_env , p_http_session );
 		
 #if ( defined __linux ) || ( defined __unix )

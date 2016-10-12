@@ -3011,6 +3011,12 @@ int GetHttpBufferLengthUnprocessed( struct HttpBuffer *b )
 		return 0;
 }
 
+void CopyHttpHeader_STATUSCODE( struct HttpEnv *e , struct HttpEnv *e2 )
+{
+	memmove( & (e->headers.STATUSCODE) , & (e2->headers.STATUSCODE) , sizeof(struct HttpHeader) );
+	return;
+}
+
 #ifndef STAT
 #if ( defined __linux__ ) || ( defined __unix ) || ( defined _AIX )
 #define STAT		stat

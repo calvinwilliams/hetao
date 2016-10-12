@@ -286,28 +286,6 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		
 		UpdateHttpSessionTimeoutTreeNode( p_env , p_http_session , (int)GETSECONDSTAMP + p_env->http_options__timeout );
 		UpdateHttpSessionElapseTreeNode( p_env , p_http_session , (int)GETSECONDSTAMP + p_env->http_options__elapse );
-		
-		/* 直接来一发 */
-		/*
-		if( p_env->p_config->worker_processes == 1 )
-		{
-			nret = OnSendingSocket( p_env , p_http_session ) ;
-			if( nret > 0 )
-			{
-				DebugLog( __FILE__ , __LINE__ , "OnSendingSocket done[%d]" , nret );
-				return nret;
-			}
-			else if( nret < 0 )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "OnSendingSocket failed[%d] , errno[%d]" , nret , ERRNO );
-				return nret;
-			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "OnSendingSocket ok" );
-			}
-		}
-		*/
 	}
 	
 	return 0;
