@@ -1,3 +1,7 @@
+0.9.2		2016-10-12	calvin
+		* 发现代码中有同步调用SSL_accept和SSL_connect，改成非堵塞模式
+		* 解决了fasterhttp中的一个SSL读饿死问题
+
 0.9.1		2016-10-09	calvin
 		* WINDOWS版本支持HTTPS啦
 

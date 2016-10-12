@@ -111,6 +111,17 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 	SetHttpLinger( p_http_session->forward_netaddr.sock , p_env->tcp_options__nolinger );
 	
 #if ( defined _WIN32 )
+	/* 绑定完成端口  */
+	hret = CreateIoCompletionPort( (HANDLE)(p_http_session->forward_netaddr.sock) , p_env->iocp , (DWORD)p_http_session , 0 ) ;
+	if( hret == NULL )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
+		return HTTP_INTERNAL_SERVER_ERROR;
+	}
+#endif
+	
+#if ( defined _WIN32 )
+	/* 绑定端口，完成端口特殊需要 */
 	SETNETADDRESS( p_http_session->forward_netaddr )
 	nret = bind( p_http_session->forward_netaddr.sock , (struct sockaddr *) & (p_http_session->forward_netaddr.addr) , sizeof(struct sockaddr) ) ;
 	if( nret == -1 )
@@ -120,19 +131,9 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 	}
 #endif
 	
-	p_http_session->forward_flags |= HTTPSESSION_FLAGS_CONNECTING ;
+	p_http_session->forward_flags = HTTPSESSION_FLAGS_CONNECTING ;
 	p_http_session->p_forward_server->connection_count++;
 	UpdateLeastConnectionCountTreeNode( p_http_session->p_virtualhost , p_http_session->p_forward_server );
-	
-#if ( defined _WIN32 )
-	/* 绑定完成端口  */
-	hret = CreateIoCompletionPort( (HANDLE)(p_http_session->forward_netaddr.sock) , p_env->iocp , (DWORD)p_http_session , 0 ) ;
-	if( hret == NULL )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
-		return HTTP_INTERNAL_SERVER_ERROR;
-	}
-#endif
 	
 	/* 连接服务端 */
 	DebugLog( __FILE__ , __LINE__ , "connecting[%s:%d] ..." , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
@@ -195,19 +196,18 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 			
 			SSL_set_fd( p_http_session->forward_ssl , p_http_session->forward_netaddr.sock );
 			
-			nret = SSL_connect( p_http_session->forward_ssl ) ;
+			SSL_set_connect_state( p_http_session->forward_ssl );
+			p_http_session->forward_ssl_connected = 0 ;
+			
+			nret = OnConnectingSslForward( p_env , p_http_session ) ;
 			if( nret == -1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "SSL_connect failed , errno[%d]" , ERRNO );
+				ErrorLog( __FILE__ , __LINE__ , "OnConnectingSslForward failed , errno[%d]" , ERRNO );
 				SetHttpSessionUnused_05( p_env , p_http_session );
 				return HTTP_INTERNAL_SERVER_ERROR;
 			}
 			
-#if ( defined _WIN32 )
-			p_http_session->forward_in_bio = BIO_new(BIO_s_mem()) ;
-			p_http_session->forward_out_bio = BIO_new(BIO_s_mem()) ;
-			SSL_set_bio( p_http_session->forward_ssl , p_http_session->forward_in_bio , p_http_session->forward_out_bio );
-#endif
+			return 0;
 		}
 		
 		/* 复制HTTP请求 */
@@ -434,21 +434,18 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 		
 		SSL_set_fd( p_http_session->forward_ssl , p_http_session->forward_netaddr.sock );
 		
-		SetHttpBlock( p_http_session->forward_netaddr.sock );
-		nret = SSL_connect( p_http_session->forward_ssl ) ;
-		SetHttpNonblock( p_http_session->forward_netaddr.sock );
+		SSL_set_connect_state( p_http_session->forward_ssl );
+		p_http_session->forward_ssl_connected = 0 ;
+		
+		nret = OnConnectingSslForward( p_env , p_http_session ) ;
 		if( nret == -1 )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "SSL_connect failed , errno[%d]" , ERRNO );
+			ErrorLog( __FILE__ , __LINE__ , "OnConnectingSslForward failed , errno[%d]" , ERRNO );
 			SetHttpSessionUnused_05( p_env , p_http_session );
 			return 1;
 		}
 		
-#if ( defined _WIN32 )
-		p_http_session->forward_in_bio = BIO_new(BIO_s_mem()) ;
-		p_http_session->forward_out_bio = BIO_new(BIO_s_mem()) ;
-		SSL_set_bio( p_http_session->forward_ssl , p_http_session->forward_in_bio , p_http_session->forward_out_bio );
-#endif
+		return 0;
 	}
 	
 	/* 复制HTTP请求 */

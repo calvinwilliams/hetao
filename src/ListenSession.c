@@ -289,7 +289,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 				DebugLog( __FILE__ , __LINE__ , "PushVirtualHostHashNode[%s][%s] ok" , p_virtualhost->domain , p_virtualhost->wwwroot , nret );
 			}
 			
-			if( p_virtualhost->domain[0] == '\0' )
+			if( p_virtualhost->domain[0] == '\0' && p_listen_session->p_virtualhost_default == NULL )
 				p_listen_session->p_virtualhost_default = p_virtualhost ;
 			
 			p_listen_session->virtualhost_count++;

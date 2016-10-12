@@ -15,9 +15,6 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 	SOCKET			sock ;
 	struct sockaddr_in	addr ;
 	SOCKLEN_T		accept_addr_len ;
-	SSL			*ssl = NULL ;
-	X509			*x509 = NULL ;
-	char			*line = NULL ;
 	
 	struct HttpSession	*p_http_session = NULL ;
 	
@@ -44,42 +41,10 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 			InfoLog( __FILE__ , __LINE__ , "accept ok , listen #%d# accept #%d#" , p_listen_session->netaddr.sock , sock );
 		}
 		
-		/* SSL握手 */
-		if( p_listen_session->ssl_ctx )
-		{
-			ssl = SSL_new( p_listen_session->ssl_ctx ) ;
-			if( ssl == NULL )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "SSL_new failed , errno[%d]" , ERRNO );
-				close( sock );
-				return 1;
-			}
-			
-			SSL_set_fd( ssl , sock );
-			
-			nret = SSL_accept( ssl ) ;
-			if( nret == -1 )
-			{
-				ErrorLog( __FILE__ , __LINE__ , "SSL_accept failed , errno[%d]" , ERRNO );
-				SSL_free( ssl ) ;
-				close( sock );
-				return 1;
-			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "SSL_accept ok" );
-			}
-			
-			x509 = SSL_get_peer_certificate( ssl ) ;
-			if( x509 )
-			{
-				line = X509_NAME_oneline( X509_get_subject_name(x509) , 0 , 0 );
-				free( line );
-				line = X509_NAME_oneline( X509_get_issuer_name(x509) , 0 , 0 );
-				free( line );
-				X509_free( x509 );
-			}
-		}
+		/* 设置TCP选项 */
+		SetHttpNonblock( sock );
+		SetHttpNodelay( sock , p_env->tcp_options__nodelay );
+		SetHttpLinger( sock , p_env->tcp_options__nolinger );
 		
 		/* 获得一个新的会话结构 */
 		p_http_session = FetchHttpSessionUnused( p_env , (unsigned int)(addr.sin_addr.s_addr) ) ;
@@ -99,16 +64,6 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 		p_http_session->netaddr.ip[sizeof(p_http_session->netaddr.ip)-1] = '\0' ;
 		inet_ntop( AF_INET , & (p_http_session->netaddr.addr) , p_http_session->netaddr.ip , sizeof(p_http_session->netaddr.ip) );
 		
-		if( p_listen_session->ssl_ctx )
-		{
-			p_http_session->ssl = ssl ;
-		}
-		
-		/* 设置TCP选项 */
-		SetHttpNonblock( p_http_session->netaddr.sock );
-		SetHttpNodelay( p_http_session->netaddr.sock , p_env->tcp_options__nodelay );
-		SetHttpLinger( p_http_session->netaddr.sock , p_env->tcp_options__nolinger );
-		
 		/* 注册epoll读事件 */
 		memset( & event , 0x00 , sizeof(struct epoll_event) );
 		event.events = EPOLLIN | EPOLLERR ;
@@ -125,27 +80,32 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 			DebugLog( __FILE__ , __LINE__ , "epoll_ctl #%d# add #%d#" , p_env->p_this_process_info->epoll_fd , p_http_session->netaddr.sock );
 		}
 		
-		/* 马上收一把 */
-		/*
-		if( p_env->worker_processes == 1 )
+		/* SSL握手 */
+		if( p_listen_session->ssl_ctx )
 		{
-			nret = OnReceivingSocket( p_env , p_http_session ) ;
-			if( nret > 0 )
+			p_http_session->ssl = SSL_new( p_listen_session->ssl_ctx ) ;
+			if( p_http_session->ssl == NULL )
 			{
-				DebugLog( __FILE__ , __LINE__ , "OnReceivingSocket done[%d]" , nret );
+				ErrorLog( __FILE__ , __LINE__ , "SSL_new failed , errno[%d]" , ERRNO );
 				SetHttpSessionUnused( p_env , p_http_session );
+				return 1;
 			}
-			else if( nret < 0 )
+			
+			SSL_set_fd( p_http_session->ssl , p_http_session->netaddr.sock );
+			
+			SSL_set_accept_state( p_http_session->ssl );
+			p_http_session->ssl_accepted = 0 ;
+			
+			nret = OnAcceptingSslSocket( p_env , p_http_session ) ;
+			if( nret )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "OnReceivingSocket failed[%d] , errno[%d]" , nret , ERRNO );
-				return -1;
+				ErrorLog( __FILE__ , __LINE__ , "SSL_new failed , errno[%d]" , ERRNO );
+				SetHttpSessionUnused( p_env , p_http_session );
+				return 0;
 			}
-			else
-			{
-				DebugLog( __FILE__ , __LINE__ , "OnReceivingSocket ok" );
-			}
+			
+			return 0;
 		}
-		*/
 	}
 	
 	return 0;
@@ -200,6 +160,15 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 	SetHttpNodelay( p_http_session->netaddr.sock , p_env->tcp_options__nodelay );
 	SetHttpLinger( p_http_session->netaddr.sock , p_env->tcp_options__nolinger );
 	
+	/* 绑定完成端口 */
+	hret = CreateIoCompletionPort( (HANDLE)(p_http_session->netaddr.sock) , p_env->iocp , (DWORD)p_http_session , 0 ) ;
+	if( hret == NULL )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
+		SetHttpSessionUnused( p_env , p_http_session );
+		return -1;
+	}
+	
 	/* SSL握手 */
 	if( p_listen_session->ssl_ctx )
 	{
@@ -213,74 +182,45 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 		
 		SSL_set_fd( p_http_session->ssl , p_http_session->netaddr.sock );
 		
-		nret = SSL_accept( p_http_session->ssl ) ;
-		if( nret == -1 )
+		SSL_set_accept_state( p_http_session->ssl );
+		p_http_session->ssl_accepted = 0 ;
+		
+		nret = OnAcceptingSslSocket( p_env , p_http_session ) ;
+		if( nret )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "SSL_accept failed , errno[%d]" , ERRNO );
+			ErrorLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket failed , errno[%d]" , ERRNO );
 			SetHttpSessionUnused( p_env , p_http_session );
 			return 0;
 		}
-		else
-		{
-			DebugLog( __FILE__ , __LINE__ , "SSL_accept ok" );
-		}
-		
-		x509 = SSL_get_peer_certificate( p_http_session->ssl ) ;
-		if( x509 )
-		{
-			line = X509_NAME_oneline( X509_get_subject_name(x509) , 0 , 0 );
-			free( line );
-			line = X509_NAME_oneline( X509_get_issuer_name(x509) , 0 , 0 );
-			free( line );
-			X509_free( x509 );
-		}
-		
-		p_http_session->in_bio = BIO_new(BIO_s_mem()) ;
-		p_http_session->out_bio = BIO_new(BIO_s_mem()) ;
-		SSL_set_bio( p_http_session->ssl , p_http_session->in_bio , p_http_session->out_bio );
 	}
-	
-	/* 绑定完成端口 */
-	hret = CreateIoCompletionPort( (HANDLE)(p_http_session->netaddr.sock) , p_env->iocp , (DWORD)p_http_session , 0 ) ;
-	if( hret == NULL )
+	else
 	{
-		ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
-		SetHttpSessionUnused( p_env , p_http_session );
-		return -1;
-	}
-	
-	/* 投递接收事件 */
-	b = GetHttpRequestBuffer( p_http_session->http );
-	if( p_http_session->ssl == NULL )
-	{
+		/* 投递接收事件 */
+		b = GetHttpRequestBuffer( p_http_session->http );
 		buf.buf = GetHttpBufferBase( b , NULL ) ;
 		buf.len = GetHttpBufferSize( b ) - 1 ;
-	}
-	else
-	{
-		buf.buf = p_http_session->in_bio_buffer ;
-		buf.len = sizeof(p_http_session->in_bio_buffer) - 1 ;
-	}
-	dwFlags = 0 ;
-	nret = WSARecv( p_http_session->netaddr.sock , & buf , 1 , NULL , & dwFlags , & (p_http_session->overlapped) , NULL ) ;
-	if( nret == SOCKET_ERROR )
-	{
-		if( WSAGetLastError() == ERROR_IO_PENDING )
+		dwFlags = 0 ;
+		nret = WSARecv( p_http_session->netaddr.sock , & buf , 1 , NULL , & dwFlags , & (p_http_session->overlapped) , NULL ) ;
+		if( nret == SOCKET_ERROR )
 		{
-			DebugLog( __FILE__ , __LINE__ , "WSARecv io pending" );
+			if( WSAGetLastError() == ERROR_IO_PENDING )
+			{
+				DebugLog( __FILE__ , __LINE__ , "WSARecv io pending" );
+			}
+			else
+			{
+				ErrorLog( __FILE__ , __LINE__ , "WSARecv failed , errno[%d]" , ERRNO );
+				SetHttpSessionUnused( p_env , p_http_session );
+				return 0;
+			}
 		}
 		else
 		{
-			ErrorLog( __FILE__ , __LINE__ , "WSARecv failed , errno[%d]" , ERRNO );
-			SetHttpSessionUnused( p_env , p_http_session );
-			return 0;
+			InfoLog( __FILE__ , __LINE__ , "WSARecv ok" );
 		}
 	}
-	else
-	{
-		InfoLog( __FILE__ , __LINE__ , "WSARecv ok" );
-	}
 	
+	/* 继续投递接受新连接事件 */
 	p_listen_session->accept_socket = WSASocket( AF_INET , SOCK_STREAM , 0 , NULL , 0 , WSA_FLAG_OVERLAPPED ) ;
 	if( p_listen_session->accept_socket == -1 )
 	{

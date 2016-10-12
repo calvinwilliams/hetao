@@ -139,7 +139,7 @@ void *WorkerThread( void *pv )
 				if( p_http_session == NULL )
 					break;
 				
-				ErrorLog( __FILE__ , __LINE__ , "SESSION TIMEOUT --------- client_ip[%s]" , p_http_session->netaddr.ip );
+				WarnLog( __FILE__ , __LINE__ , "SESSION TIMEOUT --------- client_ip[%s]" , p_http_session->netaddr.ip );
 				SetHttpSessionUnused( p_env , p_http_session );
 			}
 			
@@ -149,7 +149,7 @@ void *WorkerThread( void *pv )
 				if( p_http_session == NULL )
 					break;
 				
-				ErrorLog( __FILE__ , __LINE__ , "SESSION ELAPSE --------- client_ip[%s]" , p_http_session->netaddr.ip );
+				WarnLog( __FILE__ , __LINE__ , "SESSION ELAPSE --------- client_ip[%s]" , p_http_session->netaddr.ip );
 				SetHttpSessionUnused( p_env , p_http_session );
 			}
 			
@@ -264,10 +264,46 @@ void *WorkerThread( void *pv )
 				
 				if( p_event->events & EPOLLIN )
 				{
-					/* HTTP接收事件。如果接收完成，则马上处理 */
+					/* HTTP接收事件 */
 					DebugLog( __FILE__ , __LINE__ , "EPOLLIN" );
 					
-					if( p_http_session->forward_flags == 0 )
+					if( p_http_session->ssl && p_http_session->ssl_accepted == 0 )
+					{
+						nret = OnAcceptingSslSocket( p_env , p_http_session ) ;
+						if( nret > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket done[%d]" , nret );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket failed[%d] , errno[%d]" , nret , ERRNO );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket ok" );
+						}
+					}
+					else if( p_http_session->forward_ssl && p_http_session->forward_ssl_connected == 0 )
+					{
+						nret = OnConnectingSslForward( p_env , p_http_session ) ;
+						if( nret > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnConnectingSslForward done[%d]" , nret );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnConnectingSslForward failed[%d] , errno[%d]" , nret , ERRNO );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnConnectingSslForward ok" );
+						}
+					}
+					else if( p_http_session->forward_flags == 0 )
 					{
 						nret = OnReceivingSocket( p_env , p_http_session ) ;
 						if( nret > 0 )
@@ -306,10 +342,46 @@ void *WorkerThread( void *pv )
 				}
 				else if( p_event->events & EPOLLOUT )
 				{
-					/* HTTP发送事件。如果设置了Keep-Alive则等待下一个HTTP请求 */
+					/* HTTP发送事件 */
 					DebugLog( __FILE__ , __LINE__ , "EPOLLOUT" );
 					
-					if( p_http_session->forward_flags == 0 )
+					if( p_http_session->ssl && p_http_session->ssl_accepted == 0 )
+					{
+						nret = OnAcceptingSslSocket( p_env , p_http_session ) ;
+						if( nret > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket done[%d]" , nret );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket failed[%d] , errno[%d]" , nret , ERRNO );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket ok" );
+						}
+					}
+					else if( p_http_session->forward_ssl && p_http_session->forward_ssl_connected == 0 )
+					{
+						nret = OnConnectingSslForward( p_env , p_http_session ) ;
+						if( nret > 0 )
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnConnectingSslForward done[%d]" , nret );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnConnectingSslForward failed[%d] , errno[%d]" , nret , ERRNO );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnConnectingSslForward ok" );
+						}
+					}
+					else if( p_http_session->forward_flags == 0 )
 					{
 						nret = OnSendingSocket( p_env , p_http_session ) ;
 						if( nret > 0 )
@@ -535,6 +607,7 @@ void *WorkerThread( void *pv )
 	struct HetaoEnv		*p_env = (struct HetaoEnv *)pv ;
 	
 	DWORD			transfer_bytes ;
+	int			ssl_bytes ;
 	struct DataSession	*p_data_session = NULL ;
 	struct ListenSession	*p_listen_session = NULL ;
 	struct HttpSession	*p_http_session = NULL ;
@@ -657,11 +730,10 @@ void *WorkerThread( void *pv )
 	while(1)
 	{
 		InfoLog( __FILE__ , __LINE__ , "[%d]GetQueuedCompletionStatus ... [%d][%d][%d,%d]" , p_env->process_info_index , p_env->listen_session_count , p_env->htmlcache_session_count , p_env->http_session_used_count , p_env->http_session_unused_count );
-		// SetLastError( 0 );
 		bret = GetQueuedCompletionStatus( p_env->iocp , & transfer_bytes , (LPDWORD) & p_data_session , (LPOVERLAPPED *) & p_data_session , 1000 ) ;
 		if( bret == FALSE && ERRNO != WAIT_TIMEOUT )
 		{
-			FatalLog( __FILE__ , __LINE__ , "[%d]GetQueuedCompletionStatus failed , errno[%d]" , p_env->process_info_index , ERRNO );
+			WarnLog( __FILE__ , __LINE__ , "[%d]GetQueuedCompletionStatus failed , errno[%d]" , p_env->process_info_index , ERRNO );
 			continue;
 		}
 		else
@@ -680,7 +752,7 @@ void *WorkerThread( void *pv )
 				if( p_http_session == NULL )
 					break;
 				
-				ErrorLog( __FILE__ , __LINE__ , "SESSION TIMEOUT --------- client_ip[%s]" , p_http_session->netaddr.ip );
+				WarnLog( __FILE__ , __LINE__ , "SESSION TIMEOUT --------- client_ip[%s]" , p_http_session->netaddr.ip );
 				SetHttpSessionUnused( p_env , p_http_session );
 			}
 			
@@ -690,7 +762,7 @@ void *WorkerThread( void *pv )
 				if( p_http_session == NULL )
 					break;
 				
-				ErrorLog( __FILE__ , __LINE__ , "SESSION ELAPSE --------- client_ip[%s]" , p_http_session->netaddr.ip );
+				WarnLog( __FILE__ , __LINE__ , "SESSION ELAPSE --------- client_ip[%s]" , p_http_session->netaddr.ip );
 				SetHttpSessionUnused( p_env , p_http_session );
 			}
 			
@@ -723,7 +795,26 @@ void *WorkerThread( void *pv )
 				
 				if( p_http_session->forward_flags == 0 )
 				{
-					if( p_http_session->flag == HTTPSESSION_FLAGS_RECEIVING )
+					if( p_http_session->ssl && p_http_session->ssl_accepted == 0 )
+					{
+						nret = OnAcceptingSslSocket( p_env , p_http_session ) ;
+						if( nret > 0 )
+						{
+							InfoLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket done" );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket failed , errno[%d]" , ERRNO );
+							SetHttpSessionUnused( p_env , p_http_session );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnAcceptingSslSocket ok" );
+						}
+					}
+					else if( p_http_session->flag == HTTPSESSION_FLAGS_RECEIVING )
 					{
 						if( transfer_bytes > 0 )
 						{
@@ -747,8 +838,14 @@ void *WorkerThread( void *pv )
 							else
 							{
 								BIO_write( p_http_session->in_bio , p_http_session->in_bio_buffer , transfer_bytes );
-								transfer_bytes = SSL_read( p_http_session->ssl , p_http_session->out_bio_buffer , sizeof(p_http_session->out_bio_buffer)-1 ) ;
-								MemcatHttpBuffer( b , p_http_session->out_bio_buffer , transfer_bytes );
+								ssl_bytes = SSL_read( p_http_session->ssl , p_http_session->out_bio_buffer , sizeof(p_http_session->out_bio_buffer)-1 ) ;
+								if( ssl_bytes == -1 )
+								{
+									ErrorLog( __FILE__ , __LINE__ , "SSL_read failed , errno[%d]" , ERRNO );
+									SetHttpSessionUnused( p_env , p_http_session );
+									continue;
+								}
+								MemcatHttpBuffer( b , p_http_session->out_bio_buffer , ssl_bytes );
 							}
 							
 							nret = OnReceivingSocket( p_env , p_http_session ) ;
@@ -811,10 +908,6 @@ void *WorkerThread( void *pv )
 							SetHttpSessionUnused( p_env , p_http_session );
 						}
 					}
-					else
-					{
-						ErrorLog( __FILE__ , __LINE__ , "p_http_session->flag[%d] invalid" , p_http_session->flag );
-					}
 				}
 				else if( p_http_session->forward_flags == HTTPSESSION_FLAGS_CONNECTING )
 				{
@@ -837,7 +930,26 @@ void *WorkerThread( void *pv )
 				}
 				else if( p_http_session->forward_flags == HTTPSESSION_FLAGS_CONNECTED )
 				{
-					if( p_http_session->flag == HTTPSESSION_FLAGS_SENDING )
+					if( p_http_session->forward_ssl && p_http_session->forward_ssl_connected == 0 )
+					{
+						nret = OnConnectingSslForward( p_env , p_http_session ) ;
+						if( nret > 0 )
+						{
+							InfoLog( __FILE__ , __LINE__ , "OnConnectingSslForward done" );
+							SetHttpSessionUnused( p_env , p_http_session );
+						}
+						else if( nret < 0 )
+						{
+							ErrorLog( __FILE__ , __LINE__ , "OnConnectingSslForward failed , errno[%d]" , ERRNO );
+							SetHttpSessionUnused( p_env , p_http_session );
+							return NULL;
+						}
+						else
+						{
+							DebugLog( __FILE__ , __LINE__ , "OnConnectingSslForward ok" );
+						}
+					}
+					else if( p_http_session->flag == HTTPSESSION_FLAGS_SENDING )
 					{
 						if( transfer_bytes > 0 )
 						{

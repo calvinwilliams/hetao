@@ -457,6 +457,8 @@ _WINDLL_FUNC void OffsetHttpBufferProcessPtr( struct HttpBuffer *b , int offset 
 _WINDLL_FUNC int GetHttpBufferLengthProcessed( struct HttpBuffer *b );
 _WINDLL_FUNC int GetHttpBufferLengthUnprocessed( struct HttpBuffer *b );
 
+_WINDLL_FUNC void CopyHttpHeader_STATUSCODE( struct HttpEnv *e , struct HttpEnv *e2 );
+
 /* util */
 #define SetHttpReuseAddr(_sock_) \
 	{ \

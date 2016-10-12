@@ -258,7 +258,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\OnAcceptingSslSocket.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\OnConnectingForward.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\OnConnectingSslForward.c"
 				>
 			</File>
 			<File
