@@ -154,7 +154,7 @@ extern "C" {
 
 #define JSONUNESCAPE_FOLD(_src_,_src_len_,_dst_,_dst_len_,_dst_remain_len_)			\
 	(_dst_len_) = 0 ;									\
-	if( (_src_len_) > 0 )									\
+	if( (_src_len_) >= 0 )									\
 	{											\
 		unsigned char	*_p_src_ = (unsigned char *)(_src_) ;				\
 		unsigned char	*_p_src_end_ = (unsigned char *)(_src_) + (_src_len_) - 1 ;	\

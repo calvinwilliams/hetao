@@ -190,8 +190,6 @@ int MonitorProcess( void *pv )
 			
 			nret = WorkerProcess((void*)p_env) ;
 			
-			CleanEnvirment( p_env );
-			
 			return -nret;
 		}
 		else
@@ -303,8 +301,6 @@ _FORK :
 			}
 			
 			nret = WorkerProcess((void*)p_env) ;
-			
-			CleanEnvirment( p_env );
 			
 			return -nret;
 		}
