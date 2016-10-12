@@ -1,10 +1,10 @@
 {
-	"worker_processes" : 1 ,
+	"worker_processes" : -1 ,
 	"cpu_affinity" : 1 ,
 	"accept_mutex" : 1 ,
 	
 	"error_log" : "$ProgramFiles$/hetao/log/error.log" ,
-	"log_level" : ERROR ,
+	"log_level" : DEBUG ,
 	
 	"user" : "nobody" ,
 	
@@ -24,96 +24,37 @@
 			"domain" : "" ,
 			"wwwroot" : "$ProgramFiles$/hetao/www" ,
 			"index" : "/index.html,/index.htm" ,
+			"access_log" : "$ProgramFiles$/hetao/log/access.log" ,
+			// "rewrite" : { "pattern":"/(.+)/(.+)" , "template":"/(2)/(1)" } ,
+			"forward" :
+			{
+				"forward_type" : "php" ,
+				"forward_rule" : "R" ,
+				"forward_server" : { "ip" : "192.168.6.17" , "port" : 8601 } ,
+				"forward_server" : { "ip" : "192.168.6.17" , "port" : 8602 } ,
+				"forward_server" : { "ip" : "192.168.6.17" , "port" : 8603 } ,
+				"forward_server" : { "ip" : "192.168.6.17" , "port" : 8604 } ,
+				"forward_server" : { "ip" : "192.168.6.17" , "port" : 8605 }
+			}
+		} ,
+		"website" :
+		{
+			"domain" : "www.test.com" ,
+			"wwwroot" : "$ProgramFiles$/hetao/www" ,
+			"index" : "/index.html,/index.htm" ,
 			"access_log" : "$ProgramFiles$/hetao/log/access.log"
 		}
 	} ,
 	
-	/*
-	"listen" :
-	{
-		"ip" : "" ,
-		"port" : 80 ,
-		"website" :
-		{
-			"domain" : "www.test.com" ,
-			"wwwroot" : "/var/hetao/www.test.com" ,
-			"index" : "/index.html,/index.htm" ,
-			"access_log" : "/var/hetao/log/www_test_com_access.log"
-		} ,
-		"website" :
-		{
-			"domain" : "www.test2.com" ,
-			"wwwroot" : "/var/hetao/www.test2.com" ,
-			"index" : "/index.html,/index.htm" ,
-			"access_log" : "/var/hetao/log/www_test2_com_access.log"
-		}
-	} ,
-	*/
-	
-	/*
-	"listen" :
-	{
-		"ip" : "" ,
-		"port" : 80 ,
-		"website" :
-		{
-			"domain" : "" ,
-			"wwwroot" : "$ProgramFiles$/hetao/www" ,
-			"index" : "/index.html,/index.htm" ,
-			"access_log" : "$ProgramFiles$/hetao/log/access.log" ,
-			"rewrite" : { "pattern":"/(.+)/(.+)" , "template":"/(2)/(1)" }
-		}
-	} ,
-	*/
-	
-	/*
 	"listen" :
 	{
 		"ip" : "" ,
 		"port" : 443 ,
 		"ssl" :
 		{
-			"certificate_file" : "/etc/hetao/certs/server.pem" ,
-			"certificate_key_file" : "/etc/hetao/certs/server.key"
+			"certificate_file" : "$ProgramFiles$/hetao/certs/server.pem" ,
+			"certificate_key_file" : "$ProgramFiles$/hetao/certs/server.key"
 		} ,
-		"website" :
-		{
-			"domain" : "" ,
-			"wwwroot" : "$ProgramFiles$/hetao/www" ,
-			"index" : "/index.html,/index.htm" ,
-			"access_log" : "$ProgramFiles$/hetao/log/access.log"
-		}
-	} ,
-	*/
-	
-	/*
-	"listen" :
-	{
-		"ip" : "" ,
-		"port" : 80 ,
-		"website" :
-		{
-			"domain" : "" ,
-			"wwwroot" : "$ProgramFiles$/hetao/www" ,
-			"index" : "/index.html,/index.htm" ,
-			"access_log" : "$ProgramFiles$/hetao/log/access.log" ,
-			"forward" :
-			{
-				"forward_type" : "php" ,
-				"forward_rule" : "R" ,
-				"forward_server" : { "ip" : "192.168.6.111" , "port" : 8080 } ,
-				"forward_server" : { "ip" : "192.168.6.111" , "port" : 8080 } ,
-				"forward_server" : { "ip" : "192.168.6.111" , "port" : 8080 }
-			}
-		}
-	} ,
-	*/
-	
-	/*
-	"listen" :
-	{
-		"ip" : "" ,
-		"port" : 80 ,
 		"website" :
 		{
 			"domain" : "" ,
@@ -128,13 +69,10 @@
 				{
 					"certificate_file" : "$ProgramFiles$/hetao/certs/server.crt"
 				} ,
-				"forward_server" : { "ip" : "192.168.6.111" , "port" : 1443 } ,
-				"forward_server" : { "ip" : "192.168.6.111" , "port" : 1443 } ,
-				"forward_server" : { "ip" : "192.168.6.111" , "port" : 1443 }
+				"forward_server" : { "ip" : "192.168.6.17" , "port" : 9544 }
 			}
 		}
 	} ,
-	*/
 	
 	"tcp_options" :
 	{
