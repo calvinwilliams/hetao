@@ -154,9 +154,6 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 	strncpy( p_http_session->netaddr.ip , inet_ntoa(p_http_session->netaddr.addr.sin_addr) , sizeof(p_http_session->netaddr.ip)-1 );
 	
 	/* 设置TCP选项 */
-#if ( defined __linux ) || ( defined __unix )
-	SetHttpNonblock( p_http_session->netaddr.sock );
-#endif
 	SetHttpNodelay( p_http_session->netaddr.sock , p_env->tcp_options__nodelay );
 	SetHttpLinger( p_http_session->netaddr.sock , p_env->tcp_options__nolinger );
 	
@@ -184,6 +181,9 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 		
 		SSL_set_accept_state( p_http_session->ssl );
 		p_http_session->ssl_accepted = 0 ;
+		
+		/* 设置成非堵塞模式 */
+		SetHttpNonblock( p_http_session->netaddr.sock );
 		
 		nret = OnAcceptingSslSocket( p_env , p_http_session ) ;
 		if( nret )
