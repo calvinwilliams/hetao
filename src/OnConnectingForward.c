@@ -199,6 +199,11 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 			SSL_set_connect_state( p_http_session->forward_ssl );
 			p_http_session->forward_ssl_connected = 0 ;
 			
+#if ( defined _WIN32 )
+			/* 设置成非堵塞模式 */
+			SetHttpNonblock( p_http_session->forward_netaddr.sock );
+#endif
+			
 			nret = OnConnectingSslForward( p_env , p_http_session ) ;
 			if( nret == -1 )
 			{

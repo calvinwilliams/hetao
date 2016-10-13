@@ -27,13 +27,6 @@ int OnConnectingSslForward( struct HetaoEnv *p_env , struct HttpSession *p_http_
 	nret = SSL_do_handshake( p_http_session->forward_ssl ) ;
 	if( nret == 1 )
 	{
-#if ( defined _WIN32 )
-		/* 创建BIO */
-		p_http_session->forward_in_bio = BIO_new(BIO_s_mem()) ;
-		p_http_session->forward_out_bio = BIO_new(BIO_s_mem()) ;
-		SSL_set_bio( p_http_session->forward_ssl , p_http_session->forward_in_bio , p_http_session->forward_out_bio );
-#endif
-			
 		/* 复制HTTP请求 */
 		request_base = GetHttpBufferBase( GetHttpRequestBuffer(p_http_session->http) , & request_len ) ;
 		forward_b = GetHttpRequestBuffer( p_http_session->forward_http ) ;
@@ -61,6 +54,16 @@ int OnConnectingSslForward( struct HetaoEnv *p_env , struct HttpSession *p_http_
 		}
 #elif ( defined _WIN32 )
 		p_http_session->flag = HTTPSESSION_FLAGS_SENDING ;
+		
+		/* 设置成堵塞模式 */
+		SetHttpBlock( p_http_session->forward_netaddr.sock );
+			
+#if ( defined _WIN32 )
+		/* 创建BIO */
+		p_http_session->forward_in_bio = BIO_new(BIO_s_mem()) ;
+		p_http_session->forward_out_bio = BIO_new(BIO_s_mem()) ;
+		SSL_set_bio( p_http_session->forward_ssl , p_http_session->forward_in_bio , p_http_session->forward_out_bio );
+#endif
 		
 		/* 投递发送事件 */
 		forward_b = GetHttpRequestBuffer( p_http_session->forward_http );

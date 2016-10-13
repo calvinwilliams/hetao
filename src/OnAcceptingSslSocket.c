@@ -60,6 +60,9 @@ int OnAcceptingSslSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 			DebugLog( __FILE__ , __LINE__ , "epoll_ctl #%d# mod #%d# EPOLLIN" , p_env->p_this_process_info->epoll_fd , p_http_session->netaddr.sock );
 		}
 #elif ( defined _WIN32 )
+		/* 设置成堵塞模式 */
+		SetHttpBlock( p_http_session->netaddr.sock );
+		
 		/* 创建BIO */
 		p_http_session->in_bio = BIO_new(BIO_s_mem()) ;
 		p_http_session->out_bio = BIO_new(BIO_s_mem()) ;
