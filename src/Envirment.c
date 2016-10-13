@@ -235,35 +235,36 @@ void CleanEnvirment( struct HetaoEnv *p_env )
 	return;
 }
 
+static char		*_sg_env_value = NULL ;
+
 int SaveListenSockets( struct HetaoEnv *p_env )
 {
 	unsigned int		env_value_size ;
-	char			*env_value = NULL ;
 	struct list_head	*p_curr = NULL ;
 	struct ListenSession	*p_listen_session = NULL ;
 	
 	env_value_size = sizeof(HETAO_LISTEN_SOCKFDS)+1+(1+p_env->listen_session_count)*(10+1) + 1 ;
-	env_value = (char*)malloc( env_value_size ) ;
-	if( env_value == NULL )
+	if( _sg_env_value )
+		free( _sg_env_value );
+	_sg_env_value = (char*)malloc( env_value_size ) ;
+	if( _sg_env_value == NULL )
 		return -1;
-	memset( env_value , 0x00 , env_value_size );
+	memset( _sg_env_value , 0x00 , env_value_size );
 	
 	/* 先侦听信息数量 */
-	SNPRINTF( env_value , env_value_size-1 , "%s=%d|" , HETAO_LISTEN_SOCKFDS , p_env->listen_session_count );
+	SNPRINTF( _sg_env_value , env_value_size-1 , "%s=%d|" , HETAO_LISTEN_SOCKFDS , p_env->listen_session_count );
 	
 	list_for_each( p_curr , & (p_env->listen_session_list.list) )
 	{
 		p_listen_session = container_of( p_curr , struct ListenSession , list ) ;
 		
 		/* 每一个侦听信息 */
-		SNPRINTF( env_value+strlen(env_value) , env_value_size-1-strlen(env_value) , "%d|" , p_listen_session->netaddr.sock );
+		SNPRINTF( _sg_env_value+strlen(_sg_env_value) , env_value_size-1-strlen(_sg_env_value) , "%d|" , p_listen_session->netaddr.sock );
 	}
 	
 	/* 写入环境变量 */
-	InfoLog( __FILE__ , __LINE__ , "putenv[%s]" , env_value );
-	PUTENV( env_value );
-	
-	free( env_value );
+	InfoLog( __FILE__ , __LINE__ , "putenv[%s]" , _sg_env_value );
+	PUTENV( _sg_env_value );
 	
 	return 0;
 }

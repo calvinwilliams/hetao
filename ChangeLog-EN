@@ -1,3 +1,6 @@
+0.12.5		2016-11-23	calvin
+		* Fixed a bug about not enough load-balace on multi-processes
+
 0.12.4		2016-11-13	calvin
 		* Fixed a bug about buffer in fasterhttp
 

@@ -12,6 +12,8 @@
 
 int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_session )
 {
+	int			i ;
+	
 	SOCKET			sock ;
 	struct sockaddr_in	addr ;
 	SOCKLEN_T		accept_addr_len ;
@@ -23,7 +25,7 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 	int			nret = 0 ;
 	
 	/* 循环接受所有新连接，直到没有了 */
-	while(1)
+	for( i = 0 ; i < MAX_LISTEN_EPOLL_EVENTS ; i++ )
 	{
 		/* 接受新连接 */
 		accept_addr_len = sizeof(struct sockaddr) ;
@@ -113,7 +115,7 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 
 #elif ( defined _WIN32 )
 
-int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_session )
+int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_session , int *p_accepted_count )
 {
 	struct sockaddr_in	addr ;
 	int			addrlen ;

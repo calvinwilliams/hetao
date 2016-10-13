@@ -182,12 +182,13 @@ void *WorkerThread( void *pv )
 					if( p_env->accept_mutex == 1 && p_env->worker_processes > 1 )
 					{
 						/* 选择最近处理事件最少的工作进程 */
-						p_process_info_with_min_balance = p_env->process_info_array ;
-						DebugLog( __FILE__ , __LINE__ , "process[%d] epoll_nfds[%d]" , 0 , p_process_info_with_min_balance->epoll_nfds );
-						for( j = 1 , p_process_info = p_env->process_info_array + 1 ; j < p_env->worker_processes ; j++ , p_process_info++ )
+						p_process_info_with_min_balance = p_env->p_this_process_info + 1 ;
+						if( p_process_info_with_min_balance > p_env->process_info_array + p_env->worker_processes - 1 )
+							p_process_info_with_min_balance = p_env->process_info_array ;
+						for( j = 0 , p_process_info = p_env->process_info_array ; j < p_env->worker_processes ; j++ , p_process_info++ )
 						{
-							DebugLog( __FILE__ , __LINE__ , "process[%d] epoll_nfds[%d]" , j , p_process_info->epoll_nfds );
-							if( p_process_info->epoll_nfds < p_process_info_with_min_balance->epoll_nfds )
+							DebugLog( __FILE__ , __LINE__ , "process[%d] http_session_used_count[%d]" , j , p_process_info->http_session_used_count );
+							if( p_process_info->http_session_used_count < p_process_info_with_min_balance->http_session_used_count )
 								p_process_info_with_min_balance = p_process_info ;
 						}
 						DebugLog( __FILE__ , __LINE__ , "p_process_info_with_min_balance process[%d]" , p_process_info_with_min_balance-p_env->process_info_array );
@@ -582,6 +583,8 @@ void *WorkerThread( void *pv )
 				}
 			}
 		}
+		
+		p_env->p_this_process_info->http_session_used_count = p_env->http_session_used_count ;
 	}
 	
 	InfoLog( __FILE__ , __LINE__ , "--- worker[%d] exit ---" , p_env->process_info_index );
@@ -721,51 +724,6 @@ void *WorkerThread( void *pv )
 			}
 		}
 	}
-	
-#if 0
-	pReadPipe = getenv( HETAO_READ_PIPE ) ;
-	if( pReadPipe )
-	{
-		DebugLog( __FILE__ , __LINE__ , "getenv[%s][%s]" , HETAO_READ_PIPE , pReadPipe );
-		
-		/* 投递管道事件 */
-		p_env->pipe_session.type = DATASESSION_TYPE_PIPE ;
-		hret = CreateIoCompletionPort( (HANDLE)atoi(pReadPipe) , p_env->iocp , (DWORD)&(p_env->pipe_session) , 0 ) ;
-		if( hret == NULL )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
-			return NULL;
-		}
-		
-		memset( szPipeBuffer , 0x00 , sizeof(szPipeBuffer) );
-		memset( & (p_env->pipe_session.overlapped) , 0x00 , sizeof(p_env->pipe_session.overlapped) );
-		bret = ReadFile( (HANDLE)atoi(pReadPipe) , szPipeBuffer , 1 , NULL , & (p_env->pipe_session.overlapped) ) ;
-		if( bret != TRUE )
-		{
-			if( GetLastError() == ERROR_IO_PENDING )
-			{
-				DebugLog( __FILE__ , __LINE__ , "ReadFile pipe pending" );
-			}
-			else
-			{
-				ErrorLog( __FILE__ , __LINE__ , "ReadFile pipe failed , errno[%d]" , ERRNO );
-				return NULL;
-			}
-		}
-		else
-		{
-			InfoLog( __FILE__ , __LINE__ , "ReadFile pipe ok" );
-		}
-	}
-	
-	pWritePipe = getenv( HETAO_WRITE_PIPE ) ;
-	if( pWritePipe )
-	{
-		DebugLog( __FILE__ , __LINE__ , "getenv[%s][%s]" , HETAO_WRITE_PIPE , pWritePipe );
-		
-		CloseHandle( (HANDLE)atoi(pWritePipe) );
-	}
-#endif
 	
 	while( g_worker_exit_flag == 0 || p_env->http_session_used_count > 0 )
 	{
