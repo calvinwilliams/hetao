@@ -18,7 +18,6 @@ c_FILE		=	\
 			Util.c \
 			Config.c \
 			Envirment.c \
-			hetao.c \
 			MonitorProcess.c \
 			WorkerProcess.c \
 			WorkerThread.c \
@@ -52,12 +51,11 @@ c_FILE2		=	\
 			IDL_hetao_conf.dsc.c \
 			Util.c \
 			Config.c \
-			hetaocheck.c \
 
 ###### 目标文件、安装目录配置区
 NOCLEAN_DIRINST_NOCOVER=	/var/hetao
 NOCLEAN_DIRINST2_NOCOVER=	/var/hetao/log
-BIN			=	hetaocheck hetao
+BIN			=	hetaocheck minihetao hetao
 BININST			=	/usr/local/bin
 NOCLEAN_OBJ		=	../bin/hetao.sh
 NOCLEAN_OBJINST		=	/usr/local/bin
@@ -79,7 +77,7 @@ LFLAGS		=	-L. \
 			-lz \
 
 ###### 额外宏定义区
-CLEAN_ADDITION	=
+CLEAN_ADDITION	=	*.o
 
 ###### 加载mktpl模板库
 #@ make_all
@@ -98,11 +96,14 @@ CLEAN_ADDITION	=
 include $(MKTPLDIR)/makeobj_$(MKTPLOS).inc
 
 ###### 目标文件依赖关系
-hetaocheck	:	$(c_FILE2_o)
-	$(CC) -o $@ $(c_FILE2_o) $(LFLAGS)
+hetaocheck	:	hetaocheck.o $(c_FILE2_o)
+	$(CC) -o $@ hetaocheck.o $(c_FILE2_o) $(LFLAGS)
 
-hetao		:	$(c_FILE_o)
-	$(CC) -o $@ $(c_FILE_o) $(LFLAGS)
+minihetao	:	minihetao.o $(c_FILE_o)
+	$(CC) -o $@ minihetao.o $(c_FILE_o) $(LFLAGS)
+
+hetao		:	hetao.o $(c_FILE_o)
+	$(CC) -o $@ hetao.o $(c_FILE_o) $(LFLAGS)
 	@echo "	=== INSTALL CONFIG ========= OTHER OBJECT DIRECTORIES BY EDITING makefile$(MAKEFILE_POSTFIX)"
 	@echo "	= $(MKDIR) $(NOCLEAN_DIRINST_NOCOVER)"
 	@echo "	= $(MKDIR) $(NOCLEAN_DIRINST2_NOCOVER)"

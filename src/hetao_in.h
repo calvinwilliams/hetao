@@ -411,7 +411,10 @@ void FreeHtmlCacheSession( struct HtmlCacheSession *p_htmlcache_session , int fr
 int DirectoryWatcherEventHander( struct HetaoEnv *p_env , struct VirtualHost *p_virtualhost );
 int HtmlCacheEventHander( struct HetaoEnv *p_env );
 
+void SetDefaultConfig( hetao_conf *p_conf );
+void AppendDefaultConfig( hetao_conf *p_conf );
 int LoadConfig( char *config_pathfilename , hetao_conf *p_conf , struct HetaoEnv *p_env );
+int ConvertConfig( hetao_conf *p_config , struct HetaoEnv *p_env );
 
 int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf );
 void CleanEnvirment( struct HetaoEnv *p_env );
@@ -434,7 +437,8 @@ DWORD WINAPI TimerThread( LPVOID lpParameter );
 #endif
 
 int BindDaemonServer( int (* ServerMain)( void *pv ) , void *pv );
-int AccessDirectoryExist( char *pathdirname );
+int IsDirectory( char *pathdirname );
+int IsFile( char *pathdirname );
 int AccessFileExist( char *pathfilename );
 int BindCpuAffinity( int processor_no );
 unsigned long CalcHash( char *str , int len );

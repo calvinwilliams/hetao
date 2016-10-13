@@ -1,0 +1,14 @@
+{
+	"listen" :
+	{
+		"ip" : "" ,
+		"port" : 80 ,
+		"website" :
+		{
+			"domain" : "" ,
+			"wwwroot" : "$ProgramFiles$/hetao/www" ,
+			"index" : "/index.html,/index.htm" ,
+			"access_log" : "$ProgramFiles$/hetao/log/access.log"
+	}
+}
+

@@ -567,6 +567,9 @@ void *WorkerThread( void *pv )
 							{
 								hlist_for_each_entry( p_virtualhost , p_listen_session->virtualhost_hash+i , struct VirtualHost , virtualhost_node )
 								{
+									if( p_virtualhost->access_log_fd == -1 )
+										continue;
+									
 									DebugLog( __FILE__ , __LINE__ , "close access_log[%s] #%d#" , p_virtualhost->access_log , p_virtualhost->access_log_fd );
 									close( p_virtualhost->access_log_fd );
 									
@@ -580,7 +583,6 @@ void *WorkerThread( void *pv )
 									{
 										DebugLog( __FILE__ , __LINE__ ,  "open access log[%s] ok" , p_virtualhost->access_log );
 									}
-									
 								}
 							}
 						}

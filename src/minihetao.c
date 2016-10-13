@@ -18,11 +18,8 @@ static	WSADATA		wsd;
 
 static void usage()
 {
-	printf( "hetao v%s build %s %s\n" , __HETAO_VERSION , __DATE__ , __TIME__ );
-	printf( "USAGE : hetao hetao.conf\n" );
-#if ( defined _WIN32 )
-	printf( "        hetao hetao.conf [--install-service | --uninstall-service ]\n" );
-#endif
+	printf( "minihetao v%s build %s %s\n" , __HETAO_VERSION , __DATE__ , __TIME__ );
+	printf( "USAGE : minihetao wwwroot\n" );
 	return;
 }
 
@@ -93,17 +90,21 @@ int main( int argc , char *argv[] )
 		/* 设置缺省配置 */
 		SetDefaultConfig( p_conf );
 		
-		/* 装载配置 */
-		strncpy( p_env->config_pathfilename , argv[1] , sizeof(p_env->config_pathfilename)-1 );
-		nret = LoadConfig( p_env->config_pathfilename , p_conf , p_env ) ;
-		if( nret )
+		if( IsDirectory( argv[1] ) != 1 )
 		{
 			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
-				printf( "LoadConfig failed[%d]\n" , nret );
-			free( p_conf );
-			free( p_env );
-			return -nret;
+				printf( "[%s] is't directory\n" , argv[1] );
 		}
+		
+		strcpy( p_conf->listen[0].ip , "" );
+		p_conf->listen[0].port = 80 ;
+		p_conf->_listen_count = 1 ;
+		
+		strcpy( p_conf->listen[0].website[0].domain , "" );
+		strcpy( p_conf->listen[0].website[0].wwwroot , argv[1] );
+		strcpy( p_conf->listen[0].website[0].index , "/index.html,/index.htm" );
+		strcpy( p_conf->listen[0].website[0].access_log , "" );
+		p_conf->listen[0]._website_count = 1 ;
 		
 		/* 追加缺省配置 */
 		AppendDefaultConfig( p_conf );
@@ -144,7 +145,7 @@ int main( int argc , char *argv[] )
 		}
 		
 #if ( defined __linux ) || ( defined __unix )
-		return -BindDaemonServer( & MonitorProcess , p_env );
+		return -MonitorProcess( p_env );
 #elif ( defined _WIN32 )
 		if( argc == 1 + 2 && STRCMP( argv[2] , == , "--service" ) )
 		{
@@ -160,44 +161,6 @@ int main( int argc , char *argv[] )
 		}
 #endif
 	}
-#if ( defined _WIN32 )
-	else if( argc == 1 + 2 )
-	{
-		if( STRCMP( argv[2] , == , "--install-service" ) )
-		{
-			nret = InstallService( argv[1] ) ;
-			if( nret )
-			{
-				printf( "安装WINDOWS服务失败[%d]errno[%d]\n" , nret , ERRNO );
-				exit(1);
-			}
-			else
-			{
-				printf( "安装WINDOWS服务成功\n" );
-				exit(0);
-			}
-		}
-		else if( STRCMP( argv[2] , == , "--uninstall-service" ) )
-		{
-			nret = UninstallService() ;
-			if( nret )
-			{
-				printf( "卸载WINDOWS服务失败[%d]errno[%d]\n" , nret , ERRNO );
-				exit(1);
-			}
-			else
-			{
-				printf( "卸载WINDOWS服务成功\n" );
-				exit(0);
-			}
-		}
-		else
-		{
-			usage();
-			exit(9);
-		}
-	}
-#endif
 	else
 	{
 		usage();
