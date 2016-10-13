@@ -1,3 +1,6 @@
+0.12.4		2016-11-13	calvin
+		* Fixed a bug about buffer in fasterhttp
+
 0.12.3		2016-11-07	calvin
 		* Fixed some bugs on WINDOWS version
 
