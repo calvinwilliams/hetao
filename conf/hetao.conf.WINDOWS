@@ -25,7 +25,7 @@
 			"wwwroot" : "$ProgramFiles$/hetao/www" ,
 			"index" : "/index.html,/index.htm" ,
 			"access_log" : "$ProgramFiles$/hetao/log/access.log" ,
-			// "rewrite" : { "pattern":"/(.+)/(.+)" , "template":"/(2)/(1)" } ,
+			// "rewrite" : { "pattern":"/(.+)/(.+)" , "new_url":"/(2)/(1)" } ,
 			"forward" :
 			{
 				"forward_type" : "php" ,
