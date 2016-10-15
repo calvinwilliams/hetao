@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hetaocheck", "hetaocheck\he
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hetao", "hetao\hetao.vcproj", "{9616DCE7-FAAF-46AB-B27F-CC0392456AB0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "minihetao", "minihetao\minihetao.vcproj", "{CE35C1D5-0D1B-4157-B306-F827D4ECA468}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,6 +21,10 @@ Global
 		{9616DCE7-FAAF-46AB-B27F-CC0392456AB0}.Debug|Win32.Build.0 = Debug|Win32
 		{9616DCE7-FAAF-46AB-B27F-CC0392456AB0}.Release|Win32.ActiveCfg = Release|Win32
 		{9616DCE7-FAAF-46AB-B27F-CC0392456AB0}.Release|Win32.Build.0 = Release|Win32
+		{CE35C1D5-0D1B-4157-B306-F827D4ECA468}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CE35C1D5-0D1B-4157-B306-F827D4ECA468}.Debug|Win32.Build.0 = Debug|Win32
+		{CE35C1D5-0D1B-4157-B306-F827D4ECA468}.Release|Win32.ActiveCfg = Release|Win32
+		{CE35C1D5-0D1B-4157-B306-F827D4ECA468}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

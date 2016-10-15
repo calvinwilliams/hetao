@@ -94,6 +94,7 @@ int main( int argc , char *argv[] )
 		{
 			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
 				printf( "[%s] is't directory\n" , argv[1] );
+			return 1;
 		}
 		
 		strcpy( p_conf->listen[0].ip , "" );
