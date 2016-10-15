@@ -145,8 +145,10 @@ void CleanEnvirment( struct HetaoEnv *p_env )
 	
 	for( i = 0 ; i < p_env->worker_processes ; i++ )
 	{
+#if ( defined __linux ) || ( defined __unix )
 		DebugLog( __FILE__ , __LINE__ , "[%d]close epoll_fd #%d#" , i , p_env->process_info_array[i].epoll_fd );
 		CLOSE( p_env->process_info_array[i].epoll_fd );
+#endif
 	}
 	
 	if( p_env->new_url_re )

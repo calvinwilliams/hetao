@@ -9,9 +9,9 @@
 #ifndef HETAO_IN_H
 #define HETAO_IN_H
 
-#if ( defined __linux ) || ( defined __unix )
-#elif ( defined _WIN32 )
-#endif
+#define _CRTDBG_MAP_ALLOC
+#include "stdlib.h"
+#include "crtdbg.h"
 
 #include "LOGC.h"
 #include "fasterhttp.h"

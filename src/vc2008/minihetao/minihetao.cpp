@@ -196,7 +196,9 @@ DWORD WINAPI minihetao( LPVOID p )
 			return -nret;
 		}
 		
-		return -WorkerProcess( p_env );
+		nret = WorkerProcess( p_env ) ;
+		free( p_env );
+		return -nret;
 	}
 	
 	return 0;

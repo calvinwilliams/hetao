@@ -264,9 +264,16 @@ void CMiniHetaoDlg::OnBnClickedButtonSelectDirectory()
 	return;
 }
 
+extern "C"
+{
+extern signed char	g_worker_exit_flag ;
+}
+
 void CMiniHetaoDlg::OnBnClickedButtonRunning()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	g_worker_exit_flag = 0 ;
+	
 	m_hRunningThread = CreateThread( NULL , 0 , minihetao , (LPVOID)(LPCTSTR)m_strWWWRoot , 0 , & m_dwThreadId ) ;
 	if( m_hRunningThread == NULL )
 	{
@@ -288,11 +295,7 @@ void CMiniHetaoDlg::OnBnClickedButtonStop()
 	// TODO: 在此添加控件通知处理程序代码
 	if( m_hRunningThread )
 	{
-		KillTimer( 1 );
-		TerminateThread( m_hRunningThread , 5 );
-		m_ctlRunningButton.EnableWindow( TRUE );
-		m_ctlStopButton.EnableWindow( FALSE );
-		m_hRunningThread = NULL ;
+		g_worker_exit_flag = 1 ;
 	}
 	
 	return ;
