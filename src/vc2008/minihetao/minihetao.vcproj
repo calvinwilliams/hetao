@@ -46,6 +46,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D_CRT_SECURE_NO_WARNINGS"
 				Optimization="0"
+				AdditionalIncludeDirectories="&quot;D:\Work\gitfiles\oschina.net\hetao\expack\openssl-0.9.8a.win32\include&quot;;&quot;D:\Work\gitfiles\oschina.net\hetao\expack\pcre-7.0-win32\include&quot;;&quot;D:\Work\gitfiles\oschina.net\hetao\expack\zlib-1.2.3.win32\include&quot;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -70,6 +71,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="ws2_32.lib libeay32.lib ssleay32.lib zlib.lib pcre.lib "
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="&quot;D:\Work\gitfiles\oschina.net\hetao\expack\openssl-0.9.8a.win32\lib&quot;;&quot;D:\Work\gitfiles\oschina.net\hetao\expack\pcre-7.0-win32\lib&quot;;&quot;D:\Work\gitfiles\oschina.net\hetao\expack\zlib-1.2.3.win32\lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -286,6 +288,10 @@
 			</File>
 			<File
 				RelativePath="..\..\fasterjson.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\hetao_in.h"
 				>
 			</File>
 			<File

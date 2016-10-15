@@ -79,7 +79,10 @@ BOOL CMiniHetaoApp::InitInstance()
 	return FALSE;
 }
 
+extern "C"
+{
 #include "../../hetao_in.h"
+}
 
 #define PREFIX_DSCLOG_hetao_conf	DebugLog( __FILE__ , __LINE__ , 
 #define NEWLINE_DSCLOG_hetao_conf
@@ -91,6 +94,7 @@ static	WSADATA		wsd;
 
 DWORD WINAPI minihetao( LPVOID p )
 {
+	char			*wwwroot = (char*)p ;
 	hetao_conf		*p_conf = NULL ;
 	struct HetaoEnv		*p_env = NULL ;
 	
@@ -117,7 +121,7 @@ DWORD WINAPI minihetao( LPVOID p )
 		}
 		memset( p_env , 0x00 , sizeof(struct HetaoEnv) );
 		g_p_env = p_env ;
-		p_env->argv = argv ;
+		p_env->argv = NULL ;
 		
 		/* ÉêÇëÅäÖÃ½á¹¹ÄÚ´æ */
 		p_conf = (hetao_conf *)malloc( sizeof(hetao_conf) ) ;
@@ -143,7 +147,7 @@ DWORD WINAPI minihetao( LPVOID p )
 		/* ÉèÖÃÈ±Ê¡ÅäÖÃ */
 		SetDefaultConfig( p_conf );
 		
-		if( IsDirectory( argv[1] ) != 1 )
+		if( IsDirectory( wwwroot ) != 1 )
 		{
 			return 1;
 		}
@@ -153,7 +157,7 @@ DWORD WINAPI minihetao( LPVOID p )
 		p_conf->_listen_count = 1 ;
 		
 		strcpy( p_conf->listen[0].website[0].domain , "" );
-		strcpy( p_conf->listen[0].website[0].wwwroot , argv[1] );
+		strcpy( p_conf->listen[0].website[0].wwwroot , wwwroot );
 		strcpy( p_conf->listen[0].website[0].index , "/index.html,/index.htm" );
 		strcpy( p_conf->listen[0].website[0].access_log , "" );
 		p_conf->listen[0]._website_count = 1 ;

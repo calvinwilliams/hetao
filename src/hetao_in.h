@@ -468,4 +468,3 @@ void WINAPI ServiceMainProc( DWORD argc , LPTSTR *argv );
 #endif
 
 #endif
-
