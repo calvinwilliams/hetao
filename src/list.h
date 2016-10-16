@@ -37,11 +37,11 @@ struct list_head {
 	struct list_head name = LIST_HEAD_INIT(name)
 
 void INIT_LIST_HEAD(struct list_head *list);
-void list_add(struct list_head *new, struct list_head *head);
-void list_add_tail(struct list_head *new, struct list_head *head);
+void list_add(struct list_head *_new, struct list_head *head);
+void list_add_tail(struct list_head *_new, struct list_head *head);
 void list_del(struct list_head *entry);
-void list_replace(struct list_head *old, struct list_head *new);
-void list_replace_init(struct list_head *old, struct list_head *new);
+void list_replace(struct list_head *old, struct list_head *_new);
+void list_replace_init(struct list_head *old, struct list_head *_new);
 void list_del_init(struct list_head *entry);
 void list_move(struct list_head *list, struct list_head *head);
 void list_move_tail(struct list_head *list, struct list_head *head);
@@ -332,7 +332,7 @@ void hlist_add_behind(struct hlist_node *n, struct hlist_node *prev);
 void hlist_add_fake(struct hlist_node *n);
 int hlist_fake(struct hlist_node *h);
 int hlist_is_singular_node(struct hlist_node *n, struct hlist_head *h);
-void hlist_move_list(struct hlist_head *old, struct hlist_head *new);
+void hlist_move_list(struct hlist_head *old, struct hlist_head *_new);
 
 #define hlist_entry(ptr, type, member) ((type *)((char *)(ptr)-(unsigned long)(&((type *)0)->member)))
 
@@ -340,8 +340,7 @@ void hlist_move_list(struct hlist_head *old, struct hlist_head *new);
 	for (pos = (head)->first; pos ; pos = pos->next)
 
 #define hlist_for_each_safe(pos, n, head) \
-	for (pos = (head)->first; pos && ( n = pos->next ); \
-	     pos = n)
+	for (pos=(head)->first, n=((pos)?((pos)->next):NULL) ; pos ; pos = n, n=((pos)?((pos)->next):NULL) )
 
 #define hlist_entry_safe(ptr, type, member) (ptr==NULL?NULL:hlist_entry(ptr, type, member))
 

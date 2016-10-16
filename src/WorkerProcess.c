@@ -70,6 +70,8 @@ int WorkerProcess( void *pv )
 	TerminateThread( timer_thread_tid , 0 );
 #endif
 	
+	CleanEnvirment( p_env );
+	
 	return 0;
 }
 

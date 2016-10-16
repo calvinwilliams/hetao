@@ -154,7 +154,7 @@ extern "C" {
 
 #define JSONUNESCAPE_FOLD(_src_,_src_len_,_dst_,_dst_len_,_dst_remain_len_)			\
 	(_dst_len_) = 0 ;									\
-	if( (_src_len_) > 0 )									\
+	if( (_src_len_) >= 0 )									\
 	{											\
 		unsigned char	*_p_src_ = (unsigned char *)(_src_) ;				\
 		unsigned char	*_p_src_end_ = (unsigned char *)(_src_) + (_src_len_) - 1 ;	\
@@ -304,7 +304,7 @@ _WINDLL_FUNC int TravelJsonBuffer4( char *json_buffer , char *jpath , int jpath_
 
 #define FASTERJSON_ENCODING_UTF8		0 /* UTF-8 */
 #define FASTERJSON_ENCODING_GB18030		1 /* GB18030/GBK/GB2312 */
-_WINDLL_FUNC char		g_fasterjson_encoding ;
+extern char		g_fasterjson_encoding ;
 
 #define FASTERJSON_NULL				"\x7F"
 

@@ -13,7 +13,7 @@
 static sig_atomic_t		g_SIGUSR1_flag = 0 ;
 static sig_atomic_t		g_SIGUSR2_flag = 0 ;
 static sig_atomic_t		g_SIGTERM_flag = 0 ;
-static signed char		g_exit_flag = 0 ;
+static signed char		g_monitor_exit_flag = 0 ;
 
 static void sig_set_flag( int sig_no )
 {
@@ -101,7 +101,7 @@ static void sig_proc( struct HetaoEnv *p_env )
 		}
 		
 		g_SIGTERM_flag = 0 ;
-		g_exit_flag = 1 ;
+		g_monitor_exit_flag = 1 ;
 	}
 	
 	return;
@@ -190,8 +190,6 @@ int MonitorProcess( void *pv )
 			
 			nret = WorkerProcess((void*)p_env) ;
 			
-			CleanEnvirment( p_env );
-			
 			return -nret;
 		}
 		else
@@ -249,7 +247,7 @@ _WAITPID :
 		worker_processes--;
 		InfoLog( __FILE__ , __LINE__ , "worker_processes[%d]" , worker_processes );
 		
-		if( g_exit_flag == 1 )
+		if( g_monitor_exit_flag == 1 )
 			continue;
 		
 		sleep(1);
@@ -303,8 +301,6 @@ _FORK :
 			}
 			
 			nret = WorkerProcess((void*)p_env) ;
-			
-			CleanEnvirment( p_env );
 			
 			return -nret;
 		}

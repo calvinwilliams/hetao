@@ -107,6 +107,9 @@ int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf )
 	p_env->htmlcache_session_count = 0 ;
 	
 	/* 创建空闲HTTP通讯会话链表首节点，预分配节点 */
+	memset( & (p_env->http_session_array_list) , 0x00 , sizeof(struct HttpSessionArray) );
+	INIT_LIST_HEAD( & (p_env->http_session_array_list.list) );
+
 	memset( & (p_env->http_session_unused_list) , 0x00 , sizeof(struct HttpSession) );
 	INIT_LIST_HEAD( & (p_env->http_session_unused_list.list) );
 	p_env->http_session_unused_count = 0 ;
@@ -135,23 +138,35 @@ void CleanEnvirment( struct HetaoEnv *p_env )
 	
 	int			i ;
 	struct HttpSession	*p_http_session = NULL ;
+	struct HttpSessionArray	*p_http_session_array = NULL ;
 	struct ListenSession	*p_listen_session = NULL ;
 	
 	list_for_each_safe( p_curr , p_next , & (p_env->http_session_unused_list.list) )
 	{
 		p_http_session = container_of( p_curr , struct HttpSession , list ) ;
 		DestroyHttpEnv( p_http_session->http );
+		FreeHttpBuffer( p_http_session->http_buf );
+		DestroyHttpEnv( p_http_session->forward_http );
+	}
+
+	list_for_each_safe( p_curr , p_next , & (p_env->http_session_array_list.list) )
+	{
+		p_http_session_array = container_of( p_curr , struct HttpSessionArray , list ) ;
+		free( p_http_session_array->http_session_array );
+		free( p_http_session_array );
 	}
 	
 	for( i = 0 ; i < p_env->worker_processes ; i++ )
 	{
+#if ( defined __linux ) || ( defined __unix )
 		DebugLog( __FILE__ , __LINE__ , "[%d]close epoll_fd #%d#" , i , p_env->process_info_array[i].epoll_fd );
 		CLOSE( p_env->process_info_array[i].epoll_fd );
+#endif
 	}
 	
-	if( p_env->template_re )
+	if( p_env->new_url_re )
 	{
-		free( p_env->template_re );
+		free( p_env->new_url_re );
 	}
 	
 	DebugLog( __FILE__ , __LINE__ , "delete all listen_session" );

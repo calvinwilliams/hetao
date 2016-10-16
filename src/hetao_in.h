@@ -9,8 +9,10 @@
 #ifndef HETAO_IN_H
 #define HETAO_IN_H
 
-#if ( defined __linux ) || ( defined __unix )
-#elif ( defined _WIN32 )
+#if ( defined _WIN32 )
+#define _CRTDBG_MAP_ALLOC
+#include "stdlib.h"
+#include "crtdbg.h"
 #endif
 
 #include "LOGC.h"
@@ -82,8 +84,8 @@ struct DataSession
 struct RewriteUrl
 {
 	char			pattern[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].pattern ) ] ;
-	char			template[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].template ) ] ;
-	int			template_len ;
+	char			new_url[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].new_url ) ] ;
+	int			new_url_len ;
 	
 	pcre			*pattern_re ;
 	
@@ -234,6 +236,13 @@ struct HttpSession
 	struct list_head	list ;
 } ;
 
+struct HttpSessionArray
+{
+	struct HttpSession	*http_session_array ;
+	
+	struct list_head	list ;
+} ;
+
 /* 网页缓存会话结构 */
 struct HtmlCacheSession
 {
@@ -334,7 +343,7 @@ struct HetaoEnv
 	struct ListenSession	listen_session_list ;
 	int			listen_session_count ;
 	
-	pcre			*template_re ;
+	pcre			*new_url_re ;
 	
 #if ( defined __linux ) || ( defined __unix )
 	int			htmlcache_inotify_fd ;
@@ -345,6 +354,7 @@ struct HetaoEnv
 	struct rb_root		htmlcache_wd_rbtree ;
 	struct rb_root		htmlcache_pathfilename_rbtree ;
 	
+	struct HttpSessionArray	http_session_array_list ;
 	int			http_session_used_count ;
 	struct HttpSession	http_session_unused_list ;
 	int			http_session_unused_count ;
@@ -394,7 +404,7 @@ int AddHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , struct HtmlCacheS
 struct HtmlCacheSession *QueryHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , char *pathfilename );
 void RemoveHtmlCachePathfilenameTreeNode( struct HetaoEnv *p_env , struct HtmlCacheSession *p_htmlcache_session );
 
-int RegexReplaceString( pcre *pattern_re , char *url , int url_len , pcre *template_re , char *new_url , int *p_new_url_len , int new_url_size );
+int RegexReplaceString( pcre *pattern_re , char *url , int url_len , pcre *new_url_re , char *new_url , int *p_new_url_len , int new_url_size );
 
 int InitMimeTypeHash( struct HetaoEnv *p_env , hetao_conf *p_conf );
 void CleanMimeTypeHash( struct HetaoEnv *p_env );
@@ -468,4 +478,3 @@ void WINAPI ServiceMainProc( DWORD argc , LPTSTR *argv );
 #endif
 
 #endif
-

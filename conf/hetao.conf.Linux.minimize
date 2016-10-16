@@ -7,7 +7,7 @@
 		{
 			"domain" : "" ,
 			"wwwroot" : "/var/hetao/www" ,
-			"index" : "/index.htm,/index.html" ,
+			"index" : "/index.html,/index.htm" ,
 			"access_log" : "/var/hetao/log/access.log"
 		}
 	}

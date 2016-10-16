@@ -8,7 +8,7 @@
 
 #include "hetao_in.h"
 
-static signed char		g_exit_flag = 0 ;
+signed char			g_worker_exit_flag = 0 ;
 signed char			g_second_elapse = 0 ;
 
 #if ( defined __linux ) || ( defined __unix )
@@ -112,7 +112,7 @@ void *WorkerThread( void *pv )
 	}
 	
 	/* 主工作循环 */
-	while( g_exit_flag == 0 || p_env->http_session_used_count > 0 )
+	while( g_worker_exit_flag == 0 || p_env->http_session_used_count > 0 )
 	{
 		/* 等待epoll事件 */
 		InfoLog( __FILE__ , __LINE__ , "[%d]epoll_wait #%d# ... [%d][%d][%d,%d]" , p_env->process_info_index , p_env->p_this_process_info->epoll_fd , p_env->listen_session_count , p_env->htmlcache_session_count , p_env->http_session_used_count , p_env->http_session_unused_count );
@@ -549,7 +549,7 @@ void *WorkerThread( void *pv )
 					epoll_ctl( p_env->p_this_process_info->epoll_fd , EPOLL_CTL_DEL , p_env->p_this_process_info->pipe[0] , NULL );
 					close( p_env->p_this_process_info->pipe[0] );
 					
-					g_exit_flag = 1 ;
+					g_worker_exit_flag = 1 ;
 				}
 				else if( n > 0 )
 				{
@@ -729,7 +729,7 @@ void *WorkerThread( void *pv )
 		}
 	}
 	
-	while(1)
+	while( g_worker_exit_flag == 0 || p_env->http_session_used_count > 0 )
 	{
 		InfoLog( __FILE__ , __LINE__ , "[%d]GetQueuedCompletionStatus ... [%d][%d][%d,%d]" , p_env->process_info_index , p_env->listen_session_count , p_env->htmlcache_session_count , p_env->http_session_used_count , p_env->http_session_unused_count );
 		bret = GetQueuedCompletionStatus( p_env->iocp , & transfer_bytes , (LPDWORD) & p_data_session , (LPOVERLAPPED *) & p_data_session , 1000 ) ;
@@ -1073,6 +1073,18 @@ void *WorkerThread( void *pv )
 		}
 	}
 	
+	/* 关闭所有侦听 */
+	list_for_each_entry( p_listen_session , & (p_env->listen_session_list.list) , struct ListenSession , list )
+	{
+		CLOSESOCKET( p_listen_session->netaddr.sock );
+		
+		if( p_listen_session->ssl_ctx )
+		{
+			SSL_CTX_free( p_listen_session->ssl_ctx );
+			p_listen_session->ssl_ctx = NULL ;
+		}
+	}
+
 	return NULL;
 }
 

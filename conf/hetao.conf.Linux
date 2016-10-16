@@ -23,9 +23,9 @@
 		{
 			"domain" : "" ,
 			"wwwroot" : "/var/hetao/www" ,
-			"index" : "/index.htm,/index.html" ,
+			"index" : "/index.html,/index.htm" ,
 			"access_log" : "/var/hetao/log/access.log" ,
-			// "rewrite" : { "pattern":"/(.+)/(.+)" , "template":"/(2)/(1)" } ,
+			// "rewrite" : { "pattern":"/(.+)/(.+)" , "new_url":"/(2)/(1)" } ,
 			"forward" :
 			{
 				"forward_type" : "php" ,
