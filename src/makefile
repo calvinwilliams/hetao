@@ -74,6 +74,7 @@ LFLAGS		=	-L. \
 			-lpcre \
 			-lpthread \
 			-lssl \
+			-lcrypto \
 			-lz \
 
 ###### 额外宏定义区

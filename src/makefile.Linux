@@ -96,10 +96,11 @@ LFLAGS		=	-L. \
 			-lpcre \
 			-lpthread \
 			-lssl \
+			-lcrypto \
 			-lz \
 
 ###### 额外宏定义区
-CLEAN_ADDITION	=
+CLEAN_ADDITION	=	*.o
 
 ###### 加载mktpl模板库
 # 最终目标列表
