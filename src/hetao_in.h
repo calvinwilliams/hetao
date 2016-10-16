@@ -236,6 +236,13 @@ struct HttpSession
 	struct list_head	list ;
 } ;
 
+struct HttpSessionArray
+{
+	struct HttpSession	*http_session_array ;
+	
+	struct list_head	list ;
+} ;
+
 /* 网页缓存会话结构 */
 struct HtmlCacheSession
 {
@@ -347,6 +354,7 @@ struct HetaoEnv
 	struct rb_root		htmlcache_wd_rbtree ;
 	struct rb_root		htmlcache_pathfilename_rbtree ;
 	
+	struct HttpSessionArray	http_session_array_list ;
 	int			http_session_used_count ;
 	struct HttpSession	http_session_unused_list ;
 	int			http_session_unused_count ;

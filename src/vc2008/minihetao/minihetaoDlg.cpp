@@ -55,11 +55,11 @@ CMiniHetaoDlg::CMiniHetaoDlg(CWnd* pParent /*=NULL*/)
 
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
-	p = getenv("ProgramFiles") ;
-	if( p )
-		m_strWWWRoot.Format( "%s\\hetao\\www" , p );
-	else
-		m_strWWWRoot = "" ;
+	TCHAR	path[ MAX_PATH ] ;
+	
+	memset( path , 0x00 , sizeof(path) );
+	GetCurrentDirectory( sizeof(path) , path );
+	m_strWWWRoot = path ;
 
 	m_hRunningThread = NULL ;
 }

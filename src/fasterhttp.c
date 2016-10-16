@@ -264,7 +264,7 @@ void ResetHttpEnv( struct HttpEnv *e )
 		p = (struct HttpHeader *)realloc( p_headers->header_array , sizeof(struct HttpHeader) * FASTERHTTP_HEADER_ARRAYSIZE_DEFAULT ) ;
 		if( p )
 		{
-			memset( p , 0x00 , sizeof(struct HttpHeader) * p_headers->header_array_size );
+			memset( p , 0x00 , sizeof(struct HttpHeader) * FASTERHTTP_HEADER_ARRAYSIZE_DEFAULT );
 			p_headers->header_array = p ;
 			p_headers->header_array_size = FASTERHTTP_HEADER_ARRAYSIZE_DEFAULT ;
 		}

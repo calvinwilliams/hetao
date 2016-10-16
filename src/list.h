@@ -340,8 +340,7 @@ void hlist_move_list(struct hlist_head *old, struct hlist_head *_new);
 	for (pos = (head)->first; pos ; pos = pos->next)
 
 #define hlist_for_each_safe(pos, n, head) \
-	for (pos = (head)->first; pos && ( n = pos->next ); \
-	     pos = n)
+	for (pos=(head)->first, n=((pos)?((pos)->next):NULL) ; pos ; pos = n, n=((pos)?((pos)->next):NULL) )
 
 #define hlist_entry_safe(ptr, type, member) (ptr==NULL?NULL:hlist_entry(ptr, type, member))
 

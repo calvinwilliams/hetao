@@ -10,7 +10,7 @@
 
 int IncreaseHttpSessions( struct HetaoEnv *p_env , int http_session_incre_count )
 {
-	struct HttpSession	*p_http_session_array = NULL ;
+	struct HttpSessionArray	*p_http_session_array = NULL ;
 	struct HttpSession	*p_http_session = NULL ;
 	int			i ;
 	
@@ -25,15 +25,24 @@ int IncreaseHttpSessions( struct HetaoEnv *p_env , int http_session_incre_count 
 	if( p_env->http_session_used_count + http_session_incre_count > p_env->limits__max_http_session_count )
 		http_session_incre_count = p_env->limits__max_http_session_count - p_env->http_session_used_count ;
 	
-	p_http_session_array = (struct HttpSession *)malloc( sizeof(struct HttpSession) * http_session_incre_count ) ;
+	p_http_session_array = (struct HttpSessionArray *)malloc( sizeof(struct HttpSessionArray) ) ;
 	if( p_http_session_array == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 		return -1;
 	}
-	memset( p_http_session_array , 0x00 , sizeof(struct HttpSession) * http_session_incre_count );
+	memset( p_http_session_array , 0x00 , sizeof(struct HttpSessionArray) );
+	list_add_tail( & (p_http_session_array->list) , & (p_env->http_session_array_list.list) );
 	
-	for( i = 0 , p_http_session = p_http_session_array ; i < http_session_incre_count ; i++ , p_http_session++ )
+	p_http_session_array->http_session_array = (struct HttpSession *)malloc( sizeof(struct HttpSession) * http_session_incre_count ) ;
+	if( p_http_session_array->http_session_array == NULL )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
+		return -1;
+	}
+	memset( p_http_session_array->http_session_array , 0x00 , sizeof(struct HttpSession) * http_session_incre_count );
+	
+	for( i = 0 , p_http_session = p_http_session_array->http_session_array ; i < http_session_incre_count ; i++ , p_http_session++ )
 	{
 		p_http_session->http = CreateHttpEnv() ;
 		if( p_http_session->http == NULL )
