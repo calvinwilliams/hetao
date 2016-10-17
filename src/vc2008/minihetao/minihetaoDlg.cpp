@@ -10,6 +10,8 @@
 #define new DEBUG_NEW
 #endif
 
+#define TIMER_WAITFOR_WORKERTHREAD	1
+#define TIMER_INIT_DIALOG		2
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -50,18 +52,19 @@ END_MESSAGE_MAP()
 CMiniHetaoDlg::CMiniHetaoDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CMiniHetaoDlg::IDD, pParent)
 	, m_dwThreadId(0)
+	, m_strStaticRemark(_T(""))
 {
-	char	*p = NULL ;
-
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 
-	TCHAR	path[ MAX_PATH ] ;
-	
-	memset( path , 0x00 , sizeof(path) );
-	GetCurrentDirectory( sizeof(path) , path );
-	m_strWWWRoot = path ;
-
+	m_strWWWRoot = "" ;
 	m_hRunningThread = NULL ;
+	m_strStaticRemark.Format(	"\n"
+					"minihetao v%s\n"
+					"\n"
+					"Copyright by calvin 2016\n"
+					"\n"
+					"Email : <calvinwilliams@163.com>\n"
+					"\n" , __HETAO_VERSION );
 }
 
 void CMiniHetaoDlg::DoDataExchange(CDataExchange* pDX)
@@ -70,6 +73,10 @@ void CMiniHetaoDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_WWWROOT, m_strWWWRoot);
 	DDX_Control(pDX, IDC_BUTTON_RUNNING, m_ctlRunningButton);
 	DDX_Control(pDX, IDC_BUTTON_STOP, m_ctlStopButton);
+	DDX_Control(pDX, IDC_BUTTON_REGISTE, m_ctlRegisteFolderPopupmenu);
+	DDX_Control(pDX, IDC_BUTTON_UNREGISTE, m_ctlUnregisteFolderPopupmenu);
+	DDX_Control(pDX, IDC_EDIT_WWWROOT, m_ctlWWWRoot);
+	DDX_Text(pDX, IDC_STATIC_REMARK, m_strStaticRemark);
 }
 
 BEGIN_MESSAGE_MAP(CMiniHetaoDlg, CDialog)
@@ -84,10 +91,11 @@ BEGIN_MESSAGE_MAP(CMiniHetaoDlg, CDialog)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BUTTON_HIDE, &CMiniHetaoDlg::OnBnClickedButtonHide)
 	ON_BN_CLICKED(IDC_BUTTON_SELECTDIRECTORY, &CMiniHetaoDlg::OnBnClickedButtonSelectDirectory)
-	ON_BN_CLICKED(IDC_BUTTON_ABOUT, &CMiniHetaoDlg::OnBnClickedButtonAbout)
 	ON_BN_CLICKED(IDC_BUTTON_RUNNING, &CMiniHetaoDlg::OnBnClickedButtonRunning)
 	ON_BN_CLICKED(IDC_BUTTON_STOP, &CMiniHetaoDlg::OnBnClickedButtonStop)
 	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_BUTTON_REGISTE, &CMiniHetaoDlg::OnBnClickedButtonRegiste)
+	ON_BN_CLICKED(IDC_BUTTON_UNREGISTE, &CMiniHetaoDlg::OnBnClickedButtonUnregiste)
 END_MESSAGE_MAP()
 
 // CMiniHetaoDlg 消息处理程序
@@ -122,6 +130,54 @@ BOOL CMiniHetaoDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	
+	HKEY		regkey ;
+	long		lret ;
+	
+	if( theApp.m_argc >= 2 )
+	{
+		if( _wcsicmp( theApp.m_argv[1] , L"--registe-folder-popupmenu" ) == 0 )
+		{
+			OnBnClickedButtonRegiste();
+			theApp.m_pMainWnd->SendMessage(WM_DESTROY);
+			theApp.m_pMainWnd->SendMessage(WM_CLOSE);
+		}
+		else if( _wcsicmp( theApp.m_argv[1] , L"--unregiste-folder-popupmenu" ) == 0 )
+		{
+			OnBnClickedButtonUnregiste();
+			theApp.m_pMainWnd->SendMessage(WM_DESTROY);
+			theApp.m_pMainWnd->SendMessage(WM_CLOSE);
+		}
+		else
+		{
+			m_strWWWRoot = theApp.m_argv[1] ;
+			theApp.m_pMainWnd->SendMessage( WM_COMMAND , IDC_BUTTON_RUNNING );
+			SetTimer( TIMER_INIT_DIALOG , 3000 , NULL );
+		}
+	}
+	else
+	{
+		TCHAR	path[ MAX_PATH ] ;
+		
+		memset( path , 0x00 , sizeof(path) );
+		GetCurrentDirectory( sizeof(path) , path );
+		m_strWWWRoot = path ;
+	}
+
+	/* 根据是否已注册目录右键菜单项，激活失效一些按钮 */
+	lret = RegOpenKeyEx( HKEY_CLASSES_ROOT , "Folder\\shell\\minihetao" , 0 , KEY_READ , & regkey ) ;
+	if( lret != ERROR_SUCCESS )
+	{
+		m_ctlRegisteFolderPopupmenu.EnableWindow( TRUE );
+		m_ctlUnregisteFolderPopupmenu.EnableWindow( FALSE );
+	}
+	else
+	{
+		m_ctlRegisteFolderPopupmenu.EnableWindow( FALSE );
+		m_ctlUnregisteFolderPopupmenu.EnableWindow( TRUE );
+	}
+	RegCloseKey( regkey );
+	
 	// 创建托盘图标
 	m_nid.cbSize = sizeof(NOTIFYICONDATA) ;
 	m_nid.hWnd = this->m_hWnd ;
@@ -131,6 +187,9 @@ BOOL CMiniHetaoDlg::OnInitDialog()
 	m_nid.uCallbackMessage = WM_CLICK_POPUPMENU ;
 	strcpy_s( m_nid.szTip , "Hello" ) ;
 	Shell_NotifyIcon( NIM_ADD , & m_nid );
+	
+	// 更新对话框
+	UpdateData( FALSE );
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -282,9 +341,10 @@ void CMiniHetaoDlg::OnBnClickedButtonRunning()
 	}
 	else
 	{
+		m_ctlWWWRoot.EnableWindow( FALSE );
 		m_ctlRunningButton.EnableWindow( FALSE );
 		m_ctlStopButton.EnableWindow( TRUE );
-		SetTimer( 1 , 1000 , NULL );
+		SetTimer( TIMER_WAITFOR_WORKERTHREAD , 1000 , NULL );
 	}
 	
 	return;
@@ -305,15 +365,6 @@ void CMiniHetaoDlg::OnBnClickedButtonHide()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	this->ShowWindow( SW_HIDE );
-}
-
-void CMiniHetaoDlg::OnBnClickedButtonAbout()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	CAboutDlg dlgAbout;
-	dlgAbout.DoModal();
-	
-	return;
 }
 
 void CMiniHetaoDlg::OnBnClickedButtonExit()
@@ -353,19 +404,99 @@ void CMiniHetaoDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 
-	if( m_hRunningThread )
+	switch( nIDEvent )
 	{
-		DWORD	dwret ;
-		
-		dwret = WaitForSingleObject( m_hRunningThread , 0 ) ;
-		if( dwret == WAIT_OBJECT_0 )
-		{
-			m_ctlRunningButton.EnableWindow( TRUE );
-			m_ctlStopButton.EnableWindow( FALSE );
-			m_hRunningThread = NULL ;
-			KillTimer( 1 );
-		}
+		case TIMER_INIT_DIALOG :
+			theApp.m_pMainWnd->SendMessage( WM_COMMAND , IDC_BUTTON_HIDE );
+			KillTimer( TIMER_INIT_DIALOG );
+			break;
+		case TIMER_WAITFOR_WORKERTHREAD :
+			if( m_hRunningThread )
+			{
+				DWORD	dwret ;
+				
+				dwret = WaitForSingleObject( m_hRunningThread , 0 ) ;
+				if( dwret == WAIT_OBJECT_0 )
+				{
+					m_ctlWWWRoot.EnableWindow( TRUE );
+					m_ctlRunningButton.EnableWindow( TRUE );
+					m_ctlStopButton.EnableWindow( FALSE );
+					m_hRunningThread = NULL ;
+					KillTimer( TIMER_WAITFOR_WORKERTHREAD );
+				}
+			}
+			break;
 	}
 	
 	CDialog::OnTimer(nIDEvent);
+}
+
+void CMiniHetaoDlg::OnBnClickedButtonRegiste()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	
+	HKEY		regkey , regkey2 ;
+	char		szModule[ MAX_PATH ] ;
+	char		szRegValue[ MAX_PATH * 2 ] ;
+	long		lret ;
+	
+	lret = RegCreateKeyEx( HKEY_CLASSES_ROOT , "Folder\\shell\\minihetao" , 0 , NULL , 0 , KEY_READ | KEY_WRITE , NULL , & regkey , NULL ) ;
+	if( lret != ERROR_SUCCESS )
+	{
+		AfxMessageBox( "RegCreateKeyEx failed" );
+		return;
+	}
+	
+	lret = RegCreateKeyEx( HKEY_CLASSES_ROOT , "Folder\\shell\\minihetao\\command" , 0 , NULL , 0 , KEY_READ | KEY_WRITE , NULL , & regkey2 , NULL ) ;
+	if( lret != ERROR_SUCCESS )
+	{
+		AfxMessageBox( "RegCreateKeyEx failed" );
+		RegCloseKey( regkey );
+		return;
+	}
+	
+	memset( szModule , 0x00 , sizeof(szModule) );
+	GetModuleFileName( NULL , szModule , sizeof(szModule) );
+	memset( szRegValue , 0x00 , sizeof(szRegValue) );
+	_snprintf( szRegValue , sizeof(szRegValue)-1 , "\"%s\" \"%%1\"" , szModule );
+	lret = RegSetValueEx( regkey2 , NULL , 0 , REG_SZ , (BYTE*)szRegValue , strlen(szRegValue) ) ;
+	if( lret != ERROR_SUCCESS )
+	{
+		AfxMessageBox( "RegSetValueEx failed" );
+		RegCloseKey( regkey2 );
+		RegCloseKey( regkey );
+		return;
+	}
+	
+	RegCloseKey( regkey2 );
+	RegCloseKey( regkey );
+
+	m_ctlRegisteFolderPopupmenu.EnableWindow( FALSE );
+	m_ctlUnregisteFolderPopupmenu.EnableWindow( TRUE );
+	
+	return;
+}
+
+void CMiniHetaoDlg::OnBnClickedButtonUnregiste()
+{
+	// TODO: 在此添加控件通知处理程序代码
+
+	long		lret ;
+	
+	lret = RegDeleteKey( HKEY_CLASSES_ROOT , "Folder\\shell\\minihetao\\command" ) ;
+	if( lret != ERROR_SUCCESS )
+	{
+		AfxMessageBox( "RegDeleteKey failed" );
+	}
+	
+	lret = RegDeleteKey( HKEY_CLASSES_ROOT , "Folder\\shell\\minihetao" ) ;
+	if( lret != ERROR_SUCCESS )
+	{
+		AfxMessageBox( "RegDeleteKey failed" );
+	}
+	
+	m_ctlRegisteFolderPopupmenu.EnableWindow( TRUE );
+	m_ctlUnregisteFolderPopupmenu.EnableWindow( FALSE );
+	
+	return;
 }

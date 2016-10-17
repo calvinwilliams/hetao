@@ -57,4 +57,9 @@
 #endif
 #endif
 
+extern "C"
+{
+#include "../../hetao_in.h"
+}
+
 

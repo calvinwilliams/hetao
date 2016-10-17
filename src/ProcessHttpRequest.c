@@ -190,7 +190,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 			}
 			
 			nret = fread( p_htmlcache_session->html_content , p_htmlcache_session->html_content_len , 1 , fp ) ;
-			if( nret != 1 )
+			if( nret != 1 && p_htmlcache_session->html_content_len > 0 )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "fread failed , errno[%d]" , ERRNO );
 				free( p_htmlcache_session->pathfilename );

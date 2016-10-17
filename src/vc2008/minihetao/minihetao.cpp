@@ -10,7 +10,6 @@
 #define new DEBUG_NEW
 #endif
 
-
 // CMiniHetaoApp
 
 BEGIN_MESSAGE_MAP(CMiniHetaoApp, CWinAppEx)
@@ -21,6 +20,7 @@ END_MESSAGE_MAP()
 // CMiniHetaoApp 构造
 
 CMiniHetaoApp::CMiniHetaoApp()
+: m_argc(0)
 {
 	// TODO: 在此处添加构造代码，
 	// 将所有重要的初始化放置在 InitInstance 中
@@ -59,6 +59,10 @@ BOOL CMiniHetaoApp::InitInstance()
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
 
+	// 分解命令行
+	LPCWSTR	pszCmdLine = GetCommandLineW() ;
+	m_argv = CommandLineToArgvW( pszCmdLine , & m_argc ) ;
+	
 	// 显示对话框
 	CMiniHetaoDlg dlg;
 	m_pMainWnd = &dlg;
@@ -77,11 +81,6 @@ BOOL CMiniHetaoApp::InitInstance()
 	// 由于对话框已关闭，所以将返回 FALSE 以便退出应用程序，
 	//  而不是启动应用程序的消息泵。
 	return FALSE;
-}
-
-extern "C"
-{
-#include "../../hetao_in.h"
 }
 
 #define PREFIX_DSCLOG_hetao_conf	DebugLog( __FILE__ , __LINE__ , 
@@ -161,6 +160,10 @@ DWORD WINAPI minihetao( LPVOID p )
 		strcpy( p_conf->listen[0].website[0].index , "/index.html,/index.htm" );
 		strcpy( p_conf->listen[0].website[0].access_log , "" );
 		p_conf->listen[0]._website_count = 1 ;
+		/*
+		strcpy( p_conf->error_log , "C:/error.log" );
+		strcpy( p_conf->log_level , "DEBUG" );
+		*/
 		
 		/* 追加缺省配置 */
 		AppendDefaultConfig( p_conf );

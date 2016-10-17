@@ -27,6 +27,9 @@ public:
 // й╣ож
 
 	DECLARE_MESSAGE_MAP()
+public:
+	int m_argc;
+	LPWSTR *m_argv;
 };
 
 extern CMiniHetaoApp theApp;
