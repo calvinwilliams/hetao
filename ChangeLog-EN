@@ -1,3 +1,6 @@
+0.10.1		2016-10-17	calvin
+		* Add minihetao for WINDOWS
+
 0.10.0		2016-10-13	calvin
 		* Add minihetao for Linux , launch need only a directory as "minihetao /var/hetao/www"
 

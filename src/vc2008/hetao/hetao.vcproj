@@ -89,7 +89,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy ..\Debug\hetao.exe &quot;%ProgramFiles%\hetao\bin\&quot; /Y&#x0D;&#x0A;"
+				CommandLine="copy ..\Debug\hetao.exe &quot;%ProgramFiles%\hetao\bin\&quot; /Y&#x0D;&#x0A;copy ..\Debug\hetao.exe &quot;..\..\..\bin\&quot; /Y&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration

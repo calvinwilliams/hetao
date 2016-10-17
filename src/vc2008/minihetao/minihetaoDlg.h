@@ -44,7 +44,6 @@ public:
 	afx_msg void OnBnClickedButtonSelectDirectory();
 	afx_msg void OnBnClickedButtonRunning();
 	afx_msg void OnBnClickedButtonStop();
-	afx_msg void OnBnClickedButtonAbout();
 	afx_msg void OnBnClickedButtonHide();
 	afx_msg void OnBnClickedButtonExit();
 	HANDLE m_hRunningThread;
@@ -52,4 +51,10 @@ public:
 	CButton m_ctlRunningButton;
 	CButton m_ctlStopButton;
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	CButton m_ctlRegisteFolderPopupmenu;
+	CButton m_ctlUnregisteFolderPopupmenu;
+	afx_msg void OnBnClickedButtonRegiste();
+	afx_msg void OnBnClickedButtonUnregiste();
+	CEdit m_ctlWWWRoot;
+	CString m_strStaticRemark;
 };

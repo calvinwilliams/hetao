@@ -96,7 +96,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy ..\Debug\minihetao.exe &quot;%ProgramFiles%\hetao\bin\&quot; /Y"
+				CommandLine="copy ..\Debug\minihetao.exe &quot;%ProgramFiles%\hetao\bin\&quot; /Y&#x0D;&#x0A;copy ..\Debug\minihetao.exe &quot;..\..\..\bin\&quot; /Y"
 			/>
 		</Configuration>
 		<Configuration

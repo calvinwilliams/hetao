@@ -1,3 +1,6 @@
+0.10.1		2016-10-17	calvin
+		* 新增minihetao for WINDOWS ，在窗口中选择目录后直接启动网站，或鼠标右键某目录后直接启动网站
+
 0.10.0		2016-10-13	calvin
 		* 新增minihetao for Linux ，只需一个目录即可启动，如"minihetao /var/hetao/www"
 
