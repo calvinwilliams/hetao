@@ -9,7 +9,7 @@
  * Licensed under the LGPL v2.1, see the file LICENSE in base directory.
  */
 
-/* ´úÂëºê */
+/* ä»£ç å® */
 #define OFFSET_BUFPTR(_buffer_,_bufptr_,_len_,_buflen_,_remain_len_) \
 	if( _len_ > 0 && _buflen_+_len_ <= sizeof(_buffer_)-1 ) \
 	{ \
@@ -18,7 +18,7 @@
 		_remain_len_ -= _len_ ; \
 	} \
 
-/* ÈÕÖ¾ÎÄ¼þÃû */
+/* æ—¥å¿—æ–‡ä»¶å */
 TLS char		g_log_pathfilename[ MAXLEN_FILENAME + 1 ] = "" ;
 TLS int			g_log_level = LOGLEVEL_INFO ;
 TLS int			g_file_fd = -1 ;
@@ -29,7 +29,7 @@ unsigned char		g_date_time_cache_index = 0 ;
 
 const char log_level_itoa[][6] = { "DEBUG" , "INFO" , "WARN" , "ERROR" , "FATAL" } ;
 
-/* ´ò¿ªÈÕÖ¾ÎÄ¼þ */
+/* æ‰“å¼€æ—¥å¿—æ–‡ä»¶ */
 static int OpenLogFile()
 {
 	CloseLogFile();
@@ -50,7 +50,7 @@ static int OpenLogFile()
 	return 0;
 }
 
-/* ÉèÖÃÈÕÖ¾ÎÄ¼þÃû£¬²¢´ò¿ªÎÄ¼þ */
+/* è®¾ç½®æ—¥å¿—æ–‡ä»¶åï¼Œå¹¶æ‰“å¼€æ–‡ä»¶ */
 void SetLogFile( char *format , ... )
 {
 	va_list		valist ;
@@ -68,7 +68,7 @@ void SetLogFile( char *format , ... )
 	return;
 }
 
-/* ¹Ø±ÕÈÕÖ¾ÎÄ¼þ */
+/* å…³é—­æ—¥å¿—æ–‡ä»¶ */
 void CloseLogFile()
 {
 	if( g_file_fd != -1 )
@@ -78,7 +78,7 @@ void CloseLogFile()
 	}
 }
 
-/* ÉèÖÃÈÕÖ¾µÈ¼¶ */
+/* è®¾ç½®æ—¥å¿—ç­‰çº§ */
 void SetLogLevel( int log_level )
 {
 	g_log_level = log_level ;
@@ -108,7 +108,7 @@ static void _UpdateDateTimeCache( unsigned char index )
 	return;
 }
 
-/* µÚÒ»´Î¸üÐÂÊ±¼ä»º³åÇø */
+/* ç¬¬ä¸€æ¬¡æ›´æ–°æ—¶é—´ç¼“å†²åŒº */
 void UpdateDateTimeCacheFirst()
 {
 	_UpdateDateTimeCache( 0 );
@@ -116,7 +116,7 @@ void UpdateDateTimeCacheFirst()
 	return;
 }
 
-/* ¸üÐÂÊ±¼ä»º³åÇø */
+/* æ›´æ–°æ—¶é—´ç¼“å†²åŒº */
 void UpdateDateTimeCache()
 {
 	unsigned char	next_date_time_cache_index = g_date_time_cache_index ;
@@ -130,7 +130,7 @@ void UpdateDateTimeCache()
 	return;
 }
 
-/* Êä³öÈÕÖ¾ */
+/* è¾“å‡ºæ—¥å¿— */
 int WriteLogBaseV( int log_level , char *c_filename , long c_fileline , char *format , va_list valist )
 {
 	char		c_filename_copy[ MAXLEN_FILENAME + 1 ] ;
@@ -144,7 +144,7 @@ int WriteLogBaseV( int log_level , char *c_filename , long c_fileline , char *fo
 	
 	int		nret = 0 ;
 	
-	/* ´¦ÀíÔ´´úÂëÎÄ¼þÃû */
+	/* å¤„ç†æºä»£ç æ–‡ä»¶å */
 	memset( c_filename_copy , 0x00 , sizeof(c_filename_copy) );
 	strncpy( c_filename_copy , c_filename , sizeof(c_filename_copy)-1 );
 	p_c_filename = strrchr( c_filename_copy , '\\' ) ;
@@ -153,7 +153,7 @@ int WriteLogBaseV( int log_level , char *c_filename , long c_fileline , char *fo
 	else
 		p_c_filename = c_filename_copy ;
 	
-	/* Ìî³äÐÐÈÕÖ¾ */
+	/* å¡«å……è¡Œæ—¥å¿— */
 	/* memset( log_buffer , 0x00 , sizeof(log_buffer) ); */
 	log_bufptr = log_buffer ;
 	log_buflen = 0 ;
@@ -173,7 +173,7 @@ int WriteLogBaseV( int log_level , char *c_filename , long c_fileline , char *fo
 	len = SNPRINTF( log_bufptr , log_buf_remain_len , NEWLINE ) ;
 	OFFSET_BUFPTR( log_buffer , log_bufptr , len , log_buflen , log_buf_remain_len );
 	
-	/* Êä³öÐÐÈÕÖ¾ */
+	/* è¾“å‡ºè¡Œæ—¥å¿— */
 	if( g_log_pathfilename[0] != '#' )
 	{
 		if( g_file_fd == -1 )
@@ -203,7 +203,7 @@ int WriteLogBase( int log_level , char *c_filename , long c_fileline , char *for
 	nret = WriteLogBaseV( log_level , c_filename , c_fileline , format , valist );
 	va_end( valist );
 	
-	return 0;
+	return nret;
 }
 
 #if ( defined __STDC_VERSION__ ) && ( __STDC_VERSION__ >= 199901 )
@@ -313,13 +313,13 @@ int WriteHexLogBaseV( int log_level , char *c_filename , long c_fileline , char 
 	if( buflen > sizeof(hexlog_buffer) - 1 )
 		return -1;
 	
-	/* Êä³öÐÐÈÕÖ¾ */
+	/* è¾“å‡ºè¡Œæ—¥å¿— */
 	if( format )
 	{
 		WriteLogBaseV( log_level , c_filename , c_fileline , format , valist );
 	}
 	
-	/* Ìî³äÊ®Áù½øÖÆ¿éÈÕÖ¾ */
+	/* å¡«å……åå…­è¿›åˆ¶å—æ—¥å¿— */
 	memset( hexlog_buffer , 0x00 , sizeof(hexlog_buffer) );
 	hexlog_bufptr = hexlog_buffer ;
 	hexlog_buflen = 0 ;
@@ -379,7 +379,7 @@ int WriteHexLogBaseV( int log_level , char *c_filename , long c_fileline , char 
 		row_offset++;
 	}
 	
-	/* Êä³öÊ®Áù½øÖÆ¿éÈÕÖ¾ */
+	/* è¾“å‡ºåå…­è¿›åˆ¶å—æ—¥å¿— */
 	if( g_log_pathfilename[0] != '#' )
 	{
 		if( g_file_fd == -1 )
@@ -409,7 +409,7 @@ int WriteHexLogBase( int log_level , char *c_filename , long c_fileline , char *
 	nret = WriteHexLogBaseV( log_level , c_filename , c_fileline , buf , buflen , format , valist ) ;
 	va_end( valist );
 	
-	return 0;
+	return nret;
 }
 
 #if ( defined __STDC_VERSION__ ) && ( __STDC_VERSION__ >= 199901 )
