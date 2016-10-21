@@ -116,10 +116,17 @@ typedef struct
 			struct
 			{
 				char	pattern[ 256 + 1 ] ;
-				char	new_url[ 256 + 1 ] ;
+				char	new_uri[ 256 + 1 ] ;
 			} rewrite [ 10 ] ;
 			int	_rewrite_count ;
 			int	_rewrite_size ;
+			struct
+			{
+				char	domain[ 64 + 1 ] ;
+				char	new_domain[ 64 + 1 ] ;
+			} redirect [ 100 ] ;
+			int	_redirect_count ;
+			int	_redirect_size ;
 			struct
 			{
 				char	forward_type[ 16 + 1 ] ;

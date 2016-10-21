@@ -1,3 +1,8 @@
+0.10.2		2016-10-21	calvin
+		* Add include file in configure : "!include filename"
+		* modify 'new_url' to 'new_uri' in configure
+		*** Configuration file format is not compatible between 0.10.1 and 0.10.2 ***
+
 0.10.1		2016-10-17	calvin
 		* Add minihetao for WINDOWS
 

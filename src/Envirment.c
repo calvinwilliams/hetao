@@ -164,9 +164,9 @@ void CleanEnvirment( struct HetaoEnv *p_env )
 #endif
 	}
 	
-	if( p_env->new_url_re )
+	if( p_env->new_uri_re )
 	{
-		free( p_env->new_url_re );
+		free( p_env->new_uri_re );
 	}
 	
 	DebugLog( __FILE__ , __LINE__ , "delete all listen_session" );
