@@ -96,7 +96,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy ..\Debug\minihetao.exe &quot;%ProgramFiles%\hetao\bin\&quot; /Y&#x0D;&#x0A;copy ..\Debug\minihetao.exe &quot;..\..\..\bin\&quot; /Y"
+				CommandLine="copy ..\Debug\minihetao.exe &quot;%ProgramFiles%\hetao\bin\&quot; /Y&#x0D;&#x0A;copy ..\Debug\minihetao.exe &quot;..\..\..\bin\&quot; /Y&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -415,7 +415,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\RewriteUrl.c"
+				RelativePath="..\..\RedirectDomain.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\RewriteUri.c"
 				>
 			</File>
 			<File

@@ -41,7 +41,8 @@ c_FILE		=	\
 			HttpSessionElapseTree.c \
 			LeastConnectionCountTree.c \
 			MimeTypeHash.c \
-			RewriteUrl.c \
+			RewriteUri.c \
+			RedirectDomain.c \
 			IpLimitsHash.c \
 
 c_FILE2		=	\

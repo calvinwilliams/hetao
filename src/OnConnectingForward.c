@@ -11,12 +11,12 @@
 int SelectForwardAddress( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
 	/* 轮询算法 */
-	if( p_http_session->p_virtualhost->forward_rule[0] == FORWARD_RULE_ROUNDROBIN[0] )
+	if( p_http_session->p_virtual_host->forward_rule[0] == FORWARD_RULE_ROUNDROBIN[0] )
 	{
 		struct list_head	*p_curr = NULL , *p_next = NULL ;
 		struct ForwardServer	*p_forward_server = NULL ;
 		
-		list_for_each_safe( p_curr , p_next , & (p_http_session->p_virtualhost->roundrobin_list.roundrobin_node) )
+		list_for_each_safe( p_curr , p_next , & (p_http_session->p_virtual_host->roundrobin_list.roundrobin_node) )
 		{
 			p_forward_server = container_of( p_curr , struct ForwardServer , roundrobin_node ) ;
 			
@@ -24,7 +24,7 @@ int SelectForwardAddress( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 			{
 				p_forward_server->timestamp_to_valid = 0 ;
 				
-				list_move_tail( p_curr , & (p_http_session->p_virtualhost->roundrobin_list.roundrobin_node) );
+				list_move_tail( p_curr , & (p_http_session->p_virtual_host->roundrobin_list.roundrobin_node) );
 				p_http_session->p_forward_server = p_forward_server ;
 				DebugLog( __FILE__ , __LINE__ , "forward_rule[B] server[%s:%d]" , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
 				
@@ -35,11 +35,11 @@ int SelectForwardAddress( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 		return HTTP_SERVICE_UNAVAILABLE;
 	}
 	/* 最少连接数算法 */
-	else if( p_http_session->p_virtualhost->forward_rule[0] == FORWARD_RULE_LEASTCONNECTION[0] )
+	else if( p_http_session->p_virtual_host->forward_rule[0] == FORWARD_RULE_LEASTCONNECTION[0] )
 	{
 		struct ForwardServer	*p_forward_server = NULL ;
 		
-		p_forward_server = TravelMinLeastConnectionCountTreeNode( p_http_session->p_virtualhost , NULL ) ;
+		p_forward_server = TravelMinLeastConnectionCountTreeNode( p_http_session->p_virtual_host , NULL ) ;
 		while(p_forward_server)
 		{
 			if( p_forward_server->timestamp_to_valid == 0 || GETSECONDSTAMP > p_forward_server->timestamp_to_valid )
@@ -52,14 +52,14 @@ int SelectForwardAddress( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 				return HTTP_OK;
 			}
 			
-			p_forward_server = TravelMinLeastConnectionCountTreeNode( p_http_session->p_virtualhost , p_forward_server ) ;
+			p_forward_server = TravelMinLeastConnectionCountTreeNode( p_http_session->p_virtual_host , p_forward_server ) ;
 		}
 		
 		return HTTP_SERVICE_UNAVAILABLE;
 	}
 	else
 	{
-		ErrorLog( __FILE__ , __LINE__ , "forward_rule[%c] invalid" , p_http_session->p_virtualhost->forward_rule[0] );
+		ErrorLog( __FILE__ , __LINE__ , "forward_rule[%c] invalid" , p_http_session->p_virtual_host->forward_rule[0] );
 		return HTTP_INTERNAL_SERVER_ERROR;
 	}
 }
@@ -133,7 +133,7 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 	
 	p_http_session->forward_flags = HTTPSESSION_FLAGS_CONNECTING ;
 	p_http_session->p_forward_server->connection_count++;
-	UpdateLeastConnectionCountTreeNode( p_http_session->p_virtualhost , p_http_session->p_forward_server );
+	UpdateLeastConnectionCountTreeNode( p_http_session->p_virtual_host , p_http_session->p_forward_server );
 	
 	/* 连接服务端 */
 	DebugLog( __FILE__ , __LINE__ , "connecting[%s:%d] ..." , p_http_session->p_forward_server->netaddr.ip , p_http_session->p_forward_server->netaddr.port );
@@ -184,9 +184,9 @@ int ConnectForwardServer( struct HetaoEnv *p_env , struct HttpSession *p_http_se
 #endif
 				
 		/* SSL握手 */
-		if( p_http_session->p_virtualhost->forward_ssl_ctx )
+		if( p_http_session->p_virtual_host->forward_ssl_ctx )
 		{
-			p_http_session->forward_ssl = SSL_new( p_http_session->p_virtualhost->forward_ssl_ctx ) ;
+			p_http_session->forward_ssl = SSL_new( p_http_session->p_virtual_host->forward_ssl_ctx ) ;
 			if( p_http_session->forward_ssl == NULL )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "SSL_new failed , errno[%d]" , ERRNO );
@@ -345,7 +345,7 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 					ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , errno );
 					
 					/* 格式化响应头和体，用出错状态码 */
-					nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
+					nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 , NULL ) ;
 					if( nret )
 					{
 						ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , ERRNO );
@@ -359,7 +359,7 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 				ErrorLog( __FILE__ , __LINE__ , "SelectForwardAddress failed[%d] , errno[%d]" , nret , ERRNO );
 				
 				/* 格式化响应头和体，用出错状态码 */
-				nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
+				nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 , NULL ) ;
 				if( nret )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , ERRNO );
@@ -427,9 +427,9 @@ int OnConnectingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_ses
 	p_http_session->forward_flags = HTTPSESSION_FLAGS_CONNECTED ;
 	
 	/* SSL握手 */
-	if( p_http_session->p_virtualhost->forward_ssl_ctx )
+	if( p_http_session->p_virtual_host->forward_ssl_ctx )
 	{
-		p_http_session->forward_ssl = SSL_new( p_http_session->p_virtualhost->forward_ssl_ctx ) ;
+		p_http_session->forward_ssl = SSL_new( p_http_session->p_virtual_host->forward_ssl_ctx ) ;
 		if( p_http_session->forward_ssl == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "SSL_new failed , errno[%d]" , ERRNO );

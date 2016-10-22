@@ -556,32 +556,32 @@ void *WorkerThread( void *pv )
 					if( ch == SIGNAL_REOPEN_LOG )
 					{
 						struct ListenSession	*p_listen_session = NULL ;
-						struct VirtualHost	*p_virtualhost = NULL ;
+						struct VirtualHost	*p_virtual_host = NULL ;
 						
 						/* 管理进程发送给了重新打开日志信号 */
 						CloseLogFile();
 						
 						list_for_each_entry( p_listen_session , & (p_env->listen_session_list.list) , struct ListenSession , list )
 						{
-							for( i = 0 ; i < p_listen_session->virtualhost_hashsize ; i++ )
+							for( i = 0 ; i < p_listen_session->virtual_host_hashsize ; i++ )
 							{
-								hlist_for_each_entry( p_virtualhost , p_listen_session->virtualhost_hash+i , struct VirtualHost , virtualhost_node )
+								hlist_for_each_entry( p_virtual_host , p_listen_session->virtual_host_hash+i , struct VirtualHost , virtual_host_node )
 								{
-									if( p_virtualhost->access_log_fd == -1 )
+									if( p_virtual_host->access_log_fd == -1 )
 										continue;
 									
-									DebugLog( __FILE__ , __LINE__ , "close access_log[%s] #%d#" , p_virtualhost->access_log , p_virtualhost->access_log_fd );
-									close( p_virtualhost->access_log_fd );
+									DebugLog( __FILE__ , __LINE__ , "close access_log[%s] #%d#" , p_virtual_host->access_log , p_virtual_host->access_log_fd );
+									close( p_virtual_host->access_log_fd );
 									
-									p_virtualhost->access_log_fd = OPEN( p_virtualhost->access_log , O_CREAT_WRONLY_APPEND ) ;
-									if( p_virtualhost->access_log_fd == -1 )
+									p_virtual_host->access_log_fd = OPEN( p_virtual_host->access_log , O_CREAT_WRONLY_APPEND ) ;
+									if( p_virtual_host->access_log_fd == -1 )
 									{
-										ErrorLog( __FILE__ , __LINE__ ,  "open access log[%s] failed , errno[%d]" , p_virtualhost->access_log , ERRNO );
+										ErrorLog( __FILE__ , __LINE__ ,  "open access log[%s] failed , errno[%d]" , p_virtual_host->access_log , ERRNO );
 										return NULL;
 									}
 									else
 									{
-										DebugLog( __FILE__ , __LINE__ ,  "open access log[%s] ok" , p_virtualhost->access_log );
+										DebugLog( __FILE__ , __LINE__ ,  "open access log[%s] ok" , p_virtual_host->access_log );
 									}
 								}
 							}
@@ -616,7 +616,7 @@ void *WorkerThread( void *pv )
 	
 	int			i ;
 	struct hlist_head	*p_hlist_head = NULL ;
-	struct VirtualHost	*p_virtualhost = NULL ;
+	struct VirtualHost	*p_virtual_host = NULL ;
 	DWORD			dwByteRet ;
 	
 	struct HttpBuffer	*b = NULL ;
@@ -701,28 +701,28 @@ void *WorkerThread( void *pv )
 		}
 		
 		/* 投递目录变动事件 */
-		for( i = 0 , p_hlist_head = p_listen_session->virtualhost_hash ; i < p_listen_session->virtualhost_hashsize ; i++ , p_hlist_head++ )
+		for( i = 0 , p_hlist_head = p_listen_session->virtual_host_hash ; i < p_listen_session->virtual_host_hashsize ; i++ , p_hlist_head++ )
 		{
-			hlist_for_each_entry( p_virtualhost , p_hlist_head , struct VirtualHost , virtualhost_node )
+			hlist_for_each_entry( p_virtual_host , p_hlist_head , struct VirtualHost , virtual_host_node )
 			{
-				p_virtualhost->directory_changes_handler = CreateFile( p_virtualhost->wwwroot , GENERIC_READ | GENERIC_WRITE , FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE , NULL , OPEN_EXISTING , FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED , NULL ) ;
-				if( p_virtualhost->directory_changes_handler == INVALID_HANDLE_VALUE )
+				p_virtual_host->directory_changes_handler = CreateFile( p_virtual_host->wwwroot , GENERIC_READ | GENERIC_WRITE , FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE , NULL , OPEN_EXISTING , FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED , NULL ) ;
+				if( p_virtual_host->directory_changes_handler == INVALID_HANDLE_VALUE )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "CreateFile[%s] failed , errno[%d]" , p_virtualhost->wwwroot , ERRNO );
+					ErrorLog( __FILE__ , __LINE__ , "CreateFile[%s] failed , errno[%d]" , p_virtual_host->wwwroot , ERRNO );
 					return NULL;
 				}
 				
-				hret = CreateIoCompletionPort( p_virtualhost->directory_changes_handler , p_env->iocp , (DWORD)p_virtualhost , 0 ) ;
+				hret = CreateIoCompletionPort( p_virtual_host->directory_changes_handler , p_env->iocp , (DWORD)p_virtual_host , 0 ) ;
 				if( hret == NULL )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
 					return NULL;
 				}
 				
-				bret = ReadDirectoryChangesW( p_virtualhost->directory_changes_handler , p_virtualhost->directory_changes_buffer , sizeof(p_virtualhost->directory_changes_buffer) , TRUE , FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_SECURITY , & dwByteRet , & (p_virtualhost->overlapped) , NULL ) ;
+				bret = ReadDirectoryChangesW( p_virtual_host->directory_changes_handler , p_virtual_host->directory_changes_buffer , sizeof(p_virtual_host->directory_changes_buffer) , TRUE , FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_SECURITY , & dwByteRet , & (p_virtual_host->overlapped) , NULL ) ;
 				if( bret == FALSE )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "ReadDirectoryChangesW[%s] failed , errno[%d]" , p_virtualhost->wwwroot , ERRNO );
+					ErrorLog( __FILE__ , __LINE__ , "ReadDirectoryChangesW[%s] failed , errno[%d]" , p_virtual_host->wwwroot , ERRNO );
 					return NULL;
 				}
 			}
@@ -1050,16 +1050,16 @@ void *WorkerThread( void *pv )
 				break;
 			case DATASESSION_TYPE_HTMLCACHE:
 				DebugLog( __FILE__ , __LINE__ , "DATASESSION_TYPE_HTMLCACHE" );
-				p_virtualhost = (struct VirtualHost *)p_data_session ;
+				p_virtual_host = (struct VirtualHost *)p_data_session ;
 				
-				nret = DirectoryWatcherEventHander( p_env , p_virtualhost ) ;
+				nret = DirectoryWatcherEventHander( p_env , p_virtual_host ) ;
 				if( nret )
 				{
 					FatalLog( __FILE__ , __LINE__ , "DirectoryWatcherEventHander failed , errno[%d]" , ERRNO );
 					return NULL;
 				}
 				
-				bret = ReadDirectoryChangesW( p_virtualhost->directory_changes_handler , p_virtualhost->directory_changes_buffer , sizeof(p_virtualhost->directory_changes_buffer) , TRUE , FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_SECURITY , & dwByteRet , & (p_virtualhost->overlapped) , NULL ) ;
+				bret = ReadDirectoryChangesW( p_virtual_host->directory_changes_handler , p_virtual_host->directory_changes_buffer , sizeof(p_virtual_host->directory_changes_buffer) , TRUE , FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_SECURITY , & dwByteRet , & (p_virtual_host->overlapped) , NULL ) ;
 				if( bret == FALSE )
 				{
 					FatalLog( __FILE__ , __LINE__ , "ReadDirectoryChangesW failed , errno[%d]" , ERRNO );

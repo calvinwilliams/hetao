@@ -1,3 +1,9 @@
+0.11.0		2016-10-22	calvin
+		* Add redirect domain
+		* Adjust some log content
+		* Adjust some varibles in code
+		*** Configuration file format is not compatible between 0.10.2 and 0.11.0 ***
+
 0.10.2		2016-10-21	calvin
 		* Add include file in configure : "!include filename"
 		* modify 'new_url' to 'new_uri' in configure

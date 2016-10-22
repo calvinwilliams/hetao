@@ -375,9 +375,10 @@ _WINDLL_FUNC int ReceiveHttpResponse( SOCKET sock , SSL *ssl , struct HttpEnv *e
 
 /* http server api */
 _WINDLL_FUNC int ReceiveHttpRequest( SOCKET sock , SSL *ssl , struct HttpEnv *e );
-_WINDLL_FUNC int FormatHttpResponseStartLine( int status_code , struct HttpEnv *e , int fill_body_with_status_flag );
+_WINDLL_FUNC int FormatHttpResponseStartLine( int status_code , struct HttpEnv *e , int fill_body_with_status_flag , char *format , ... );
 _WINDLL_FUNC int SendHttpResponse( SOCKET sock , SSL *ssl , struct HttpEnv *e );
 _WINDLL_FUNC int CheckHttpKeepAlive( struct HttpEnv *e );
+_WINDLL_FUNC void SetHttpKeepAlive( struct HttpEnv *e , char keepalive );
 
 /* http client api with nonblock */
 _WINDLL_FUNC int SendHttpRequestNonblock( SOCKET sock , SSL *ssl , struct HttpEnv *e );
