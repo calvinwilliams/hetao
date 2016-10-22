@@ -66,7 +66,7 @@
 #define NATOC(_base_,_len_,_result_)	{_result_=_base_[0];}
 #endif
 #ifndef NATOI1
-#define NATOI1(_base_,_len_,_result_)	{char buf[3+1];memset(buf,0x00,sizeof(buf));strncpy(buf,_base_,5);_result_=(char)atoi(buf);}
+#define NATOI1(_base_,_len_,_result_)	{char buf[3+1];memset(buf,0x00,sizeof(buf));strncpy(buf,_base_,3);_result_=(char)atoi(buf);}
 #endif
 #ifndef NATOS
 #define NATOS(_base_,_len_,_result_)	{char buf[5+1];memset(buf,0x00,sizeof(buf));strncpy(buf,_base_,5);_result_=(short)atol(buf);}
