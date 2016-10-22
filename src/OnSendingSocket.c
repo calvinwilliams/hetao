@@ -102,7 +102,7 @@ int OnSendingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session
 		
 		DebugLog( __FILE__ , __LINE__ , "SendHttpResponseNonblock done" );
 		
-		if( p_http_session->p_virtualhost && p_http_session->p_virtualhost->access_log_fd != -1 )
+		if( p_http_session->p_virtual_host && p_http_session->p_virtual_host->access_log_fd != -1 )
 		{
 			/* 输出事件日志 */
 			host = QueryHttpHeaderPtr( e , "Host" , & host_len ) ;
@@ -127,7 +127,7 @@ int OnSendingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session
 				, GetHttpHeaderLen_VERSION(e) , GetHttpHeaderPtr_VERSION(e,NULL)
 				, GetHttpHeaderLen_STATUSCODE(e) , GetHttpHeaderPtr_STATUSCODE(e,NULL) ) ;
 			if( log_buflen != -1 && log_buflen != sizeof(log_buffer)-1 )
-				WRITE( p_http_session->p_virtualhost->access_log_fd , log_buffer , log_buflen );
+				WRITE( p_http_session->p_virtual_host->access_log_fd , log_buffer , log_buflen );
 		}
 		
 		/* 如果有Keep-Alive则不关闭连接，等待下一个HTTP请求 */

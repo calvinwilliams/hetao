@@ -46,7 +46,7 @@ int OnReceivingForward( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 		{
 			ErrorLog( __FILE__ , __LINE__ , "ReceiveHttpResponseNonblock failed[%d] , errno[%d]" , nret , ERRNO );
 			
-			nret = FormatHttpResponseStartLine( abs(nret)/100 , p_http_session->http , 1 ) ;
+			nret = FormatHttpResponseStartLine( abs(nret)/100 , p_http_session->http , 1 , NULL ) ;
 			if( nret )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , ERRNO );

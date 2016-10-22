@@ -153,7 +153,7 @@ void SetHttpSessionUnused( struct HetaoEnv *p_env , struct HttpSession *p_http_s
 	}
 	CLOSESOCKET( p_http_session->netaddr.sock );
 	ResetHttpEnv( p_http_session->http );
-	p_http_session->p_virtualhost = NULL ;
+	p_http_session->p_virtual_host = NULL ;
 	
 	if( p_http_session->p_forward_server )
 	{

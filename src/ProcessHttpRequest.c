@@ -64,7 +64,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 #elif ( defined _WIN32 )
 #endif
 	
-	struct MimeType		*p_mimetype = NULL ;
+	struct MimeType		*p_mime_type = NULL ;
 	
 	char			pathfilename[ 1024 + 1 ] ;
 	int			pathfilename_len ;
@@ -89,9 +89,9 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 	}
 	
 	/* 如果文件类型为转发后端服务器 */
-	if( p_http_session->p_virtualhost->forward_rule[0]
-		&& p_http_session->http_uri.ext_filename_len == p_http_session->p_virtualhost->forward_type_len
-		&& MEMCMP( p_http_session->http_uri.ext_filename_base , == , p_http_session->p_virtualhost->forward_type , p_http_session->http_uri.ext_filename_len ) )
+	if( p_http_session->p_virtual_host->forward_rule[0]
+		&& p_http_session->http_uri.ext_filename_len == p_http_session->p_virtual_host->forward_type_len
+		&& MEMCMP( p_http_session->http_uri.ext_filename_base , == , p_http_session->p_virtual_host->forward_type , p_http_session->http_uri.ext_filename_len ) )
 	{
 		while(1)
 		{
@@ -220,10 +220,10 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 		int	index_filename_len = 0 ;
 		char	*index_filename = NULL ;
 		
-		if( p_http_session->p_virtualhost->index[0] == '\0' )
+		if( p_http_session->p_virtual_host->index[0] == '\0' )
 			return HTTP_NOT_FOUND;
 		
-		strcpy( index_copy , p_http_session->p_virtualhost->index );
+		strcpy( index_copy , p_http_session->p_virtual_host->index );
 		index_filename = strtok( index_copy , "," ) ;
 		while( index_filename )
 		{
@@ -238,14 +238,14 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 		}
 		if( index_filename == NULL )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "wwwroot[%s] dirname[%.*s] index[%s] failed , errno[%d]" , p_http_session->p_virtualhost->wwwroot , index_filename_len , index_filename , p_http_session->p_virtualhost->index , ERRNO );
+			ErrorLog( __FILE__ , __LINE__ , "wwwroot[%s] dirname[%.*s] index[%s] failed , errno[%d]" , p_http_session->p_virtual_host->wwwroot , index_filename_len , index_filename , p_http_session->p_virtual_host->index , ERRNO );
 			return HTTP_NOT_FOUND;
 		}
 	}
 	else
 	{
 		/* 先格式化响应头首行，用成功状态码 */
-		nret = FormatHttpResponseStartLine( HTTP_OK , p_http_session->http , 0 ) ;
+		nret = FormatHttpResponseStartLine( HTTP_OK , p_http_session->http , 0 , NULL ) ;
 		if( nret )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , ERRNO );
@@ -253,8 +253,8 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 		}
 		
 		/* 查询流类型 */
-		p_mimetype = QueryMimeTypeHashNode( p_env , p_http_session->http_uri.ext_filename_base , p_http_session->http_uri.ext_filename_len ) ;
-		if( p_mimetype == NULL )
+		p_mime_type = QueryMimeTypeHashNode( p_env , p_http_session->http_uri.ext_filename_base , p_http_session->http_uri.ext_filename_len ) ;
+		if( p_mime_type == NULL )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "QueryMimeTypeHashNode[%.*s] failed[%d]" , p_http_session->http_uri.ext_filename_len , p_http_session->http_uri.ext_filename_base , nret );
 			return HTTP_FORBIDDEN;
@@ -268,7 +268,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 			token_base = TokenHttpHeaderValue( token_base , & p_compress_algorithm , & compress_algorithm_len ) ;
 			if( p_compress_algorithm )
 			{
-				if( p_mimetype->compress_enable == 1 && compress_algorithm_len == 4 && STRNICMP( p_compress_algorithm , == , "gzip" , compress_algorithm_len ) )
+				if( p_mime_type->compress_enable == 1 && compress_algorithm_len == 4 && STRNICMP( p_compress_algorithm , == , "gzip" , compress_algorithm_len ) )
 				{
 					if( p_htmlcache_session->html_gzip_content == NULL )
 					{
@@ -297,7 +297,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 									"%s"
 									"\r\n"
 									, __HETAO_VERSION
-									, p_mimetype->mime
+									, p_mime_type->mime
 									, p_htmlcache_session->html_gzip_content_len
 									, CheckHttpKeepAlive(p_http_session->http)?"Connection: Keep-Alive\r\n":"" ) ;
 					if( nret )
@@ -322,7 +322,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 					
 					break;
 				}
-				else if( p_mimetype->compress_enable == 1 && compress_algorithm_len == 7 && STRNICMP( p_compress_algorithm , == , "deflate" , compress_algorithm_len ) )
+				else if( p_mime_type->compress_enable == 1 && compress_algorithm_len == 7 && STRNICMP( p_compress_algorithm , == , "deflate" , compress_algorithm_len ) )
 				{
 					if( p_htmlcache_session->html_deflate_content == NULL )
 					{
@@ -351,7 +351,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 									"%s"
 									"\r\n"
 									, __HETAO_VERSION
-									, p_mimetype->mime
+									, p_mime_type->mime
 									, p_htmlcache_session->html_deflate_content_len
 									, CheckHttpKeepAlive(p_http_session->http)?"Connection: Keep-Alive\r\n":"" ) ;
 					if( nret )
@@ -387,7 +387,7 @@ int ProcessHttpRequest( struct HetaoEnv *p_env , struct HttpSession *p_http_sess
 							"%s"
 							"\r\n"
 							, __HETAO_VERSION
-							, p_mimetype->mime
+							, p_mime_type->mime
 							, p_htmlcache_session->html_content_len
 							, CheckHttpKeepAlive(p_http_session->http)?"Connection: Keep-Alive\r\n":"" ) ;
 			if( nret )

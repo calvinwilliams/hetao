@@ -70,7 +70,7 @@ int HtmlCacheEventHander( struct HetaoEnv *p_env )
 
 #elif ( defined _WIN32 )
 
-int DirectoryWatcherEventHander( struct HetaoEnv *p_env , struct VirtualHost *p_virtualhost )
+int DirectoryWatcherEventHander( struct HetaoEnv *p_env , struct VirtualHost *p_virtual_host )
 {
 	FILE_NOTIFY_INFORMATION	*p_notify = NULL ;
 	char			filename[ MAX_PATH + 1 ] ;
@@ -79,7 +79,7 @@ int DirectoryWatcherEventHander( struct HetaoEnv *p_env , struct VirtualHost *p_
 	
 	int			nret = 0 ;
 	
-	p_notify = (FILE_NOTIFY_INFORMATION *)(p_virtualhost->directory_changes_buffer) ;
+	p_notify = (FILE_NOTIFY_INFORMATION *)(p_virtual_host->directory_changes_buffer) ;
 	while( p_notify )
 	{
 		memset( filename , 0x00 , sizeof(filename) );
@@ -88,7 +88,7 @@ int DirectoryWatcherEventHander( struct HetaoEnv *p_env , struct VirtualHost *p_
 		InfoLog( __FILE__ , __LINE__ , "directory changes event event action[%ld] filename[%s]" , p_notify->Action , filename );
 		
 		memset( pathfilename , 0x00 , sizeof(pathfilename) );
-		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/%s" , p_virtualhost->wwwroot , filename );
+		SNPRINTF( pathfilename , sizeof(pathfilename)-1 , "%s/%s" , p_virtual_host->wwwroot , filename );
 		
 		p_htmlcache_session = QueryHtmlCachePathfilenameTreeNode( p_env , pathfilename ) ;
 		if( p_htmlcache_session )

@@ -159,7 +159,7 @@ int MonitorProcess( void *pv )
 		}
 		SetHttpCloseExec( p_env->process_info_array[i].pipe[0] );
 		SetHttpCloseExec( p_env->process_info_array[i].pipe[1] );
-		DebugLog( __FILE__ , __LINE__ , "Create pipe #%d# #%d#" , p_env->process_info_array[i].pipe[0] , p_env->process_info_array[i].pipe[1] );
+		DebugLog( __FILE__ , __LINE__ , "create pipe #%d# #%d#" , p_env->process_info_array[i].pipe[0] , p_env->process_info_array[i].pipe[1] );
 		
 		/* 创建工作进程 */
 		p_env->p_this_process_info = p_env->process_info_array + i ;

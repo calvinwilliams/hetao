@@ -87,11 +87,23 @@ struct RewriteUri
 {
 	char			pattern[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].pattern ) ] ;
 	char			new_uri[ sizeof( ((hetao_conf*)0)->listen[0].website[0].rewrite[0].new_uri ) ] ;
+	
 	int			new_uri_len ;
 	
 	pcre			*pattern_re ;
 	
-	struct list_head	rewriteuri_node ;
+	struct list_head	rewrite_uri_node ;
+} ;
+
+/* 重定向域名结构 */
+struct RedirectDomain
+{
+	char			domain[ sizeof( ((hetao_conf*)0)->listen[0].website[0].redirect[0].domain ) ] ;
+	char			new_domain[ sizeof( ((hetao_conf*)0)->listen[0].website[0].redirect[0].new_domain ) ] ;
+	
+	int			domain_len ;
+	
+	struct hlist_node	redirect_domain_node ;
 } ;
 
 /* 转发服务器结构 */
@@ -136,7 +148,12 @@ struct VirtualHost
 	
 	SSL_CTX			*forward_ssl_ctx ;
 	
-	struct hlist_node	virtualhost_node ;
+	struct RedirectDomain	*p_redirect_domain_default ;
+	int			redirect_domain_hashsize ;
+	int			redirect_domain_count ;
+	struct hlist_head	*redirect_domain_hash ;
+	
+	struct hlist_node	virtual_host_node ;
 
 #if ( defined _WIN32 )
 	HANDLE			directory_changes_handler ;
@@ -164,10 +181,10 @@ struct ListenSession
 	
 	SSL_CTX			*ssl_ctx ;
 	
-	struct VirtualHost	*p_virtualhost_default ;
-	int			virtualhost_hashsize ;
-	int			virtualhost_count ;
-	struct hlist_head	*virtualhost_hash ;
+	struct VirtualHost	*p_virtual_host_default ;
+	int			virtual_host_hashsize ;
+	int			virtual_host_count ;
+	struct hlist_head	*virtual_host_hash ;
 	
 	struct list_head	list ;
 } ;
@@ -181,7 +198,7 @@ struct MimeType
 	
 	int			type_len ;
 	
-	struct hlist_node	mimetype_node ;
+	struct hlist_node	mime_type_node ;
 } ;
 
 /* HTTP通讯会话 */
@@ -202,7 +219,7 @@ struct HttpSession
 	
 	int			flag ;
 	struct NetAddress	netaddr ;
-	struct VirtualHost	*p_virtualhost ;
+	struct VirtualHost	*p_virtual_host ;
 	struct HttpUri		http_uri ;
 	struct HttpEnv		*http ;
 	struct HttpBuffer	*http_buf ;
@@ -337,8 +354,8 @@ struct HetaoEnv
 	LPFN_CONNECTEX		lpfnConnectEx ;
 #endif
 	
-	int			mimetype_hashsize ;
-	struct hlist_head	*mimetype_hash ;
+	int			mime_type_hashsize ;
+	struct hlist_head	*mime_type_hash ;
 	
 	struct DataSession	pipe_session ;
 	
@@ -373,8 +390,13 @@ extern char			*__HETAO_VERSION ;
 
 int InitVirtualHostHash( struct ListenSession *p_listen_session , int count );
 void CleanVirtualHostHash( struct ListenSession *p_listen_session );
-int PushVirtualHostHashNode( struct ListenSession *p_listen_session , struct VirtualHost *p_virtualhost );
+int PushVirtualHostHashNode( struct ListenSession *p_listen_session , struct VirtualHost *p_virtual_host );
 struct VirtualHost *QueryVirtualHostHashNode( struct ListenSession *p_listen_session , char *domain , int domain_len );
+
+int InitRedirectDomainHash( struct VirtualHost *p_virtual_host , int count );
+void CleanRedirectDomainHash( struct VirtualHost *p_virtual_host );
+int PushRedirectDomainHashNode( struct VirtualHost *p_virtual_host , struct RedirectDomain *p_redirect_domain );
+struct RedirectDomain *QueryRedirectDomainHashNode( struct VirtualHost *p_virtual_host , char *domain , int domain_len );
 
 int InitIpLimitsHash( struct HetaoEnv *p_env );
 void CleanIpLimitsHash( struct HetaoEnv *p_env );
@@ -410,17 +432,17 @@ int RegexReplaceString( pcre *pattern_re , char *uri , int uri_len , pcre *new_u
 
 int InitMimeTypeHash( struct HetaoEnv *p_env , hetao_conf *p_conf );
 void CleanMimeTypeHash( struct HetaoEnv *p_env );
-int PushMimeTypeHashNode( struct HetaoEnv *p_env , struct MimeType *p_mimetype );
+int PushMimeTypeHashNode( struct HetaoEnv *p_env , struct MimeType *p_mime_type );
 struct MimeType *QueryMimeTypeHashNode( struct HetaoEnv *p_env , char *type , int type_len );
 
-int AddLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
-void RemoveLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
-int UpdateLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
-struct ForwardServer *TravelMinLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server );
+int AddLeastConnectionCountTreeNode( struct VirtualHost *p_virtual_host , struct ForwardServer *p_forward_server );
+void RemoveLeastConnectionCountTreeNode( struct VirtualHost *p_virtual_host , struct ForwardServer *p_forward_server );
+int UpdateLeastConnectionCountTreeNode( struct VirtualHost *p_virtual_host , struct ForwardServer *p_forward_server );
+struct ForwardServer *TravelMinLeastConnectionCountTreeNode( struct VirtualHost *p_virtual_host , struct ForwardServer *p_forward_server );
 
 void FreeHtmlCacheSession( struct HtmlCacheSession *p_htmlcache_session , int free_flag );
 
-int DirectoryWatcherEventHander( struct HetaoEnv *p_env , struct VirtualHost *p_virtualhost );
+int DirectoryWatcherEventHander( struct HetaoEnv *p_env , struct VirtualHost *p_virtual_host );
 int HtmlCacheEventHander( struct HetaoEnv *p_env );
 
 void SetDefaultConfig( hetao_conf *p_conf );

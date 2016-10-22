@@ -15,9 +15,10 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 	struct ListenSession	*p_listen_session = NULL ;
 	struct NetAddress	*p_netaddr = NULL ;
 	
-	struct VirtualHost	*p_virtualhost = NULL ;
+	struct VirtualHost	*p_virtual_host = NULL ;
 	
 	struct RewriteUri	*p_rewrite_uri = NULL ;
+	struct RedirectDomain	*p_redirect_domain = NULL ;
 	const char		*error_desc = NULL ;
 	int			error_offset ;
 	
@@ -143,43 +144,43 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 			return -1;
 		}
 		
-		p_listen_session->virtualhost_count = 0 ;
+		p_listen_session->virtual_host_count = 0 ;
 		for( i = 0 ; i < p_conf->listen[k]._website_count ; i++ )
 		{
 			if( p_conf->listen[k].website[i].wwwroot[0] == '\0' )
 				continue;
 			
-			p_virtualhost = (struct VirtualHost *)malloc( sizeof(struct VirtualHost) ) ;
-			if( p_virtualhost == NULL )
+			p_virtual_host = (struct VirtualHost *)malloc( sizeof(struct VirtualHost) ) ;
+			if( p_virtual_host == NULL )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 				return -1;
 			}
-			memset( p_virtualhost , 0x00 , sizeof(struct VirtualHost) );
-			p_virtualhost->type = DATASESSION_TYPE_HTMLCACHE ;
-			strncpy( p_virtualhost->domain , p_conf->listen[k].website[i].domain , sizeof(p_virtualhost->domain)-1 );
-			p_virtualhost->domain_len = strlen(p_virtualhost->domain) ;
-			strncpy( p_virtualhost->wwwroot , p_conf->listen[k].website[i].wwwroot , sizeof(p_virtualhost->wwwroot)-1 );
-			strncpy( p_virtualhost->index , p_conf->listen[k].website[i].index , sizeof(p_virtualhost->index)-1 );
-			strncpy( p_virtualhost->access_log , p_conf->listen[k].website[i].access_log , sizeof(p_virtualhost->access_log)-1 );
-			if(  p_virtualhost->access_log[0] )
+			memset( p_virtual_host , 0x00 , sizeof(struct VirtualHost) );
+			p_virtual_host->type = DATASESSION_TYPE_HTMLCACHE ;
+			strncpy( p_virtual_host->domain , p_conf->listen[k].website[i].domain , sizeof(p_virtual_host->domain)-1 );
+			p_virtual_host->domain_len = strlen(p_virtual_host->domain) ;
+			strncpy( p_virtual_host->wwwroot , p_conf->listen[k].website[i].wwwroot , sizeof(p_virtual_host->wwwroot)-1 );
+			strncpy( p_virtual_host->index , p_conf->listen[k].website[i].index , sizeof(p_virtual_host->index)-1 );
+			strncpy( p_virtual_host->access_log , p_conf->listen[k].website[i].access_log , sizeof(p_virtual_host->access_log)-1 );
+			if(  p_virtual_host->access_log[0] )
 			{
-				p_virtualhost->access_log_fd = OPEN( p_virtualhost->access_log , O_CREAT_WRONLY_APPEND ) ;
-				if( p_virtualhost->access_log_fd == -1 )
+				p_virtual_host->access_log_fd = OPEN( p_virtual_host->access_log , O_CREAT_WRONLY_APPEND ) ;
+				if( p_virtual_host->access_log_fd == -1 )
 				{
-					ErrorLog( __FILE__ , __LINE__ , "open access log[%s] failed , errno[%d]" , p_virtualhost->access_log , ERRNO );
+					ErrorLog( __FILE__ , __LINE__ , "open access log[%s] failed , errno[%d]" , p_virtual_host->access_log , ERRNO );
 					return -1;
 				}
-				SetHttpCloseExec( p_virtualhost->access_log_fd );
+				SetHttpCloseExec( p_virtual_host->access_log_fd );
 			}
 			else
 			{
-				p_virtualhost->access_log_fd = -1 ;
+				p_virtual_host->access_log_fd = -1 ;
 			}
 			
 			/* 创建rewrite链表 */
-			memset( & (p_virtualhost->rewrite_uri_list) , 0x00 , sizeof(struct RewriteUri) );
-			INIT_LIST_HEAD( & (p_virtualhost->rewrite_uri_list.rewriteuri_node) );
+			memset( & (p_virtual_host->rewrite_uri_list) , 0x00 , sizeof(struct RewriteUri) );
+			INIT_LIST_HEAD( & (p_virtual_host->rewrite_uri_list.rewrite_uri_node) );
 			
 			if( p_conf->listen[k].website[i]._rewrite_count > 0 && p_env->new_uri_re == NULL )
 			{
@@ -222,14 +223,57 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 					return -1;
 				}
 				
-				list_add_tail( & (p_rewrite_uri->rewriteuri_node) , & (p_virtualhost->rewrite_uri_list.rewriteuri_node) );
+				list_add_tail( & (p_rewrite_uri->rewrite_uri_node) , & (p_virtual_host->rewrite_uri_list.rewrite_uri_node) );
 				DebugLog( __FILE__ , __LINE__ , "add rewrite[%s][%s]" , p_rewrite_uri->pattern , p_rewrite_uri->new_uri );
 			}
 			
+			/* 注册所有重定向域名 */
+			nret = InitRedirectDomainHash( p_virtual_host , p_conf->listen[k].website[i]._redirect_count ) ;
+			if( nret )
+			{
+				ErrorLog( __FILE__ , __LINE__ , "InitRedirectDomainHash failed[%d]" , nret );
+				return -1;
+			}
+			
+			for( j = 0 ; j < p_conf->listen[k].website[i]._redirect_count ; j++ )
+			{
+				if( p_conf->listen[k].website[i].redirect[j].new_domain[0] == '\0' )
+				{
+					ErrorLog( __FILE__ , __LINE__ , "redirect domain invalid , domain[%s] new_domain[%s]" , p_conf->listen[k].website[i].redirect[j].domain , p_conf->listen[k].website[i].redirect[j].new_domain );
+					return -1;
+				}
+				
+				p_redirect_domain = (struct RedirectDomain *)malloc( sizeof(struct RedirectDomain) ) ;
+				if( p_redirect_domain == NULL )
+				{
+					ErrorLog( __FILE__ , __LINE__ , "malloc failed[%d] , errno[%d]" , ERRNO );
+					return -1;
+				}
+				memset( p_redirect_domain , 0x00 , sizeof(struct RedirectDomain) );
+				
+				strcpy( p_redirect_domain->domain , p_conf->listen[k].website[i].redirect[j].domain );
+				strcpy( p_redirect_domain->new_domain , p_conf->listen[k].website[i].redirect[j].new_domain );
+				p_redirect_domain->domain_len = strlen( p_redirect_domain->domain ) ;
+				
+				nret = PushRedirectDomainHashNode( p_virtual_host , p_redirect_domain ) ;
+				if( nret )
+				{
+					ErrorLog( __FILE__ , __LINE__ , "PushRedirectDomainHashNode[%s][%s] failed[%d] , errno[%d]" , p_redirect_domain->domain , p_redirect_domain->new_domain , nret , ERRNO );
+					return -1;
+				}
+				else
+				{
+					DebugLog( __FILE__ , __LINE__ , "add redirect[%s][%s]" , p_redirect_domain->domain , p_redirect_domain->new_domain );
+				}
+				
+				if( p_redirect_domain->domain[0] == '\0' && p_virtual_host->p_redirect_domain_default == NULL )
+					p_virtual_host->p_redirect_domain_default = p_redirect_domain ;
+			}
+			
 			/* 创建反向代理链表 */
-			strncpy( p_virtualhost->forward_type , p_conf->listen[k].website[i].forward.forward_type , sizeof(p_virtualhost->forward_type)-1 );
-			p_virtualhost->forward_type_len = strlen(p_virtualhost->forward_type) ;
-			strncpy( p_virtualhost->forward_rule , p_conf->listen[k].website[i].forward.forward_rule , sizeof(p_virtualhost->forward_rule)-1 );
+			strncpy( p_virtual_host->forward_type , p_conf->listen[k].website[i].forward.forward_type , sizeof(p_virtual_host->forward_type)-1 );
+			p_virtual_host->forward_type_len = strlen(p_virtual_host->forward_type) ;
+			strncpy( p_virtual_host->forward_rule , p_conf->listen[k].website[i].forward.forward_rule , sizeof(p_virtual_host->forward_rule)-1 );
 			
 			if( p_conf->listen[k].website[i].forward.ssl.certificate_file[0] )
 			{
@@ -241,14 +285,14 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 					p_env->init_ssl_env_flag = 1 ;
 				}
 				
-				p_virtualhost->forward_ssl_ctx = SSL_CTX_new( SSLv23_method() ) ;
-				if( p_virtualhost->forward_ssl_ctx == NULL )
+				p_virtual_host->forward_ssl_ctx = SSL_CTX_new( SSLv23_method() ) ;
+				if( p_virtual_host->forward_ssl_ctx == NULL )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_new failed , errno[%d]" , ERRNO );
 					return -1;
 				}
 				
-				nret = SSL_CTX_use_certificate_file( p_virtualhost->forward_ssl_ctx , p_conf->listen[k].website[i].forward.ssl.certificate_file , SSL_FILETYPE_PEM ) ;
+				nret = SSL_CTX_use_certificate_file( p_virtual_host->forward_ssl_ctx , p_conf->listen[k].website[i].forward.ssl.certificate_file , SSL_FILETYPE_PEM ) ;
 				if( nret <= 0 )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "SSL_CTX_use_certificate_file failed , errno[%d]" , ERRNO );
@@ -260,10 +304,10 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 				}
 			}
 			
-			INIT_LIST_HEAD( & (p_virtualhost->roundrobin_list.roundrobin_node) );
+			INIT_LIST_HEAD( & (p_virtual_host->roundrobin_list.roundrobin_node) );
 			
 			/* 注册反向代理应用服务器 */
-			if( p_virtualhost->forward_rule[0] && p_conf->listen[k].website[i].forward._forward_server_count > 0 )
+			if( p_virtual_host->forward_rule[0] && p_conf->listen[k].website[i].forward._forward_server_count > 0 )
 			{
 				struct ForwardServer	*p_forward_server = NULL ;
 				
@@ -280,26 +324,26 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 					p_forward_server->netaddr.port = p_conf->listen[k].website[i].forward.forward_server[j].port ;
 					SETNETADDRESS( p_forward_server->netaddr )
 					
-					list_add_tail( & (p_forward_server->roundrobin_node) , & (p_virtualhost->roundrobin_list.roundrobin_node) );
-					AddLeastConnectionCountTreeNode( p_virtualhost , p_forward_server );
+					list_add_tail( & (p_forward_server->roundrobin_node) , & (p_virtual_host->roundrobin_list.roundrobin_node) );
+					AddLeastConnectionCountTreeNode( p_virtual_host , p_forward_server );
 				}
 			}
 			
-			nret = PushVirtualHostHashNode( p_listen_session , p_virtualhost ) ;
+			nret = PushVirtualHostHashNode( p_listen_session , p_virtual_host ) ;
 			if( nret )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "PushVirtualHostHashNode[%s][%s] failed[%d] , errno[%d]" , p_virtualhost->domain , p_virtualhost->wwwroot , nret , ERRNO );
+				ErrorLog( __FILE__ , __LINE__ , "PushVirtualHostHashNode[%s][%s] failed[%d] , errno[%d]" , p_virtual_host->domain , p_virtual_host->wwwroot , nret , ERRNO );
 				return -1;
 			}
 			else
 			{
-				DebugLog( __FILE__ , __LINE__ , "PushVirtualHostHashNode[%s][%s] ok" , p_virtualhost->domain , p_virtualhost->wwwroot , nret );
+				DebugLog( __FILE__ , __LINE__ , "add virtual host[%s] wwwroot[%s]" , p_virtual_host->domain , p_virtual_host->wwwroot , nret );
 			}
 			
-			if( p_virtualhost->domain[0] == '\0' && p_listen_session->p_virtualhost_default == NULL )
-				p_listen_session->p_virtualhost_default = p_virtualhost ;
+			if( p_virtual_host->domain[0] == '\0' && p_listen_session->p_virtual_host_default == NULL )
+				p_listen_session->p_virtual_host_default = p_virtual_host ;
 			
-			p_listen_session->virtualhost_count++;
+			p_listen_session->virtual_host_count++;
 		}
 	}
 	

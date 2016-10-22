@@ -91,7 +91,7 @@ STRUCT	hetao_conf
 		{
 			STRING	50	type
 			STRING	100	mime
-			CHAR	1	compress_enable
+			INT	1	compress_enable
 		}
 	}
 }

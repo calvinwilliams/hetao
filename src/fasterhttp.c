@@ -1423,14 +1423,14 @@ int ResponseAllHttp( SOCKET sock , SSL *ssl , struct HttpEnv *e , funcProcessHtt
 				return nret;
 		}
 		
-		nret = FormatHttpResponseStartLine( HTTP_OK , e , 0 ) ;
+		nret = FormatHttpResponseStartLine( HTTP_OK , e , 0 , NULL ) ;
 		if( nret )
 			return nret;
 		
 		nret = pfuncProcessHttpRequest( e , p ) ;
 		if( nret != HTTP_OK )
 		{
-			nret = FormatHttpResponseStartLine( abs(nret)/1000 , e , 1 ) ;
+			nret = FormatHttpResponseStartLine( abs(nret)/1000 , e , 1 , NULL ) ;
 			if( nret )
 				return nret;
 		}
@@ -1809,7 +1809,7 @@ int ReceiveHttpRequest( SOCKET sock , SSL *ssl , struct HttpEnv *e )
 
 static struct HttpBuffer	__fasterhttp_status_code_httpbuf ;
 
-int FormatHttpResponseStartLine( int status_code , struct HttpEnv *e , int fill_body_with_status_flag )
+int FormatHttpResponseStartLine( int status_code , struct HttpEnv *e , int fill_body_with_status_flag , char *format , ... )
 {
 	struct HttpBuffer	*b = GetHttpResponseBuffer(e) ;
 	
@@ -1950,8 +1950,17 @@ int FormatHttpResponseStartLine( int status_code , struct HttpEnv *e , int fill_
 	if( nret )
 		return nret;
 	
-	GetHttpStatus( status_code , &p_status_code_s , &p_status_text );
+	if( format )
+	{
+		va_list		valist ;
+		va_start( valist , format );
+		nret = StrcatvHttpBuffer( b , format , valist ) ;
+		va_end( valist );
+		if( nret )
+			return nret;
+	}
 	
+	GetHttpStatus( status_code , &p_status_code_s , &p_status_text );
 	memset( & __fasterhttp_status_code_httpbuf , 0x00 , sizeof(__fasterhttp_status_code_httpbuf) );
 	__fasterhttp_status_code_httpbuf.base = p_status_code_s ;
 	e->headers.STATUSCODE.p_buffer = &__fasterhttp_status_code_httpbuf ;
@@ -2228,6 +2237,25 @@ int CheckHttpKeepAlive( struct HttpEnv *e )
 		return 1;
 	else
 		return 0;
+}
+
+void SetHttpKeepAlive( struct HttpEnv *e , char keepalive )
+{
+	if( keepalive )
+	{
+		e->headers.connection__keepalive = 1 ;
+	}
+	else
+	{
+		if( e->headers.version == HTTP_VERSION_1_0_N )
+			e->headers.connection__keepalive = 0 ;
+		else if( e->headers.version == HTTP_VERSION_1_1_N )
+			e->headers.connection__keepalive = -1 ;
+		else
+			e->headers.connection__keepalive = 0 ;
+	}
+	
+	return;
 }
 
 int ParseHttpResponse( struct HttpEnv *e )

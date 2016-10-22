@@ -8,13 +8,13 @@
 
 #include "hetao_in.h"
 
-int AddLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server )
+int AddLeastConnectionCountTreeNode( struct VirtualHost *p_virtual_host , struct ForwardServer *p_forward_server )
 {
         struct rb_node		**pp_new_node = NULL ;
         struct rb_node		*p_parent = NULL ;
         struct ForwardServer	*p = NULL ;
 	
-	pp_new_node = & (p_virtualhost->leastconnection_rbtree.rb_node) ;
+	pp_new_node = & (p_virtual_host->leastconnection_rbtree.rb_node) ;
         while( *pp_new_node )
         {
                 p = container_of( *pp_new_node , struct ForwardServer , leastconnection_rbnode ) ;
@@ -30,35 +30,35 @@ int AddLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct 
         }
 	
         rb_link_node( & (p_forward_server->leastconnection_rbnode) , p_parent , pp_new_node );
-        rb_insert_color( & (p_forward_server->leastconnection_rbnode) , & (p_virtualhost->leastconnection_rbtree) );
+        rb_insert_color( & (p_forward_server->leastconnection_rbnode) , & (p_virtual_host->leastconnection_rbtree) );
 	
 	return 0;
 }
 
-void RemoveLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server )
+void RemoveLeastConnectionCountTreeNode( struct VirtualHost *p_virtual_host , struct ForwardServer *p_forward_server )
 {
-	rb_erase( & (p_forward_server->leastconnection_rbnode) , & (p_virtualhost->leastconnection_rbtree) );
+	rb_erase( & (p_forward_server->leastconnection_rbnode) , & (p_virtual_host->leastconnection_rbtree) );
 	return;
 }
 
-int UpdateLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server )
+int UpdateLeastConnectionCountTreeNode( struct VirtualHost *p_virtual_host , struct ForwardServer *p_forward_server )
 {
 	int		nret = 0 ;
 	
-	RemoveLeastConnectionCountTreeNode( p_virtualhost , p_forward_server );
+	RemoveLeastConnectionCountTreeNode( p_virtual_host , p_forward_server );
 	
-	nret = AddLeastConnectionCountTreeNode( p_virtualhost , p_forward_server ) ;
+	nret = AddLeastConnectionCountTreeNode( p_virtual_host , p_forward_server ) ;
 	
 	return nret;
 }
 
-struct ForwardServer *TravelMinLeastConnectionCountTreeNode( struct VirtualHost *p_virtualhost , struct ForwardServer *p_forward_server )
+struct ForwardServer *TravelMinLeastConnectionCountTreeNode( struct VirtualHost *p_virtual_host , struct ForwardServer *p_forward_server )
 {
 	struct rb_node		*p_curr = NULL ;
 	
 	if( p_forward_server == NULL )
 	{
-		p_curr = rb_first( & (p_virtualhost->leastconnection_rbtree) ); 
+		p_curr = rb_first( & (p_virtual_host->leastconnection_rbtree) ); 
 		if (p_curr == NULL)
 			return NULL;
 	}

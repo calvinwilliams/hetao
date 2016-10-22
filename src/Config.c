@@ -10,8 +10,8 @@
 
 struct HetaoEnv	*g_p_env = NULL ;
 
-char	__HETAO_VERSION_0_10_2[] = "0.10.2" ;
-char	*__HETAO_VERSION = __HETAO_VERSION_0_10_2 ;
+char	__HETAO_VERSION_0_11_0[] = "0.11.0" ;
+char	*__HETAO_VERSION = __HETAO_VERSION_0_11_0 ;
 
 char *strndup(const char *s, size_t n);
 
@@ -45,139 +45,139 @@ void AppendDefaultConfig( hetao_conf *p_conf )
 	{
 		strcpy( p_conf->mime_types.mime_type[0].type , "html htm shtml" );
 		strcpy( p_conf->mime_types.mime_type[0].mime , "text/html" );
-		p_conf->mime_types.mime_type[0].compress_enable = '1' ;
+		p_conf->mime_types.mime_type[0].compress_enable = 1 ;
 		strcpy( p_conf->mime_types.mime_type[1].type , "css" );
 		strcpy( p_conf->mime_types.mime_type[1].mime , "text/css" );
-		p_conf->mime_types.mime_type[1].compress_enable = '1' ;
+		p_conf->mime_types.mime_type[1].compress_enable = 1 ;
 		strcpy( p_conf->mime_types.mime_type[2].type , "xml" );
 		strcpy( p_conf->mime_types.mime_type[2].mime , "text/xml" );
-		p_conf->mime_types.mime_type[2].compress_enable = '1' ;
+		p_conf->mime_types.mime_type[2].compress_enable = 1 ;
 		strcpy( p_conf->mime_types.mime_type[3].type , "txt" );
 		strcpy( p_conf->mime_types.mime_type[3].mime , "text/plain" );
-		p_conf->mime_types.mime_type[3].compress_enable = '1' ;
+		p_conf->mime_types.mime_type[3].compress_enable = 1 ;
 		strcpy( p_conf->mime_types.mime_type[4].type , "gif" );
 		strcpy( p_conf->mime_types.mime_type[4].mime , "image/gif" );
-		p_conf->mime_types.mime_type[4].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[4].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[5].type , "jpeg jpg" );
 		strcpy( p_conf->mime_types.mime_type[5].mime , "image/jpeg" );
-		p_conf->mime_types.mime_type[5].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[5].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[6].type , "png" );
 		strcpy( p_conf->mime_types.mime_type[6].mime , "image/png" );
-		p_conf->mime_types.mime_type[6].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[6].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[7].type , "tif tiff" );
 		strcpy( p_conf->mime_types.mime_type[7].mime , "image/tiff" );
-		p_conf->mime_types.mime_type[7].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[7].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[8].type , "ico" );
 		strcpy( p_conf->mime_types.mime_type[8].mime , "image/x-ico" );
-		p_conf->mime_types.mime_type[8].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[8].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[9].type , "jng" );
 		strcpy( p_conf->mime_types.mime_type[9].mime , "image/x-jng" );
-		p_conf->mime_types.mime_type[9].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[9].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[10].type , "bmp" );
 		strcpy( p_conf->mime_types.mime_type[10].mime , "image/x-ms-bmp" );
-		p_conf->mime_types.mime_type[10].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[10].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[11].type , "svg svgz" );
 		strcpy( p_conf->mime_types.mime_type[11].mime , "image/svg+xml" );
-		p_conf->mime_types.mime_type[11].compress_enable = '1' ;
+		p_conf->mime_types.mime_type[11].compress_enable = 1 ;
 		strcpy( p_conf->mime_types.mime_type[12].type , "jar war ear" );
 		strcpy( p_conf->mime_types.mime_type[12].mime , "application/java-archive" );
-		p_conf->mime_types.mime_type[12].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[12].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[13].type , "json" );
 		strcpy( p_conf->mime_types.mime_type[13].mime , "application/json" );
-		p_conf->mime_types.mime_type[13].compress_enable = '1' ;
+		p_conf->mime_types.mime_type[13].compress_enable = 1 ;
 		strcpy( p_conf->mime_types.mime_type[14].type , "doc" );
 		strcpy( p_conf->mime_types.mime_type[14].mime , "application/msword" );
-		p_conf->mime_types.mime_type[14].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[14].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[15].type , "pdf" );
 		strcpy( p_conf->mime_types.mime_type[15].mime , "application/pdf" );
-		p_conf->mime_types.mime_type[15].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[15].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[16].type , "rtf" );
 		strcpy( p_conf->mime_types.mime_type[16].mime , "application/rtf" );
-		p_conf->mime_types.mime_type[16].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[16].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[17].type , "xls" );
 		strcpy( p_conf->mime_types.mime_type[17].mime , "application/vnd.ms-excel" );
-		p_conf->mime_types.mime_type[17].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[17].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[18].type , "ppt" );
 		strcpy( p_conf->mime_types.mime_type[18].mime , "application/vnd.ms-powerpoint" );
-		p_conf->mime_types.mime_type[18].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[18].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[19].type , "7z" );
 		strcpy( p_conf->mime_types.mime_type[19].mime , "application/x-7z-compressed" );
-		p_conf->mime_types.mime_type[19].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[19].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[20].type , "rar" );
 		strcpy( p_conf->mime_types.mime_type[20].mime , "application/x-rar-compressed" );
-		p_conf->mime_types.mime_type[20].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[20].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[21].type , "swf" );
 		strcpy( p_conf->mime_types.mime_type[21].mime , "application/x-shockwave-flas" );
-		p_conf->mime_types.mime_type[21].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[21].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[22].type , "xhtml" );
 		strcpy( p_conf->mime_types.mime_type[22].mime , "application/xhtml+xml" );
-		p_conf->mime_types.mime_type[22].compress_enable = '1' ;
+		p_conf->mime_types.mime_type[22].compress_enable = 1 ;
 		strcpy( p_conf->mime_types.mime_type[23].type , "bin exe dll iso img msi msp msm" );
 		strcpy( p_conf->mime_types.mime_type[23].mime , "application/octet-stream" );
-		p_conf->mime_types.mime_type[23].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[23].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[24].type , "zip" );
 		strcpy( p_conf->mime_types.mime_type[24].mime , "application/zip" );
-		p_conf->mime_types.mime_type[24].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[24].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[25].type , "docx" );
 		strcpy( p_conf->mime_types.mime_type[25].mime , "application/vnd.openxmlformats-officedocument.wordprocessingml.document" );
-		p_conf->mime_types.mime_type[25].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[25].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[26].type , "xlsx" );
 		strcpy( p_conf->mime_types.mime_type[26].mime , "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" );
-		p_conf->mime_types.mime_type[26].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[26].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[27].type , "pptx" );
 		strcpy( p_conf->mime_types.mime_type[27].mime , "application/vnd.openxmlformats-officedocument.presentationml.presentation" );
-		p_conf->mime_types.mime_type[27].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[27].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[28].type , "mid midi kar" );
 		strcpy( p_conf->mime_types.mime_type[28].mime , "audio/midi" );
-		p_conf->mime_types.mime_type[28].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[28].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[29].type , "mp3" );
 		strcpy( p_conf->mime_types.mime_type[29].mime , "audio/mpeg" );
-		p_conf->mime_types.mime_type[29].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[29].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[30].type , "ogg" );
 		strcpy( p_conf->mime_types.mime_type[30].mime , "audio/ogg" );
-		p_conf->mime_types.mime_type[30].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[30].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[31].type , "m4a" );
 		strcpy( p_conf->mime_types.mime_type[31].mime , "audio/x-m4a" );
-		p_conf->mime_types.mime_type[31].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[31].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[32].type , "ra" );
 		strcpy( p_conf->mime_types.mime_type[32].mime , "audio/x-realaudio" );
-		p_conf->mime_types.mime_type[32].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[32].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[33].type , "3gpp 3gp" );
 		strcpy( p_conf->mime_types.mime_type[33].mime , "video/3gpp" );
-		p_conf->mime_types.mime_type[33].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[33].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[34].type , "ts" );
 		strcpy( p_conf->mime_types.mime_type[34].mime , "video/mp2t" );
-		p_conf->mime_types.mime_type[34].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[34].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[35].type , "mp4" );
 		strcpy( p_conf->mime_types.mime_type[35].mime , "video/mp4" );
-		p_conf->mime_types.mime_type[35].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[35].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[36].type , "mpeg mpg" );
 		strcpy( p_conf->mime_types.mime_type[36].mime , "video/mpeg" );
-		p_conf->mime_types.mime_type[36].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[36].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[37].type , "mov" );
 		strcpy( p_conf->mime_types.mime_type[37].mime , "video/quicktime" );
-		p_conf->mime_types.mime_type[37].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[37].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[38].type , "webm" );
 		strcpy( p_conf->mime_types.mime_type[38].mime , "video/webm" );
-		p_conf->mime_types.mime_type[38].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[38].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[39].type , "flv" );
 		strcpy( p_conf->mime_types.mime_type[39].mime , "video/x-flv" );
-		p_conf->mime_types.mime_type[39].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[39].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[40].type , "m4v" );
 		strcpy( p_conf->mime_types.mime_type[40].mime , "video/x-m4v" );
-		p_conf->mime_types.mime_type[40].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[40].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[41].type , "mng" );
 		strcpy( p_conf->mime_types.mime_type[41].mime , "video/x-mng" );
-		p_conf->mime_types.mime_type[41].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[41].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[42].type , "asx asf" );
 		strcpy( p_conf->mime_types.mime_type[42].mime , "video/x-ms-asf" );
-		p_conf->mime_types.mime_type[42].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[42].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[43].type , "wmv" );
 		strcpy( p_conf->mime_types.mime_type[43].mime , "video/x-ms-wmv" );
-		p_conf->mime_types.mime_type[43].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[43].compress_enable = 0 ;
 		strcpy( p_conf->mime_types.mime_type[44].type , "avi" );
 		strcpy( p_conf->mime_types.mime_type[44].mime , "video/x-msvideo" );
-		p_conf->mime_types.mime_type[44].compress_enable = '0' ;
+		p_conf->mime_types.mime_type[44].compress_enable = 0 ;
 		p_conf->mime_types._mime_type_count = 45 ;
 	}
 	
@@ -277,6 +277,10 @@ static char *StrdupEntireFile( char *pathfilename , int *p_file_size )
 	struct stat	st ;
 	char		*p_file_content = NULL ;
 	FILE		*fp = NULL ;
+	
+	char		*p1 = NULL ;
+	char		*p2 = NULL ;
+	
 	int		nret = 0 ;
 	
 	nret = stat( pathfilename , & st ) ;
@@ -309,6 +313,42 @@ static char *StrdupEntireFile( char *pathfilename , int *p_file_size )
 	}
 	
 	fclose( fp );
+	
+	while(1)
+	{
+		p1 = strstr( p_file_content , "//" ) ;
+		if( p1 == NULL )
+			break;
+	
+		p2 = strchr( p1+2 , '\n' ) ;
+		if( p2 )
+		{
+			memset( p1 , ' ' , p2-p1+1 );
+		}
+		else
+		{
+			memset( p1 , ' ' , strlen(p1) );
+		}
+	}
+	
+	while(1)
+	{
+		p1 = strstr( p_file_content , "/*" ) ;
+		if( p1 == NULL )
+			break;
+	
+		p2 = strstr( p1+2 , "*/" ) ;
+		if( p2 )
+		{
+			memset( p1 , ' ' , p2-p1+1+1 );
+		}
+		else
+		{
+			ErrorLog( __FILE__ , __LINE__ , "[%s] invalid" , pathfilename );
+			free( p_file_content );
+			return NULL;
+		}
+	}
 	
 	if( p_file_size )
 		(*p_file_size) = (int)(st.st_size) ;

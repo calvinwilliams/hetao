@@ -10,12 +10,14 @@
 
 int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_session )
 {
-#if ( defined __linux ) || ( defined __unix )
-	struct epoll_event	event ;
-	
-	struct HttpBuffer	*b = NULL ;
+	struct HttpBuffer	*request_buf = NULL ;
+	struct HttpBuffer	*response_buf = NULL ;
+	struct HttpBuffer	*append_buf = NULL ;
 	
 	int			nret = 0 ;
+	
+#if ( defined __linux ) || ( defined __unix )
+	struct epoll_event	event ;
 	
 	/* 收一把HTTP请求 */
 	nret = ReceiveHttpRequestNonblock( p_http_session->netaddr.sock , p_http_session->ssl , p_http_session->http ) ;
@@ -46,11 +48,8 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		}
 	}
 #elif ( defined _WIN32 )
-	struct HttpBuffer	*b = NULL ;
 	WSABUF			buf ;
 	DWORD			dwFlags ;
-	
-	int			nret = 0 ;
 	
 	/* 解析一把HTTP请求 */
 	nret = ParseHttpRequest( p_http_session->http ) ;
@@ -64,9 +63,9 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		/* 继续投递接收事件 */
 		if( p_http_session->ssl == NULL )
 		{
-			b = GetHttpRequestBuffer( p_http_session->http );
-			buf.buf = GetHttpBufferBase( b , NULL ) + GetHttpBufferLength( b ) ;
-			buf.len = GetHttpBufferSize( b ) - 1 - GetHttpBufferLength( b ) ;
+			request_buf = GetHttpRequestBuffer( p_http_session->http );
+			buf.buf = GetHttpBufferBase( request_buf , NULL ) + GetHttpBufferLength( request_buf ) ;
+			buf.len = GetHttpBufferSize( request_buf ) - 1 - GetHttpBufferLength( request_buf ) ;
 		}
 		else
 		{
@@ -119,31 +118,33 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		int			host_len ;
 		
 		struct RewriteUri	*p_rewrite_uri = NULL ;
+		struct RedirectDomain	*p_redirect_domain = NULL ;
 		char			*p_uri = NULL ;
 		char			uri[ 4096 + 1 ] ;
 		int			uri_len ;
 		
 		DebugLog( __FILE__ , __LINE__ , "ReceiveHttpRequestNonblock done" );
 		
-		b = GetHttpRequestBuffer(p_http_session->http) ;
-		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpRequestBuffer [%d]bytes" , GetHttpBufferLength(b) );
+		request_buf = GetHttpRequestBuffer(p_http_session->http) ;
+		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(request_buf,NULL) , GetHttpBufferLength(request_buf) , "HttpRequestBuffer [%d]bytes" , GetHttpBufferLength(request_buf) );
+		response_buf = GetHttpResponseBuffer(p_http_session->http) ;
 		
 		/* 查询虚拟主机 */
 		host = QueryHttpHeaderPtr( p_http_session->http , "Host" , & host_len ) ;
 		if( host == NULL )
 			host = "" , host_len = 0 ;
-		p_http_session->p_virtualhost = QueryVirtualHostHashNode( p_http_session->p_listen_session , host , host_len ) ;
-		if( p_http_session->p_virtualhost == NULL && p_http_session->p_listen_session->p_virtualhost_default )
+		p_http_session->p_virtual_host = QueryVirtualHostHashNode( p_http_session->p_listen_session , host , host_len ) ;
+		if( p_http_session->p_virtual_host == NULL && p_http_session->p_listen_session->p_virtual_host_default )
 		{
-			p_http_session->p_virtualhost = p_http_session->p_listen_session->p_virtualhost_default ;
+			p_http_session->p_virtual_host = p_http_session->p_listen_session->p_virtual_host_default ;
 		}
 		
 		/* 处理HTTP请求 */
-		if( p_http_session->p_virtualhost )
+		if( p_http_session->p_virtual_host )
 		{
-			DebugLog( __FILE__ , __LINE__ , "QueryVirtualHostHashNode[%.*s] ok , wwwroot[%s]" , host_len , host , p_http_session->p_virtualhost->wwwroot );
+			DebugLog( __FILE__ , __LINE__ , "QueryVirtualHostHashNode[%.*s] ok , wwwroot[%s]" , host_len , host , p_http_session->p_virtual_host->wwwroot );
 			
-			/* REWRITE */
+			/* 重写地址处理 */
 			if( p_env->new_uri_re == NULL )
 			{
 				p_uri = GetHttpHeaderPtr_URI(p_http_session->http,NULL) ;
@@ -152,7 +153,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 			else
 			{
 				p_uri = NULL ;
-				list_for_each_entry( p_rewrite_uri , & (p_http_session->p_virtualhost->rewrite_uri_list.rewriteuri_node) , struct RewriteUri , rewriteuri_node )
+				list_for_each_entry( p_rewrite_uri , & (p_http_session->p_virtual_host->rewrite_uri_list.rewrite_uri_node) , struct RewriteUri , rewrite_uri_node )
 				{
 					strcpy( uri , p_rewrite_uri->new_uri );
 					uri_len = p_rewrite_uri->new_uri_len ;
@@ -186,31 +187,52 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 				uri_len--;
 #endif
 			
-			/* 处理HTTP请求 */
-			nret = ProcessHttpRequest( p_env , p_http_session , p_http_session->p_virtualhost->wwwroot , p_uri , uri_len ) ;
-			if( nret == HTTP_OK )
+			/* 重定向域名处理 */
+			if( p_http_session->p_virtual_host->redirect_domain_count > 0 )
 			{
-				DebugLog( __FILE__ , __LINE__ , "ProcessHttpRequest ok" );
+				p_redirect_domain = QueryRedirectDomainHashNode( p_http_session->p_virtual_host , host , host_len ) ;
 			}
-			else if( nret > 0 )
+			if( p_redirect_domain == NULL && p_http_session->p_virtual_host->p_redirect_domain_default )
+				p_redirect_domain = p_http_session->p_virtual_host->p_redirect_domain_default ;
+			if( p_redirect_domain )
 			{
-				/* 格式化响应头和体，用出错状态码 */
-				nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 ) ;
+				nret = FormatHttpResponseStartLine( HTTP_MOVED_PERMANNETLY , p_http_session->http , 0 , "Location: %s" HTTP_RETURN_NEWLINE HTTP_RETURN_NEWLINE , p_redirect_domain->new_domain ) ;
 				if( nret )
 				{
 					ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , ERRNO );
 					return 1;
 				}
-			}
-			else if( nret == 0 )
-			{
-				DebugLog( __FILE__ , __LINE__ , "ProcessHttpRequest forward" );
-				return 0;
+				
+				SetHttpKeepAlive( p_http_session->http , 0 );
 			}
 			else
 			{
-				ErrorLog( __FILE__ , __LINE__ , "ProcessHttpRequest failed[%d]" , nret );
-				return nret;
+				/* 处理HTTP请求 */
+				nret = ProcessHttpRequest( p_env , p_http_session , p_http_session->p_virtual_host->wwwroot , p_uri , uri_len ) ;
+				if( nret == HTTP_OK )
+				{
+					DebugLog( __FILE__ , __LINE__ , "ProcessHttpRequest ok" );
+				}
+				else if( nret > 0 )
+				{
+					/* 格式化响应头和体，用出错状态码 */
+					nret = FormatHttpResponseStartLine( nret , p_http_session->http , 1 , NULL ) ;
+					if( nret )
+					{
+						ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , ERRNO );
+						return 1;
+					}
+				}
+				else if( nret == 0 )
+				{
+					DebugLog( __FILE__ , __LINE__ , "ProcessHttpRequest forward" );
+					return 0;
+				}
+				else
+				{
+					ErrorLog( __FILE__ , __LINE__ , "ProcessHttpRequest failed[%d]" , nret );
+					return nret;
+				}
 			}
 		}
 		else
@@ -218,7 +240,7 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 			DebugLog( __FILE__ , __LINE__ , "QueryVirtualHostHashNode[%.*s] not found" , host_len , host );
 			
 			/* 格式化响应头和体，用出错状态码 */
-			nret = FormatHttpResponseStartLine( HTTP_FORBIDDEN , p_http_session->http , 1 ) ;
+			nret = FormatHttpResponseStartLine( HTTP_FORBIDDEN , p_http_session->http , 1 , NULL ) ;
 			if( nret )
 			{
 				ErrorLog( __FILE__ , __LINE__ , "FormatHttpResponseStartLine failed[%d] , errno[%d]" , nret , ERRNO );
@@ -226,12 +248,11 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 			}
 		}
 		
-		b = GetHttpResponseBuffer(p_http_session->http) ;
-		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpResponseBuffer [%d]bytes" , GetHttpBufferLength(b) );
-		b = GetHttpAppendBuffer(p_http_session->http) ;
-		if( b )
+		DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(response_buf,NULL) , GetHttpBufferLength(response_buf) , "HttpResponseBuffer [%d]bytes" , GetHttpBufferLength(response_buf) );
+		append_buf = GetHttpAppendBuffer(p_http_session->http) ;
+		if( append_buf )
 		{
-			DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(b,NULL) , GetHttpBufferLength(b) , "HttpAppendBuffer [%d]bytes" , GetHttpBufferLength(b) );
+			DebugHexLog( __FILE__ , __LINE__ , GetHttpBufferBase(append_buf,NULL) , GetHttpBufferLength(append_buf) , "HttpAppendBuffer [%d]bytes" , GetHttpBufferLength(append_buf) );
 		}
 		
 #if ( defined __linux ) || ( defined __unix )
@@ -251,16 +272,16 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		/* 投递发送事件 */
 		if( p_http_session->ssl == NULL )
 		{
-			b = GetHttpResponseBuffer( p_http_session->http );
-			buf.buf = GetHttpBufferBase( b , NULL ) ;
-			buf.len = GetHttpBufferLength( b ) ;
+			response_buf = GetHttpResponseBuffer( p_http_session->http );
+			buf.buf = GetHttpBufferBase( response_buf , NULL ) ;
+			buf.len = GetHttpBufferLength( response_buf ) ;
 		}
 		else
 		{
-			b = GetHttpResponseBuffer( p_http_session->http );
-			SSL_write( p_http_session->ssl , GetHttpBufferBase( b , NULL ) , GetHttpBufferLength( b ) );
+			response_buf = GetHttpResponseBuffer( p_http_session->http );
+			SSL_write( p_http_session->ssl , GetHttpBufferBase( response_buf , NULL ) , GetHttpBufferLength( response_buf ) );
 			b = GetHttpAppendBuffer( p_http_session->http );
-			SSL_write( p_http_session->ssl , GetHttpBufferBase( b , NULL ) , GetHttpBufferLength( b ) );
+			SSL_write( p_http_session->ssl , GetHttpBufferBase( append_buf , NULL ) , GetHttpBufferLength( append_buf );
 			buf.buf = p_http_session->out_bio_buffer ;
 			buf.len = BIO_read( p_http_session->out_bio , p_http_session->out_bio_buffer , sizeof(p_http_session->out_bio_buffer)-1 ) ;
 		}
