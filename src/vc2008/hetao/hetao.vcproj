@@ -296,7 +296,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\RewriteUrl.c"
+				RelativePath="..\..\RedirectDomain.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\RewriteUri.c"
 				>
 			</File>
 			<File

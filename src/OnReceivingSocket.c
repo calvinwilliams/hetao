@@ -280,8 +280,8 @@ int OnReceivingSocket( struct HetaoEnv *p_env , struct HttpSession *p_http_sessi
 		{
 			response_buf = GetHttpResponseBuffer( p_http_session->http );
 			SSL_write( p_http_session->ssl , GetHttpBufferBase( response_buf , NULL ) , GetHttpBufferLength( response_buf ) );
-			b = GetHttpAppendBuffer( p_http_session->http );
-			SSL_write( p_http_session->ssl , GetHttpBufferBase( append_buf , NULL ) , GetHttpBufferLength( append_buf );
+			append_buf = GetHttpAppendBuffer( p_http_session->http );
+			SSL_write( p_http_session->ssl , GetHttpBufferBase( append_buf , NULL ) , GetHttpBufferLength( append_buf ) );
 			buf.buf = p_http_session->out_bio_buffer ;
 			buf.len = BIO_read( p_http_session->out_bio , p_http_session->out_bio_buffer , sizeof(p_http_session->out_bio_buffer)-1 ) ;
 		}

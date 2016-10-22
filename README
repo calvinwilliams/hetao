@@ -13,7 +13,8 @@ hetao功能：
 * 支持自适应gzip、deflate压缩
 * 支持HTTPS
 * 支持反向代理负载均衡（目前支持轮询、最少连接数算法），支持HTTP与HTTPS互转
-* 支持rewrite
+* 支持改写URI
+* 支持重定向域名
 * 支持优雅重启/重载配置，重启期间完全不中断对外服务
 * 支持工作进程绑定CPU
 * 支持进程崩溃后自动重启
@@ -31,6 +32,7 @@ hetao安全机制：
 * hetao配置文件采用JSON标准格式，简洁易写，而且支持行注释和块注释。Apache配置格式比较复杂，Nginx配置格式多变怪异且不支持块注释
 * hetao设计精炼，代码结构简洁易读，代码量小，易于改造
 * hetao是中国国产原创，作者可随时联系交流，中文资料较多
+* Linux版提供指定目录直接创建Web站点，WINDOWS版提供了右键目录直接创建Web站点，便于测试页面
 
 源码托管：
 http://git.oschina.net/calvinwilliams/hetao
