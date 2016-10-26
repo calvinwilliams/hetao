@@ -38,20 +38,32 @@ int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf )
 	{
 		DebugLog( __FILE__ , __LINE__ , "shmat[%ld] ok , [%ld]bytes" , p_env->process_info_shmid , sizeof(struct ProcessInfo) * p_conf->worker_processes );
 	}
+	memset( p_env->process_info_array , 0x00 , sizeof(struct ProcessInfo) * p_conf->worker_processes );
 #elif ( defined _WIN32 )
-	p_env->process_info_shmid = CreateFileMapping( INVALID_HANDLE_VALUE , NULL , PAGE_READWRITE , 0 , sizeof(struct ProcessInfo) * p_conf->worker_processes , NULL ) ;	
-	if( p_env->process_info_shmid == NULL )
+	if( GETENV(HETAO_PROCESS_INFO) == NULL )
 	{
-		ErrorLog( __FILE__ , __LINE__ , "CreateFileMapping failed , errno[%d]" , ERRNO );
-		return -1;
+		SECURITY_ATTRIBUTES	sa ;
+		memset( & sa , 0x00 , sizeof(SECURITY_ATTRIBUTES) );
+		sa.nLength = sizeof(SECURITY_ATTRIBUTES) ;
+		sa.bInheritHandle = TRUE ;
+		p_env->process_info_shmid = CreateFileMapping( INVALID_HANDLE_VALUE , & sa , PAGE_READWRITE , 0 , sizeof(struct ProcessInfo) , NULL ) ;	
+		if( p_env->process_info_shmid == NULL )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "CreateFileMapping failed , errno[%d]" , ERRNO );
+			return -1;
+		}
+		else
+		{
+			DebugLog( __FILE__ , __LINE__ , "CreateFileMapping ok[%ld]" , p_env->process_info_shmid );
+		}
 	}
 	else
 	{
-		DebugLog( __FILE__ , __LINE__ , "CreateFileMapping ok[%ld]" , p_env->process_info_shmid );
+		p_env->process_info_shmid = (HANDLE)( atoi(GETENV(HETAO_PROCESS_INFO)) ) ;
 	}
 	
-	p_env->process_info_array = MapViewOfFile( p_env->process_info_shmid , FILE_MAP_ALL_ACCESS , 0 , 0 , 0 );
-	if( p_env->process_info_array == NULL )
+	p_env->p_process_info = MapViewOfFile( p_env->process_info_shmid , FILE_MAP_ALL_ACCESS , 0 , 0 , 0 );
+	if( p_env->p_process_info == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "MapViewOfFile failed , errno[%d]" , ERRNO );
 		return -2;
@@ -60,8 +72,12 @@ int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf )
 	{
 		DebugLog( __FILE__ , __LINE__ , "MapViewOfFile[%ld] ok , [%ld]bytes" , p_env->process_info_shmid , sizeof(struct ProcessInfo) * p_conf->worker_processes );
 	}
+	
+	if( GETENV(HETAO_PROCESS_INFO) == NULL )
+	{
+		memset( p_env->p_process_info , 0x00 , sizeof(struct ProcessInfo) );
+	}
 #endif
-	memset( p_env->process_info_array , 0x00 , sizeof(struct ProcessInfo) * p_conf->worker_processes );
 	
 	/* 创建、注册流类型哈希表 */
 	nret = InitMimeTypeHash( p_env , p_conf ) ;
@@ -76,7 +92,6 @@ int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf )
 	INIT_LIST_HEAD( & (p_env->listen_session_list.list) );
 	p_env->listen_session_count = 0 ;
 	
-#if ( defined __linux ) || ( defined __unix )
 	/* 如果是优雅重启，从环境变量中获得上一辈侦听信息 */
 	nret = LoadOldListenSockets( & old_netaddr_array , & old_netaddr_array_count ) ;
 	if( nret )
@@ -84,8 +99,6 @@ int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf )
 		ErrorLog( __FILE__ , __LINE__ , "LoadOldListenSockets failed[%d] , errno[%d]" , nret , ERRNO );
 		return -1;
 	}
-#elif ( defined _WIN32 )
-#endif
 	
 	/* 创建所有侦听会话 */
 	nret = InitListenEnvirment( p_env , p_conf , old_netaddr_array , old_netaddr_array_count ) ;
@@ -95,11 +108,8 @@ int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf )
 		return -1;
 	}
 	
-#if ( defined __linux ) || ( defined __unix )
 	/* 清理上一辈侦听信息 */
 	CloseUnusedOldListeners( old_netaddr_array , old_netaddr_array_count );
-#elif ( defined _WIN32 )
-#endif
 	
 	/* 创建网页缓存会话链表首节点 */
 	memset( & (p_env->htmlcache_session_list) , 0x00 , sizeof(struct HtmlCacheSession) );
@@ -190,7 +200,7 @@ void CleanEnvirment( struct HetaoEnv *p_env )
 	shmdt( p_env->process_info_array );
 	shmctl( p_env->process_info_shmid , IPC_RMID , NULL );
 #elif ( defined _WIN32 )
-	UnmapViewOfFile( p_env->process_info_array );
+	UnmapViewOfFile( p_env->p_process_info );
 	CloseHandle( p_env->process_info_shmid );
 #endif
 	
@@ -200,8 +210,6 @@ void CleanEnvirment( struct HetaoEnv *p_env )
 	
 	return;
 }
-
-#if ( defined __linux ) || ( defined __unix )
 
 int SaveListenSockets( struct HetaoEnv *p_env )
 {
@@ -217,7 +225,7 @@ int SaveListenSockets( struct HetaoEnv *p_env )
 	memset( env_value , 0x00 , env_value_size );
 	
 	/* 先侦听信息数量 */
-	SNPRINTF( env_value , env_value_size-1 , "%d|" , p_env->listen_session_count );
+	SNPRINTF( env_value , env_value_size-1 , "%s=%d|" , HETAO_LISTEN_SOCKFDS , p_env->listen_session_count );
 	
 	list_for_each( p_curr , & (p_env->listen_session_list.list) )
 	{
@@ -228,8 +236,8 @@ int SaveListenSockets( struct HetaoEnv *p_env )
 	}
 	
 	/* 写入环境变量 */
-	InfoLog( __FILE__ , __LINE__ , "setenv[%s][%s]" , HETAO_LISTEN_SOCKFDS , env_value );
-	setenv( HETAO_LISTEN_SOCKFDS , env_value , 1 );
+	InfoLog( __FILE__ , __LINE__ , "putenv[%s]" , env_value );
+	PUTENV( env_value );
 	
 	free( env_value );
 	
@@ -247,7 +255,7 @@ int LoadOldListenSockets( struct NetAddress **pp_old_netaddr_array , int *p_old_
 	
 	int				nret = 0 ;
 	
-	p_env_value = getenv( HETAO_LISTEN_SOCKFDS ) ;
+	p_env_value = GETENV( HETAO_LISTEN_SOCKFDS ) ;
 	InfoLog( __FILE__ , __LINE__ , "getenv[%s][%s]" , HETAO_LISTEN_SOCKFDS , p_env_value );
 	if( p_env_value )
 	{
@@ -289,13 +297,17 @@ int LoadOldListenSockets( struct NetAddress **pp_old_netaddr_array , int *p_old_
 					nret = getsockname( p_old_netaddr->sock , (struct sockaddr *) & (p_old_netaddr->addr) , & addr_len ) ;
 					if( nret == -1 )
 					{
-						ErrorLog( __FILE__ , __LINE__ , "getsockname failed , errno[%d]" , ERRNO );
+						ErrorLog( __FILE__ , __LINE__ , "getsockname[%d] failed , errno[%d]" , p_old_netaddr->sock , ERRNO );
 						free( p_env_value );
 						return -1;
 					}
 					
 					p_old_netaddr->ip[sizeof(p_old_netaddr->ip)-1] = '\0' ;
+#if ( defined __linux ) || ( defined __unix )
 					inet_ntop( AF_INET , &(p_old_netaddr->addr) , p_old_netaddr->ip , sizeof(p_old_netaddr->ip) );
+#elif ( defined _WIN32 )
+					strncpy( p_old_netaddr->ip , inet_ntoa(p_old_netaddr->addr.sin_addr) , sizeof(p_old_netaddr->ip)-1 );
+#endif
 					p_old_netaddr->port = (int)ntohs( p_old_netaddr->addr.sin_port ) ;
 					
 					DebugLog( __FILE__ , __LINE__ , "load [%s:%d]#%d#" , p_old_netaddr->ip , p_old_netaddr->port , p_old_netaddr->sock );
@@ -342,7 +354,7 @@ int CloseUnusedOldListeners( struct NetAddress *p_old_netaddr_array , int old_ne
 		if( p_old_netaddr->ip[0] )
 		{
 			DebugLog( __FILE__ , __LINE__ , "close old #%d#" , p_old_netaddr->sock );
-			close( p_old_netaddr->sock );
+			CLOSESOCKET( p_old_netaddr->sock );
 		}
 	}
 	
@@ -351,4 +363,3 @@ int CloseUnusedOldListeners( struct NetAddress *p_old_netaddr_array , int old_ne
 	return 0;
 }
 
-#endif

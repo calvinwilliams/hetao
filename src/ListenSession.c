@@ -38,7 +38,6 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 		
 		list_add( & (p_listen_session->list) , & (p_env->listen_session_list.list) );
 		
-#if ( defined __linux ) || ( defined __unix )
 		p_netaddr = GetListener( old_netaddr_array , old_netaddr_array_count , p_conf->listen[k].ip , p_conf->listen[k].port ) ;
 		if( p_netaddr )
 		{
@@ -49,7 +48,6 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 		}
 		else
 		{
-#endif
 			/* 上一辈侦听信息中没有本次侦听相同地址，老老实实创建新的侦听端口 */
 #if ( defined __linux ) || ( defined __unix )
 			p_listen_session->netaddr.sock = socket( AF_INET , SOCK_STREAM , IPPROTO_TCP ) ;
@@ -78,7 +76,7 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 			nret = bind( p_listen_session->netaddr.sock , (struct sockaddr *) & (p_listen_session->netaddr.addr) , sizeof(struct sockaddr) ) ;
 			if( nret == -1 )
 			{
-				ErrorLog( __FILE__ , __LINE__ , "bind[%s:%d] failed , errno[%d]" , p_conf->listen[k].ip , p_conf->listen[k].port , ERRNO );
+				ErrorLog( __FILE__ , __LINE__ , "bind[%s:%d] failed , errno[%d]" , p_listen_session->netaddr.ip , p_listen_session->netaddr.port , ERRNO );
 				return -1;
 			}
 			
@@ -89,11 +87,9 @@ int InitListenEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf , struct Ne
 				return -1;
 			}
 			
-			DebugLog( __FILE__ , __LINE__ , "[%s:%d] listen #%d#" , p_conf->listen[k].ip , p_conf->listen[k].port , p_listen_session->netaddr.sock );
+			DebugLog( __FILE__ , __LINE__ , "[%s:%d] listen #%d#" , p_listen_session->netaddr.ip , p_conf->listen[k].port , p_listen_session->netaddr.sock );
 			p_env->listen_session_count++;
-#if ( defined __linux ) || ( defined __unix )
 		}
-#endif
 		
 		/* 创建SSL环境 */
 		if( p_conf->listen[k].ssl.certificate_file[0] )

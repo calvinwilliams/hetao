@@ -30,8 +30,7 @@ int main( int argc , char *argv[] )
 		p_env = (struct HetaoEnv *)malloc( sizeof(struct HetaoEnv) ) ;
 		if( p_env == NULL )
 		{
-			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
-				printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
+			printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
 			return 1;
 		}
 		memset( p_env , 0x00 , sizeof(struct HetaoEnv) );
@@ -42,8 +41,7 @@ int main( int argc , char *argv[] )
 		p_conf = (hetao_conf *)malloc( sizeof(hetao_conf) ) ;
 		if( p_conf == NULL )
 		{
-			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
-				printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
+			printf( "alloc failed[%d] , errno[%d]\n" , nret , errno );
 			free( p_env );
 			return 1;
 		}

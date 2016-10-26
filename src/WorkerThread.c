@@ -619,6 +619,12 @@ void *WorkerThread( void *pv )
 	struct VirtualHost	*p_virtual_host = NULL ;
 	DWORD			dwByteRet ;
 	
+	/*
+	char			*pReadPipe = NULL ;
+	char			*pWritePipe = NULL ;
+	char			szPipeBuffer[ 1 + 1 ] ;
+	*/
+	
 	struct HttpBuffer	*b = NULL ;
 	
 	int			nret = 0 ;
@@ -633,7 +639,7 @@ void *WorkerThread( void *pv )
 	InfoLog( __FILE__ , __LINE__ , "--- worker[%d] begin ---" , p_env->process_info_index );
 	
 	/* 创建完成端口 */
-	p_env->iocp = CreateIoCompletionPort( INVALID_HANDLE_VALUE, 0, 0, 0 ) ;
+	p_env->iocp = CreateIoCompletionPort( INVALID_HANDLE_VALUE , 0 , 0 , 0 ) ;
 	if( p_env->iocp == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
@@ -681,7 +687,7 @@ void *WorkerThread( void *pv )
 		hret = CreateIoCompletionPort( (HANDLE)(p_listen_session->netaddr.sock) , p_env->iocp , (DWORD)p_listen_session , 0 ) ;
 		if( hret == NULL )
 		{
-			ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
+			ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort[%d] failed , errno[%d]" , p_listen_session->netaddr.sock , ERRNO );
 			return NULL;
 		}
 		
@@ -728,6 +734,51 @@ void *WorkerThread( void *pv )
 			}
 		}
 	}
+	
+#if 0
+	pReadPipe = getenv( HETAO_READ_PIPE ) ;
+	if( pReadPipe )
+	{
+		DebugLog( __FILE__ , __LINE__ , "getenv[%s][%s]" , HETAO_READ_PIPE , pReadPipe );
+		
+		/* 投递管道事件 */
+		p_env->pipe_session.type = DATASESSION_TYPE_PIPE ;
+		hret = CreateIoCompletionPort( (HANDLE)atoi(pReadPipe) , p_env->iocp , (DWORD)&(p_env->pipe_session) , 0 ) ;
+		if( hret == NULL )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "CreateIoCompletionPort failed , errno[%d]" , ERRNO );
+			return NULL;
+		}
+		
+		memset( szPipeBuffer , 0x00 , sizeof(szPipeBuffer) );
+		memset( & (p_env->pipe_session.overlapped) , 0x00 , sizeof(p_env->pipe_session.overlapped) );
+		bret = ReadFile( (HANDLE)atoi(pReadPipe) , szPipeBuffer , 1 , NULL , & (p_env->pipe_session.overlapped) ) ;
+		if( bret != TRUE )
+		{
+			if( GetLastError() == ERROR_IO_PENDING )
+			{
+				DebugLog( __FILE__ , __LINE__ , "ReadFile pipe pending" );
+			}
+			else
+			{
+				ErrorLog( __FILE__ , __LINE__ , "ReadFile pipe failed , errno[%d]" , ERRNO );
+				return NULL;
+			}
+		}
+		else
+		{
+			InfoLog( __FILE__ , __LINE__ , "ReadFile pipe ok" );
+		}
+	}
+	
+	pWritePipe = getenv( HETAO_WRITE_PIPE ) ;
+	if( pWritePipe )
+	{
+		DebugLog( __FILE__ , __LINE__ , "getenv[%s][%s]" , HETAO_WRITE_PIPE , pWritePipe );
+		
+		CloseHandle( (HANDLE)atoi(pWritePipe) );
+	}
+#endif
 	
 	while( g_worker_exit_flag == 0 || p_env->http_session_used_count > 0 )
 	{

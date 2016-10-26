@@ -567,8 +567,6 @@ _DumpHexBuffer( stdout , b->process_ptr , len );
 		return FASTERHTTP_INFO_TCP_SEND_WOULDBLOCK;
 }
 
-#include "LOGC.h"
-
 static int ReceiveHttpBuffer( SOCKET sock , SSL *ssl , struct HttpEnv *e , struct HttpBuffer *b , int wait_flag )
 {
 	struct timeval	t1 , t2 ;

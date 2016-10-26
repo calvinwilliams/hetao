@@ -31,6 +31,8 @@ char *strndup (const char *s, size_t n);
 
 #define HETAO_LISTEN_SOCKFDS			"HETAO_LISTEN_SOCKFDS"	/* 环境变量名，用于优雅重启时传给下一辈侦听信息 */
 #define HETAO_LOG_PATHFILENAME			"HETAO_LOG_PATHFILENAME"	/* 环境变量名，用于优雅重启时传给下一辈日志文件名 */
+#define HETAO_READ_PIPE				"HETAO_READ_PIPE"	/* 环境变量名，用于优雅重启时传给下一辈读管道 */
+#define HETAO_PROCESS_INFO			"HETAO_PROCESS_INFO"	/* 环境变量名，用于优雅重启时传给下一辈的共享内存 */
 
 #define MAX_EPOLL_EVENTS			10000	/* 每次从epoll取回事件数量 */
 
@@ -301,18 +303,19 @@ struct IpLimits
 /* 工作进程共享信息结构 */
 struct ProcessInfo
 {
+#if ( defined __linux ) || ( defined __unix )
 	int			pipe[2] ;
 	
-#if ( defined __linux ) || ( defined __unix )
 	pid_t			pid ;
-#elif ( defined _WIN32 )
-	HANDLE			handle ;
-	STARTUPINFO		si ;
-	PROCESS_INFORMATION	pi ;
-#endif
 	
 	int			epoll_fd ;
 	int			epoll_nfds ;
+#elif ( defined _WIN32 )
+	DWORD			dwParentProcessId ;
+	HANDLE			hParentProcess ;
+	STARTUPINFO		si ;
+	PROCESS_INFORMATION	pi ;
+#endif
 } ;
 
 /* 主环境结构 */
@@ -342,11 +345,12 @@ struct HetaoEnv
 	
 #if ( defined __linux ) || ( defined __unix )
 	int			process_info_shmid ;
-#elif ( defined _WIN32 )
-	HANDLE			process_info_shmid ;
-#endif
 	struct ProcessInfo	*process_info_array ;
 	struct ProcessInfo	*p_this_process_info ;
+#elif ( defined _WIN32 )
+	HANDLE			process_info_shmid ;
+	struct ProcessInfo	*p_process_info ;
+#endif
 	int			process_info_index ;
 	
 #if ( defined _WIN32 )
