@@ -59,7 +59,7 @@ int main( int argc , char *argv[] )
 		p_env = (struct HetaoEnv *)malloc( sizeof(struct HetaoEnv) ) ;
 		if( p_env == NULL )
 		{
-			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
+			if( GETENV( HETAO_LISTEN_SOCKFDS ) == NULL )
 				printf( "alloc failed[%d] , errno[%d]\n" , nret , ERRNO );
 			return 1;
 		}
@@ -71,7 +71,7 @@ int main( int argc , char *argv[] )
 		p_conf = (hetao_conf *)malloc( sizeof(hetao_conf) ) ;
 		if( p_conf == NULL )
 		{
-			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
+			if( GETENV( HETAO_LISTEN_SOCKFDS ) == NULL )
 				printf( "alloc failed[%d] , errno[%d]\n" , nret , ERRNO );
 			return 1;
 		}
@@ -98,7 +98,7 @@ int main( int argc , char *argv[] )
 		nret = LoadConfig( p_env->config_pathfilename , p_conf , p_env ) ;
 		if( nret )
 		{
-			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
+			if( GETENV( HETAO_LISTEN_SOCKFDS ) == NULL )
 				printf( "LoadConfig failed[%d]\n" , nret );
 			free( p_conf );
 			free( p_env );
@@ -112,7 +112,7 @@ int main( int argc , char *argv[] )
 		nret = ConvertConfig( p_conf , p_env ) ;
 		if( nret )
 		{
-			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
+			if( GETENV( HETAO_LISTEN_SOCKFDS ) == NULL )
 				printf( "ConvertConfig failed[%d]\n" , nret );
 			free( p_conf );
 			free( p_env );
@@ -138,7 +138,7 @@ int main( int argc , char *argv[] )
 		free( p_conf );
 		if( nret )
 		{
-			if( getenv( HETAO_LISTEN_SOCKFDS ) == NULL )
+			if( GETENV( HETAO_LISTEN_SOCKFDS ) == NULL )
 				printf( "InitEnvirment failed[%d]\n" , nret );
 			return -nret;
 		}

@@ -136,7 +136,7 @@ int WriteLogBaseV( int log_level , char *c_filename , long c_fileline , char *fo
 	char		c_filename_copy[ MAXLEN_FILENAME + 1 ] ;
 	char		*p_c_filename = NULL ;
 	
-	char		log_buffer[ 1024 + 1 ] ;
+	char		log_buffer[ 40960 + 1 ] ;
 	char		*log_bufptr = NULL ;
 	size_t		log_buflen ;
 	size_t		log_buf_remain_len ;
@@ -298,7 +298,7 @@ int DebugLog( char *c_filename , long c_fileline , char *format , ... )
 
 int WriteHexLogBaseV( int log_level , char *c_filename , long c_fileline , char *buf , long buflen , char *format , va_list valist )
 {
-	char		hexlog_buffer[ 4096 * 10 + 1 ] ;
+	char		hexlog_buffer[ 409600 + 1 ] ;
 	char		*hexlog_bufptr = NULL ;
 	size_t		hexlog_buflen ;
 	size_t		hexlog_buf_remain_len ;

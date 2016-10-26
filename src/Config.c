@@ -10,8 +10,8 @@
 
 struct HetaoEnv	*g_p_env = NULL ;
 
-char	__HETAO_VERSION_0_11_0[] = "0.11.0" ;
-char	*__HETAO_VERSION = __HETAO_VERSION_0_11_0 ;
+char	__HETAO_VERSION_0_12_1[] = "0.12.1" ;
+char	*__HETAO_VERSION = __HETAO_VERSION_0_12_1 ;
 
 char *strndup(const char *s, size_t n);
 
@@ -272,14 +272,18 @@ static int ConvertLogLevel_atoi( char *log_level_desc , int *p_log_level )
 
 /* 装载整个文件 */
 /* 内有申请内存，请注意后续释放 */
+static char *StringExpandIncludeFile( char *config_pathfilename , char *buf , int *p_buf_size );
+
 static char *StrdupEntireFile( char *pathfilename , int *p_file_size )
 {
 	struct stat	st ;
-	char		*p_file_content = NULL ;
+	char		*file_content = NULL ;
+	int		file_size ;
 	FILE		*fp = NULL ;
 	
 	char		*p1 = NULL ;
 	char		*p2 = NULL ;
+	char		*tmp = NULL ;
 	
 	int		nret = 0 ;
 	
@@ -289,14 +293,15 @@ static char *StrdupEntireFile( char *pathfilename , int *p_file_size )
 		ErrorLog( __FILE__ , __LINE__ , "stat[%s] failed , errno[%d]" , pathfilename , ERRNO );
 		return NULL;
 	}
+	file_size = (int)(st.st_size) ;
 	
-	p_file_content = (char*)malloc( st.st_size+1 ) ;
-	if( p_file_content == NULL )
+	file_content = (char*)malloc( file_size+1 ) ;
+	if( file_content == NULL )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "malloc failed , errno[%d]" , ERRNO );
 		return NULL;
 	}
-	memset( p_file_content , 0x00 , st.st_size+1 );
+	memset( file_content , 0x00 , file_size+1 );
 	
 	fp = fopen( pathfilename , "rb" ) ;
 	if( fp == NULL )
@@ -305,7 +310,7 @@ static char *StrdupEntireFile( char *pathfilename , int *p_file_size )
 		return NULL;
 	}
 	
-	nret = fread( p_file_content , st.st_size , 1 , fp ) ;
+	nret = fread( file_content , file_size , 1 , fp ) ;
 	if( nret != 1 )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "fread failed , errno[%d]" , ERRNO );
@@ -314,50 +319,23 @@ static char *StrdupEntireFile( char *pathfilename , int *p_file_size )
 	
 	fclose( fp );
 	
-	while(1)
+	tmp = StringExpandIncludeFile( pathfilename , file_content , & file_size ) ;
+	if( tmp == NULL )
 	{
-		p1 = strstr( p_file_content , "//" ) ;
-		if( p1 == NULL )
-			break;
-	
-		p2 = strchr( p1+2 , '\n' ) ;
-		if( p2 )
-		{
-			memset( p1 , ' ' , p2-p1+1 );
-		}
-		else
-		{
-			memset( p1 , ' ' , strlen(p1) );
-		}
+		free( file_content );
+		return NULL;
 	}
-	
-	while(1)
-	{
-		p1 = strstr( p_file_content , "/*" ) ;
-		if( p1 == NULL )
-			break;
-	
-		p2 = strstr( p1+2 , "*/" ) ;
-		if( p2 )
-		{
-			memset( p1 , ' ' , p2-p1+1+1 );
-		}
-		else
-		{
-			ErrorLog( __FILE__ , __LINE__ , "[%s] invalid" , pathfilename );
-			free( p_file_content );
-			return NULL;
-		}
-	}
+	file_content = tmp ;
 	
 	if( p_file_size )
-		(*p_file_size) = (int)(st.st_size) ;
-	return p_file_content;
+		(*p_file_size) = file_size ;
+	return file_content;
 }
 
 /* 把字符串中的!include文件展开 */
 static char *StringExpandIncludeFile( char *config_pathfilename , char *buf , int *p_buf_size )
 {
+	char		include_config_pathfilename_base[ 256 + 1 ] ;
 	char		include_config_pathfilename[ 256 + 1 ] ;
 	char		*p = NULL ;
 	
@@ -373,24 +351,24 @@ static char *StringExpandIncludeFile( char *config_pathfilename , char *buf , in
 	
 	char		*tmp = NULL ;
 	
-	memset( include_config_pathfilename , 0x00 , sizeof(include_config_pathfilename) );
-	strcpy( include_config_pathfilename , config_pathfilename );
+	memset( include_config_pathfilename_base , 0x00 , sizeof(include_config_pathfilename_base) );
+	strcpy( include_config_pathfilename_base , config_pathfilename );
 	
-	p = strrchr( include_config_pathfilename , '/' ) ;
+	p = strrchr( include_config_pathfilename_base , '/' ) ;
 	if( p )
 	{
 		p[1] = '\0' ;
 	}
 	else
 	{
-		p = strrchr( include_config_pathfilename , '\\' ) ;
+		p = strrchr( include_config_pathfilename_base , '\\' ) ;
 		if( p )
 		{
 			p[1] = '\0' ;
 		}
 		else
 		{
-			include_config_pathfilename[0] = '\0' ;
+			include_config_pathfilename_base[0] = '\0' ;
 		}
 	}
 	
@@ -410,26 +388,36 @@ static char *StringExpandIncludeFile( char *config_pathfilename , char *buf , in
 		if( (*p2) == '\0' )
 			return NULL;
 		
-		p4 = strchr( p2 , '\n' ) ;
-		if( p4 == NULL )
+		if( (*p2) == '"' )
 		{
-			p4 = p2 + strlen(p2) - 1 ;
-			p3 = p4 ;
+			p2++;
+			p4 = strchr( p2 , '"' ) ;
+			if( p4 == NULL )
+				return NULL;
+			p3 = p4 - 1 ;
+			p4++;
 		}
 		else
 		{
+			p4 = strchr( p2 , '\n' ) ;
+			if( p4 == NULL )
+			{
+				p4 = p2 + strlen(p2) ;
+			}
 			p3 = p4 - 1 ;
+			while( p2 <= p3 )
+			{
+				if( ! strchr( " \r" , (*p3) ) )
+					break;
+				else
+					p3--;
+			}
+			if( p2 > p3 )
+				return NULL;
 		}
-		while( p2 <= p3 )
-		{
-			if( ! strchr( " \r" , (*p3) ) )
-				break;
-			else
-				p3--;
-		}
-		if( p2 > p3 )
-			return NULL;
 		
+		memset( include_config_pathfilename , 0x00 , sizeof(include_config_pathfilename) );
+		strcpy( include_config_pathfilename , include_config_pathfilename_base );
 		strncat( include_config_pathfilename , p2 , p3-p2+1 );
 		p_include_file_content = StrdupEntireFile( include_config_pathfilename , & include_file_size ) ;
 		if( p_include_file_content == NULL )
@@ -437,12 +425,24 @@ static char *StringExpandIncludeFile( char *config_pathfilename , char *buf , in
 			return NULL;
 		}
 		
+		p = p_include_file_content ;
+		while( p )
+		{
+			p = strpbrk( p , "\r\n" ) ;
+			if( p )
+			{
+				(*p) = ' ' ;
+				p++;
+			}
+		}
+		
 		offset = p1 - buf ;
-		len = p4 - p1 + 1 ;
+		len = p4 - p1 ;
 		
 		tmp = (char*)realloc( buf , (*p_buf_size) + (include_file_size-len) + 1 ) ;
 		if( tmp == NULL )
 		{
+			free( p_include_file_content );
 			return NULL;
 		}
 		buf = tmp ;
@@ -452,6 +452,15 @@ static char *StringExpandIncludeFile( char *config_pathfilename , char *buf , in
 		aaa\n!include bbb\nccc
 		     ^offset
 		     |    len    |
+		     p        p pp
+		     1        2 34
+		*/
+		/*
+		aaa\n!include "bbb"\nccc
+		     ^offset
+		     |    len    |
+		     p         p p p
+		     1         2 3 4
 		*/
 		memmove( buf+offset+len+(include_file_size-len) , buf+offset+len , strlen(buf+offset+len)+1 );
 		memcpy( buf+offset , p_include_file_content , include_file_size );
@@ -466,7 +475,6 @@ int LoadConfig( char *config_pathfilename , hetao_conf *p_config , struct HetaoE
 {
 	char		*buf = NULL ;
 	int		file_size ;
-	char		*tmp = NULL ;
 	
 	int		nret = 0 ;
 	
@@ -475,22 +483,12 @@ int LoadConfig( char *config_pathfilename , hetao_conf *p_config , struct HetaoE
 	if( buf == NULL )
 		return -1;
 	
-	/* 展开配置文件 */
-	tmp = StringExpandIncludeFile( config_pathfilename , buf , & file_size ) ;
-	if( tmp == NULL )
-	{
-		free( buf );
-		return -1;
-	}
-	buf = tmp ;
-	
 	/* 解析配置文件 */
 	nret = DSCDESERIALIZE_JSON_hetao_conf( NULL , buf , & file_size , p_config ) ;
 	free( buf );
 	if( nret )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "DSCDESERIALIZE_JSON_hetao_conf failed[%d][%d] , errno[%d]" , nret , DSCGetErrorLine_hetao_conf() , ERRNO );
-		ErrorHexLog( __FILE__ , __LINE__ , buf , file_size , "buf[%d]bytes" , file_size );
 		return -1;
 	}
 	

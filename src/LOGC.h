@@ -107,6 +107,8 @@ extern "C" {
 #define ACCESS		access
 #define ACCESS_MODE	R_OK
 #define UMASK		umask
+#define PUTENV		putenv
+#define GETENV		getenv
 #elif ( defined _WIN32 )
 #define TLS		__declspec( thread )
 #define STRDUP		_strdup
@@ -158,6 +160,8 @@ extern "C" {
 #define ACCESS		_access
 #define ACCESS_MODE	04
 #define UMASK		_umask
+#define PUTENV		_putenv
+#define GETENV		getenv
 #endif
 
 /* 简单日志函数 */
