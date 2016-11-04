@@ -1,3 +1,6 @@
+0.12.2		2016-11-04	calvin
+		* Fixed a bug about PUTENV buffer too short to can't running
+
 0.12.1		2016-10-26	calvin
 		* Process framework on WINDOWS version , parent process monitoring child process
 		* Fixed a bug about include file in configure

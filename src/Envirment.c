@@ -218,7 +218,7 @@ int SaveListenSockets( struct HetaoEnv *p_env )
 	struct list_head	*p_curr = NULL ;
 	struct ListenSession	*p_listen_session = NULL ;
 	
-	env_value_size = (1+p_env->listen_session_count)*(10+1) + 1 ;
+	env_value_size = sizeof(HETAO_LISTEN_SOCKFDS)+1+(1+p_env->listen_session_count)*(10+1) + 1 ;
 	env_value = (char*)malloc( env_value_size ) ;
 	if( env_value == NULL )
 		return -1;
