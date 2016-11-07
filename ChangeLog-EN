@@ -1,3 +1,6 @@
+0.12.3		2016-11-07	calvin
+		* Fixed some bugs on WINDOWS version
+
 0.12.2		2016-11-04	calvin
 		* Fixed a bug about PUTENV buffer too short to can't running
 

@@ -328,11 +328,8 @@ int MonitorProcess( void *pv )
 {
 	struct HetaoEnv		*p_env = (struct HetaoEnv *)pv ;
 	
-	/*
-	HANDLE			hReadPipe ;
-	HANDLE			hWritePipe ;
-	SECURITY_ATTRIBUTES	sa ;
-	*/
+	HANDLE			timer_thread_tid ;
+	
 	char			env_value[ 64 + 1 ] ;
 	
 	char			szCommandLine[ MAX_PATH + 1 ] ;
@@ -342,11 +339,26 @@ int MonitorProcess( void *pv )
 	DWORD			dwret ;
 	int			nret = 0 ;
 	
+	SetLogFile( p_env->error_log );
+	SetLogLevel( p_env->log_level );
 	SETPID
 	SETTID
 	UPDATEDATETIMECACHEFIRST
 	InfoLog( __FILE__ , __LINE__ , "--- master begin ---" );
 	
+	/* 创建定时器线程，用于更新日志中的日期时间等信息 */
+	timer_thread_tid = CreateThread( NULL , 0 , & TimerThread , NULL , 0 , NULL ) ;
+	if( nret )
+	{
+		ErrorLog( __FILE__ , __LINE__ , "pthread_create time thread failed , errno[%d]" , ERRNO );
+		return -1;
+	}
+	else
+	{
+		InfoLog( __FILE__ , __LINE__ , "parent_thread : [%lu] pthread_create TimerThread[%lu]" , (unsigned long)g_tid , (unsigned long)timer_thread_tid );
+	}
+	
+	/* 保留侦听信息等到环境变量 */
 	SaveListenSockets( p_env );
 	
 	memset( env_value , 0x00 , sizeof(env_value) );
@@ -357,33 +369,10 @@ int MonitorProcess( void *pv )
 	p_env->p_process_info->dwParentProcessId = GetCurrentProcessId() ;
 	InfoLog( __FILE__ , __LINE__ , "GetCurrentProcessId()[%d]" , p_env->p_process_info->dwParentProcessId );
 	
-	/* 创建命令管道 */
-	/*
-	memset( & sa , 0x00 , sizeof(SECURITY_ATTRIBUTES) );
-	sa.nLength = sizeof(SECURITY_ATTRIBUTES) ;
-	sa.bInheritHandle = TRUE ;
-	bret = CreatePipe( & hReadPipe , & hWritePipe , & sa , 0 ) ;
-	if( bret != TRUE )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "CreatePipe failed , errno[%d]" , ERRNO );
-		return -1;
-	}
-	DebugLog( __FILE__ , __LINE__ , "CreatePipe #%d# #%d#" , hReadPipe , hWritePipe );
-	
-	memset( env_value , 0x00 , sizeof(env_value) );
-	SNPRINTF( env_value , sizeof(env_value)-1 , "%s=%d" , HETAO_READ_PIPE , hReadPipe );
-	DebugLog( __FILE__ , __LINE__ , "putenv[%s]" , env_value );
-	PUTENV( env_value );
-	memset( env_value , 0x00 , sizeof(env_value) );
-	SNPRINTF( env_value , sizeof(env_value)-1 , "%s=%d" , HETAO_WRITE_PIPE , hWritePipe );
-	DebugLog( __FILE__ , __LINE__ , "putenv[%s]" , env_value );
-	PUTENV( env_value );
-	*/
-	
 	/* 创建进程  */
 	memset( szCommandLine , 0x00 , sizeof(szCommandLine) );
 	SNPRINTF( szCommandLine , sizeof(szCommandLine)-1 , "\"%s\" \"%s\" --child" , p_env->argv[0] , p_env->argv[1] );
-	bret = CreateProcess( NULL , szCommandLine , NULL , NULL , TRUE , 0 , NULL , NULL , & (p_env->p_process_info->si) , & (p_env->p_process_info->pi) ) ;
+	bret = CreateProcess( NULL , szCommandLine , NULL , NULL , TRUE , CREATE_NO_WINDOW , NULL , NULL , & (p_env->p_process_info->si) , & (p_env->p_process_info->pi) ) ;
 	if( bret == FALSE )
 	{
 		ErrorLog( __FILE__ , __LINE__ , "CreateProcess[%s] failed , errno[%d]" , szCommandLine , ERRNO );
@@ -392,13 +381,8 @@ int MonitorProcess( void *pv )
 	else
 	{
 		InfoLog( __FILE__ , __LINE__ , "CreateProcess[%s] ok" , szCommandLine );
-		//CloseHandle( hReadPipe );
 	}
 	
-	/*
-	memset( env_value , 0x00 , sizeof(env_value) );
-	SNPRINTF( env_value , sizeof(env_value)-1 , "%s=%d" , HETAO_READ_PIPE , hReadPipe );
-	*/
 	while(1)
 	{
 		/* 监控子进程结束 */
@@ -412,8 +396,6 @@ int MonitorProcess( void *pv )
 		{
 			InfoLog( __FILE__ , __LINE__ , "WaitForSingleObject ok" );
 		}
-		
-		// CloseHandle( hWritePipe );
 		
 		CloseHandle( p_env->p_process_info->pi.hProcess );
 		CloseHandle( p_env->p_process_info->pi.hThread );
@@ -449,33 +431,21 @@ int MonitorProcess( void *pv )
 			DebugLog( __FILE__ , __LINE__ , "[%s:%d] listen #%d#" , p_listen_session->netaddr.ip , p_listen_session->netaddr.port , p_listen_session->netaddr.sock );
 		}
 		
-		/* 创建命令管道 */
-		/*
-		memset( & sa , 0x00 , sizeof(SECURITY_ATTRIBUTES) );
-		sa.nLength = sizeof(SECURITY_ATTRIBUTES) ;
-		sa.bInheritHandle = TRUE ;
-		bret = CreatePipe( & hReadPipe , & hWritePipe , & sa , 0 ) ;
-		if( bret != TRUE )
-		{
-			ErrorLog( __FILE__ , __LINE__ , "CreatePipe failed , errno[%d]" , ERRNO );
-			return -1;
-		}
-		DebugLog( __FILE__ , __LINE__ , "CreatePipe #%d# #%d#" , hReadPipe , hWritePipe );
+		/* 保留侦听信息等到环境变量 */
+		SaveListenSockets( p_env );
 		
 		memset( env_value , 0x00 , sizeof(env_value) );
-		SNPRINTF( env_value , sizeof(env_value)-1 , "%s=%d" , HETAO_READ_PIPE , hReadPipe );
+		SNPRINTF( env_value , sizeof(env_value)-1 , "%s=%d" , HETAO_PROCESS_INFO , p_env->process_info_shmid );
 		DebugLog( __FILE__ , __LINE__ , "putenv[%s]" , env_value );
 		PUTENV( env_value );
-		memset( env_value , 0x00 , sizeof(env_value) );
-		SNPRINTF( env_value , sizeof(env_value)-1 , "%s=%d" , HETAO_WRITE_PIPE , hWritePipe );
-		DebugLog( __FILE__ , __LINE__ , "putenv[%s]" , env_value );
-		PUTENV( env_value );
-		*/
+		
+		p_env->p_process_info->dwParentProcessId = GetCurrentProcessId() ;
+		InfoLog( __FILE__ , __LINE__ , "GetCurrentProcessId()[%d]" , p_env->p_process_info->dwParentProcessId );
 		
 		/* 创建进程  */
 		memset( szCommandLine , 0x00 , sizeof(szCommandLine) );
 		SNPRINTF( szCommandLine , sizeof(szCommandLine)-1 , "\"%s\" \"%s\" --child" , p_env->argv[0] , p_env->argv[1] );
-		bret = CreateProcess( NULL , szCommandLine , NULL , NULL , TRUE , 0 , NULL , NULL , & (p_env->p_process_info->si) , & (p_env->p_process_info->pi) ) ;
+		bret = CreateProcess( NULL , szCommandLine , NULL , NULL , TRUE , CREATE_NO_WINDOW , NULL , NULL , & (p_env->p_process_info->si) , & (p_env->p_process_info->pi) ) ;
 		if( bret == FALSE )
 		{
 			ErrorLog( __FILE__ , __LINE__ , "CreateProcess[%s] failed , errno[%d]" , szCommandLine , ERRNO );
@@ -484,11 +454,12 @@ int MonitorProcess( void *pv )
 		else
 		{
 			InfoLog( __FILE__ , __LINE__ , "CreateProcess[%s] ok" , szCommandLine );
-			//CloseHandle( hReadPipe );
 		}
 		
 		Sleep( 1000 );
 	}
+	
+	TerminateThread( timer_thread_tid , 0 );
 	
 	return 0;
 }
