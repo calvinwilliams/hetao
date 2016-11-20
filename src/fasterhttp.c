@@ -60,7 +60,8 @@ struct HttpEnv
 	int			parse_step ;
 	struct HttpHeaders	headers ;
 	
-	char			*body ;
+	struct HttpBuffer	*p_body_buffer ;
+	int			body_base_offset ;
 	
 	char			*chunked_body ;
 	char			*chunked_body_end ;
@@ -225,7 +226,8 @@ void ResetHttpEnv( struct HttpEnv *e )
 	
 	e->parse_step = FASTERHTTP_PARSESTEP_BEGIN ;
 	
-	e->body = NULL ;
+	e->p_body_buffer = NULL ;
+	e->body_base_offset = 0 ;
 	
 	e->chunked_body = NULL ;
 	e->chunked_body_end = NULL ;
@@ -1124,13 +1126,15 @@ _GOTO_PARSESTEP_HEADER_NAME0 :
 				} \
 				else if( *(p_content_length) > 0 ) \
 				{ \
-					e->body = p ; \
+					e->p_body_buffer = b ; \
+					e->body_base_offset = p - b->base ; \
 					*(p_parse_step) = FASTERHTTP_PARSESTEP_BODY ; \
 					goto _GOTO_PARSESTEP_BODY; \
 				} \
 				else if( *(p_transfer_encoding__chunked) == 1 ) \
 				{ \
-					e->body = p ; \
+					e->p_body_buffer = b ; \
+					e->body_base_offset = p - b->base ; \
 					e->chunked_body_end = p ; \
 					*(p_parse_step) = FASTERHTTP_PARSESTEP_CHUNKED_SIZE ; \
 					goto _GOTO_PARSESTEP_CHUNKED_SIZE; \
@@ -1292,9 +1296,9 @@ _GOTO_PARSESTEP_BODY :
 			printf( "DEBUG_PARSER >>> case FASTERHTTP_PARSESTEP_BODY\n" );
 #endif
 			
-			if( LIKELY( fill_ptr - e->body >= *(p_content_length) ) )
+			if( LIKELY( (fill_ptr-b->base) - e->body_base_offset >= *(p_content_length) ) )
 			{
-				b->process_ptr = e->body + *(p_content_length) ;
+				b->process_ptr = b->base + e->body_base_offset + *(p_content_length) ;
 				*(p_parse_step) = FASTERHTTP_PARSESTEP_DONE ;
 				if( b->fill_ptr > b->process_ptr )
 					e->reforming_flag = 1 ;
@@ -1525,7 +1529,7 @@ static int UncompressBuffer( struct HttpEnv *e , struct HttpBuffer *b , char *p_
 		return FASTERHTTP_ERROR_ZLIB__+nret;
 	}
 	
-	stream.next_in = (Bytef*)(e->body) ;
+	stream.next_in = (Bytef*)(b->base+e->body_base_offset) ;
 	stream.avail_in = in_len ;
 	while(1)
 	{
@@ -1560,7 +1564,7 @@ static int UncompressBuffer( struct HttpEnv *e , struct HttpBuffer *b , char *p_
 		}
 	}
 	
-	new_buf_size = (e->body-b->base) + stream.total_out + 1 ;
+	new_buf_size = e->body_base_offset + stream.total_out + 1 ;
 	if( new_buf_size > b->buf_size )
 	{
 		nret = ReallocHttpBuffer( b , new_buf_size ) ;
@@ -1572,8 +1576,8 @@ static int UncompressBuffer( struct HttpEnv *e , struct HttpBuffer *b , char *p_
 		}
 	}
 	
-	memmove( e->body , out_base , stream.total_out );
-	b->fill_ptr = e->body + stream.total_out ;
+	memmove( b->base + e->body_base_offset , out_base , stream.total_out );
+	b->fill_ptr = b->base + e->body_base_offset + stream.total_out ;
 	e->headers.content_length = stream.total_out ;
 	
 	free( out_base );
@@ -2557,9 +2561,9 @@ char *GetHttpBodyPtr( struct HttpEnv *e , int *p_body_len )
 	if( p_body_len )
 		(*p_body_len) = e->headers.content_length ;
 	
-	if( e->headers.content_length > 0 )
+	if( e->p_body_buffer && e->headers.content_length > 0 )
 	{
-		return e->body;
+		return e->p_body_buffer->base+e->body_base_offset;
 	}
 	else
 	{
@@ -2637,7 +2641,7 @@ int StrcpyfHttpBuffer( struct HttpBuffer *b , char *format , ... )
 		va_start( valist , format );
 		len = VSNPRINTF( b->base , b->buf_size-1 , format , valist ) ;
 		va_end( valist );
-		if( len == -1 || len >= b->buf_size-1 )
+		if( len == -1 || len == b->buf_size-1 )
 		{
 			nret = ReallocHttpBuffer( b , -1 ) ;
 			if( nret )
@@ -2662,7 +2666,7 @@ int StrcpyvHttpBuffer( struct HttpBuffer *b , char *format , va_list valist )
 	while(1)
 	{
 		len = VSNPRINTF( b->base , b->buf_size-1 , format , valist ) ;
-		if( len == -1 || len >= b->buf_size-1 )
+		if( len == -1 || len == b->buf_size-1 )
 		{
 			nret = ReallocHttpBuffer( b , -1 ) ;
 			if( nret )
@@ -2697,6 +2701,8 @@ int StrcatHttpBuffer( struct HttpBuffer *b , char *str )
 	
 	return 0;
 }
+
+#include "LOGC.h"
 
 int StrcatfHttpBuffer( struct HttpBuffer *b , char *format , ... )
 {
@@ -2735,7 +2741,7 @@ int StrcatvHttpBuffer( struct HttpBuffer *b , char *format , va_list valist )
 	while(1)
 	{
 		len = VSNPRINTF( b->fill_ptr , b->buf_size-1 - (b->fill_ptr-b->base) , format , valist ) ;
-		if( len == -1 || len >= b->buf_size-1 - (b->fill_ptr-b->base) )
+		if( len == -1 || len == b->buf_size-1 - (b->fill_ptr-b->base) )
 		{
 			nret = ReallocHttpBuffer( b , -1 ) ;
 			if( nret )
