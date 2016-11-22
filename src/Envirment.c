@@ -13,6 +13,8 @@ int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf )
 	struct NetAddress	*old_netaddr_array = NULL ;
 	int			old_netaddr_array_count = 0 ;
 	
+	int			i ;
+	
 	int			nret = 0 ;
 	
 	/* 创建共享内存给工作进程组使用 */
@@ -139,6 +141,24 @@ int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf )
 		return -1;
 	}
 	
+#if ( defined __linux ) || ( defined __unix )
+	for( i = 0 ; i < p_env->worker_processes ; i++ )
+	{
+		/* 创建多路复用池 */
+		p_env->process_info_array[i].epoll_fd = epoll_create( 1024 ) ;
+		if( p_env->process_info_array[i].epoll_fd == -1 )
+		{
+			ErrorLog( __FILE__ , __LINE__ , "[%d]epoll_create failed , errno[%d]" , i , ERRNO );
+			return -1;
+		}
+		else
+		{
+			DebugLog( __FILE__ , __LINE__ , "[%d]epoll_create ok #%d#" , i , p_env->process_info_array[i].epoll_fd );
+		}
+		SetHttpCloseExec( p_env->process_info_array[i].epoll_fd );
+	}
+#endif
+	
 	return 0;
 }
 
@@ -166,13 +186,13 @@ void CleanEnvirment( struct HetaoEnv *p_env )
 		free( p_http_session_array );
 	}
 	
+#if ( defined __linux ) || ( defined __unix )
 	for( i = 0 ; i < p_env->worker_processes ; i++ )
 	{
-#if ( defined __linux ) || ( defined __unix )
 		DebugLog( __FILE__ , __LINE__ , "[%d]close epoll_fd #%d#" , i , p_env->process_info_array[i].epoll_fd );
 		CLOSE( p_env->process_info_array[i].epoll_fd );
-#endif
 	}
+#endif
 	
 	if( p_env->new_uri_re )
 	{
