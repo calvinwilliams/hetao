@@ -13,7 +13,9 @@ int InitEnvirment( struct HetaoEnv *p_env , hetao_conf *p_conf )
 	struct NetAddress	*old_netaddr_array = NULL ;
 	int			old_netaddr_array_count = 0 ;
 	
+#if ( defined __linux ) || ( defined __unix )
 	int			i ;
+#endif
 	
 	int			nret = 0 ;
 	
@@ -166,7 +168,9 @@ void CleanEnvirment( struct HetaoEnv *p_env )
 {
 	struct list_head	*p_curr = NULL , *p_next = NULL ;
 	
+#if ( defined __linux ) || ( defined __unix )
 	int			i ;
+#endif
 	struct HttpSession	*p_http_session = NULL ;
 	struct HttpSessionArray	*p_http_session_array = NULL ;
 	struct ListenSession	*p_listen_session = NULL ;
