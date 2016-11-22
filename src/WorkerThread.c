@@ -37,19 +37,6 @@ void *WorkerThread( void *pv )
 		BindCpuAffinity( p_env->process_info_index );
 	}
 	
-	/* 创建多路复用池 */
-	p_env->p_this_process_info->epoll_fd = epoll_create( 1024 ) ;
-	if( p_env->p_this_process_info->epoll_fd == -1 )
-	{
-		ErrorLog( __FILE__ , __LINE__ , "[%d]epoll_create failed , errno[%d]" , p_env->process_info_index , ERRNO );
-		return NULL;
-	}
-	else
-	{
-		DebugLog( __FILE__ , __LINE__ , "[%d]epoll_create ok #%d#" , p_env->process_info_index , p_env->p_this_process_info->epoll_fd );
-	}
-	SetHttpCloseExec( p_env->p_this_process_info->epoll_fd );
-	
 	/* 注册管道事件 */
 	p_env->pipe_session.type = DATASESSION_TYPE_PIPE ;
 	
