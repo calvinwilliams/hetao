@@ -115,7 +115,7 @@ int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_s
 
 #elif ( defined _WIN32 )
 
-int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_session , int *p_accepted_count )
+int OnAcceptingSocket( struct HetaoEnv *p_env , struct ListenSession *p_listen_session )
 {
 	struct sockaddr_in	addr ;
 	int			addrlen ;
