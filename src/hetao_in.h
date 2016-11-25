@@ -35,7 +35,7 @@ char *strndup (const char *s, size_t n);
 #define HETAO_PROCESS_INFO			"HETAO_PROCESS_INFO"	/* 环境变量名，用于优雅重启时传给下一辈的共享内存 */
 
 #define MAX_EPOLL_EVENTS			1000	/* 每次从epoll取回事件数量 */
-#define MAX_LISTEN_EPOLL_EVENTS			20	/* 每次从epoll取回侦听事件数量 */
+#define MAX_LISTEN_EPOLL_EVENTS			50	/* 每次从epoll取回侦听事件数量 */
 
 #define INIT_HTTP_SESSION_COUNT			100	/* 初始化HTTP通讯会话数量 */
 #define INCRE_HTTP_SESSION_COUNT		100	/* 每次补充的HTTP通讯会话数量 */
