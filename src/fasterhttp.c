@@ -686,7 +686,7 @@ static int ReceiveHttpBuffer1( SOCKET sock , SSL *ssl , struct HttpEnv *e , stru
 		len = (long)SSL_read( ssl , b->fill_ptr , 1 ) ;
 	if( len == -1 )
 	{
-		if( errno == EWOULDBLOCK )
+		if( errno == EAGAIN || errno == EWOULDBLOCK )
 			return FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER;
 		else if( errno == ECONNRESET )
 			return FASTERHTTP_ERROR_TCP_CLOSE;
@@ -1815,6 +1815,8 @@ int FormatHttpResponseStartLine( int status_code , struct HttpEnv *e , int fill_
 {
 	struct HttpBuffer	*b = GetHttpResponseBuffer(e) ;
 	
+	char			*version = NULL ;
+	int			version_len ;
 	char			*p_status_code_s = NULL ;
 	char			*p_status_text = NULL ;
 	
@@ -1823,134 +1825,149 @@ int FormatHttpResponseStartLine( int status_code , struct HttpEnv *e , int fill_
 	if( status_code <= 0 )
 		status_code = HTTP_INTERNAL_SERVER_ERROR ;
 	
+	version = GetHttpHeaderPtr_VERSION( e , & version_len );
+	if( version == NULL )
+		return -1;
+	
+	nret = StrcpyfHttpBuffer( b , "%.*s" , version_len , version ) ;
+	if( nret )
+		return nret;
+	
 	switch( status_code )
 	{
 		case HTTP_CONTINUE :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_CONTINUE_S " " HTTP_CONTINUE_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_CONTINUE_S " " HTTP_CONTINUE_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_SWITCHING_PROTOCOL :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_SWITCHING_PROTOCOL_S " " HTTP_SWITCHING_PROTOCOL_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_SWITCHING_PROTOCOL_S " " HTTP_SWITCHING_PROTOCOL_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_OK :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_OK_S " " HTTP_OK_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_OK_S " " HTTP_OK_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_CREATED :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_CREATED_S " " HTTP_CREATED_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_CREATED_S " " HTTP_CREATED_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_ACCEPTED :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_ACCEPTED_S " " HTTP_ACCEPTED_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_ACCEPTED_S " " HTTP_ACCEPTED_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_NON_AUTHORITATIVE_INFORMATION :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_NON_AUTHORITATIVE_INFORMATION_S " " HTTP_NON_AUTHORITATIVE_INFORMATION_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_NON_AUTHORITATIVE_INFORMATION_S " " HTTP_NON_AUTHORITATIVE_INFORMATION_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_NO_CONTENT :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_NO_CONTENT_S " " HTTP_NO_CONTENT_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_NO_CONTENT_S " " HTTP_NO_CONTENT_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_RESET_CONTENT :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_RESET_CONTENT_S " " HTTP_RESET_CONTENT_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_RESET_CONTENT_S " " HTTP_RESET_CONTENT_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_PARTIAL_CONTENT :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_PARTIAL_CONTENT_S " " HTTP_PARTIAL_CONTENT_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_PARTIAL_CONTENT_S " " HTTP_PARTIAL_CONTENT_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_MULTIPLE_CHOICES :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_MULTIPLE_CHOICES_S " " HTTP_MULTIPLE_CHOICES_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_MULTIPLE_CHOICES_S " " HTTP_MULTIPLE_CHOICES_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_MOVED_PERMANNETLY :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_MOVED_PERMANNETLY_S " " HTTP_MOVED_PERMANNETLY_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_MOVED_PERMANNETLY_S " " HTTP_MOVED_PERMANNETLY_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_FOUND :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_FOUND_S " " HTTP_FOUND_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_FOUND_S " " HTTP_FOUND_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_SEE_OTHER :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_SEE_OTHER_S " " HTTP_SEE_OTHER_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_SEE_OTHER_S " " HTTP_SEE_OTHER_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_NOT_MODIFIED :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_NOT_MODIFIED_S " " HTTP_NOT_MODIFIED_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_NOT_MODIFIED_S " " HTTP_NOT_MODIFIED_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_USE_PROXY :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_USE_PROXY_S " " HTTP_USE_PROXY_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_USE_PROXY_S " " HTTP_USE_PROXY_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_TEMPORARY_REDIRECT :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_TEMPORARY_REDIRECT_S " " HTTP_TEMPORARY_REDIRECT_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_TEMPORARY_REDIRECT_S " " HTTP_TEMPORARY_REDIRECT_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_BAD_REQUEST :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_BAD_REQUEST_S " " HTTP_BAD_REQUEST_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_BAD_REQUEST_S " " HTTP_BAD_REQUEST_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_UNAUTHORIZED :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_UNAUTHORIZED_S " " HTTP_UNAUTHORIZED_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_UNAUTHORIZED_S " " HTTP_UNAUTHORIZED_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_PAYMENT_REQUIRED :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_PAYMENT_REQUIRED_S " " HTTP_PAYMENT_REQUIRED_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_PAYMENT_REQUIRED_S " " HTTP_PAYMENT_REQUIRED_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_FORBIDDEN :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_FORBIDDEN_S " " HTTP_FORBIDDEN_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_FORBIDDEN_S " " HTTP_FORBIDDEN_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_NOT_FOUND :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_NOT_FOUND_S " " HTTP_NOT_FOUND_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_NOT_FOUND_S " " HTTP_NOT_FOUND_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_METHOD_NOT_ALLOWED :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_METHOD_NOT_ALLOWED_S " " HTTP_METHOD_NOT_ALLOWED_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_METHOD_NOT_ALLOWED_S " " HTTP_METHOD_NOT_ALLOWED_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_NOT_ACCEPTABLE :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_NOT_ACCEPTABLE_S " " HTTP_NOT_ACCEPTABLE_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_NOT_ACCEPTABLE_S " " HTTP_NOT_ACCEPTABLE_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_PROXY_AUTHENTICATION_REQUIRED :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_PROXY_AUTHENTICATION_REQUIRED_S " " HTTP_PROXY_AUTHENTICATION_REQUIRED_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_PROXY_AUTHENTICATION_REQUIRED_S " " HTTP_PROXY_AUTHENTICATION_REQUIRED_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_REQUEST_TIMEOUT :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_REQUEST_TIMEOUT_S " " HTTP_REQUEST_TIMEOUT_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_REQUEST_TIMEOUT_S " " HTTP_REQUEST_TIMEOUT_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_CONFLICT :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_CONFLICT_S " " HTTP_CONFLICT_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_CONFLICT_S " " HTTP_CONFLICT_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_GONE :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_GONE_S " " HTTP_GONE_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_GONE_S " " HTTP_GONE_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_LENGTH_REQUIRED :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_LENGTH_REQUIRED_S " " HTTP_LENGTH_REQUIRED_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_LENGTH_REQUIRED_S " " HTTP_LENGTH_REQUIRED_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_PRECONDITION_FAILED :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_PRECONDITION_FAILED_S " " HTTP_PRECONDITION_FAILED_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_PRECONDITION_FAILED_S " " HTTP_PRECONDITION_FAILED_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_REQUEST_ENTITY_TOO_LARGE :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_REQUEST_ENTITY_TOO_LARGE_S " " HTTP_REQUEST_ENTITY_TOO_LARGE_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_REQUEST_ENTITY_TOO_LARGE_S " " HTTP_REQUEST_ENTITY_TOO_LARGE_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_URI_TOO_LONG :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_URI_TOO_LONG_S " " HTTP_URI_TOO_LONG_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_URI_TOO_LONG_S " " HTTP_URI_TOO_LONG_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_UNSUPPORTED_MEDIA_TYPE :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_UNSUPPORTED_MEDIA_TYPE_S " " HTTP_UNSUPPORTED_MEDIA_TYPE_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_UNSUPPORTED_MEDIA_TYPE_S " " HTTP_UNSUPPORTED_MEDIA_TYPE_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_REQUESTED_RANGE_NOT_SATISFIABLE :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_REQUESTED_RANGE_NOT_SATISFIABLE_S " " HTTP_REQUESTED_RANGE_NOT_SATISFIABLE_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_REQUESTED_RANGE_NOT_SATISFIABLE_S " " HTTP_REQUESTED_RANGE_NOT_SATISFIABLE_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_EXPECTATION_FAILED :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_EXPECTATION_FAILED_S " " HTTP_EXPECTATION_FAILED_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_EXPECTATION_FAILED_S " " HTTP_EXPECTATION_FAILED_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_INTERNAL_SERVER_ERROR :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_INTERNAL_SERVER_ERROR_S " " HTTP_INTERNAL_SERVER_ERROR_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_INTERNAL_SERVER_ERROR_S " " HTTP_INTERNAL_SERVER_ERROR_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_NOT_IMPLEMENTED :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_NOT_IMPLEMENTED_S " " HTTP_NOT_IMPLEMENTED_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_NOT_IMPLEMENTED_S " " HTTP_NOT_IMPLEMENTED_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_BAD_GATEWAY :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_BAD_GATEWAY_S " " HTTP_BAD_GATEWAY_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_BAD_GATEWAY_S " " HTTP_BAD_GATEWAY_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_SERVICE_UNAVAILABLE :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_SERVICE_UNAVAILABLE_S " " HTTP_SERVICE_UNAVAILABLE_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_SERVICE_UNAVAILABLE_S " " HTTP_SERVICE_UNAVAILABLE_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_GATEWAY_TIMEOUT :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_GATEWAY_TIMEOUT_S " " HTTP_GATEWAY_TIMEOUT_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_GATEWAY_TIMEOUT_S " " HTTP_GATEWAY_TIMEOUT_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		case HTTP_VERSION_NOT_SUPPORTED :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_VERSION_NOT_SUPPORTED_S " " HTTP_VERSION_NOT_SUPPORTED_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_VERSION_NOT_SUPPORTED_S " " HTTP_VERSION_NOT_SUPPORTED_T HTTP_RETURN_NEWLINE ) ;
 			break;
 		default :
-			nret = StrcpyHttpBuffer( b , HTTP_VERSION_1_1 " " HTTP_INTERNAL_SERVER_ERROR_S " " HTTP_INTERNAL_SERVER_ERROR_T HTTP_RETURN_NEWLINE ) ;
+			nret = StrcatfHttpBuffer( b , " " HTTP_INTERNAL_SERVER_ERROR_S " " HTTP_INTERNAL_SERVER_ERROR_T HTTP_RETURN_NEWLINE ) ;
 			break;
 	}
 	if( nret )
 		return nret;
+	
+	if( CheckHttpKeepAlive(e) )
+	{
+		nret = StrcatHttpBuffer( b , "Connection: keep-alive" HTTP_RETURN_NEWLINE ) ;
+		if( nret )
+			return nret;
+	}
 	
 	if( format )
 	{
@@ -1971,11 +1988,10 @@ int FormatHttpResponseStartLine( int status_code , struct HttpEnv *e , int fill_
 	
 	if( fill_body_with_status_flag )
 	{
-		nret = StrcatfHttpBuffer( b	, "Content-length: %d%s"
+		nret = StrcatfHttpBuffer( b	, "Content-length: %d" HTTP_RETURN_NEWLINE
+						HTTP_RETURN_NEWLINE
 						"%s"
-						"%s %s"
-						, strlen(p_status_text) , HTTP_RETURN_NEWLINE
-						, HTTP_RETURN_NEWLINE
+						, strlen(p_status_text)
 						, p_status_text
 						) ;
 		if( nret )
@@ -2701,8 +2717,6 @@ int StrcatHttpBuffer( struct HttpBuffer *b , char *str )
 	
 	return 0;
 }
-
-#include "LOGC.h"
 
 int StrcatfHttpBuffer( struct HttpBuffer *b , char *format , ... )
 {
