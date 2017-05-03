@@ -1167,9 +1167,10 @@ funcCallbackOnJsonNode CallbackOnJsonNode_hetao_conf ;
 int CallbackOnJsonNode_hetao_conf( int type , char *jpath , int jpath_len , int jpath_size , char *node , int node_len , char *content , int content_len , void *p )
 {
 	hetao_conf	*pst = (hetao_conf*)p ;
-	int	index[10] = { 0 } ; index[0]++; index[0] = 0 ;
+	int	index[10] = { 0 } ;
 	int	len ;
-	
+
+	index[0]++; 
 	index[0] = 0 ;
 	len = 0 ;
 	

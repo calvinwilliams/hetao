@@ -119,6 +119,10 @@ char *strcasestr(const char *haystack, const char *needle);
 #define STAT_DIRECTORY(_st_) S_ISDIR(_st_.st_mode)
 #endif
 
+#ifndef va_copy
+#define va_copy(dst, src)   memcpy(&(dst), &(src), sizeof(va_list))
+#endif
+
 #define HTTP_CONTINUE				100 
 #define HTTP_SWITCHING_PROTOCOL			101 
 #define HTTP_OK					200 
