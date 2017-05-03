@@ -61,8 +61,6 @@ static void sig_proc( struct HetaoEnv *p_env )
 	{
 		pid_t			pid ;
 		
-		int			nret = 0 ;
-		
 		/* 保存侦听信息到环境变量中 */
 		nret = SaveListenSockets( g_p_env ) ;
 		if( nret )

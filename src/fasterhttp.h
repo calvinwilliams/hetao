@@ -119,6 +119,10 @@ char *strcasestr(const char *haystack, const char *needle);
 #define STAT_DIRECTORY(_st_) S_ISDIR(_st_.st_mode)
 #endif
 
+#ifndef va_copy
+#define va_copy(dst, src)   memcpy(&(dst), &(src), sizeof(va_list))
+#endif
+
 #define HTTP_CONTINUE				100 
 #define HTTP_SWITCHING_PROTOCOL			101 
 #define HTTP_OK					200 
@@ -242,26 +246,26 @@ char *strcasestr(const char *haystack, const char *needle);
 #define HTTP_GATEWAY_TIMEOUT_T			"Gateway Timeout"
 #define HTTP_VERSION_NOT_SUPPORTED_T		"HTTP Version Not Supported"
 
-#define FASTERHTTP_ERROR_ALLOC				(-HTTP_INTERNAL_SERVER_ERROR*100)-11
-#define FASTERHTTP_ERROR_PARAMTER			(-HTTP_INTERNAL_SERVER_ERROR*100)-12
-#define FASTERHTTP_ERROR_INTERNAL			(-HTTP_INTERNAL_SERVER_ERROR*100)-14
-#define FASTERHTTP_ERROR_FILE_NOT_FOUND			(-HTTP_NOT_FOUND*100)
-#define FASTERHTTP_ERROR_TCP_SELECT_RECEIVE		(-HTTP_BAD_REQUEST*100)-31
-#define FASTERHTTP_ERROR_TCP_SELECT_RECEIVE_TIMEOUT	(-HTTP_REQUEST_TIMEOUT*100)-32
-#define FASTERHTTP_ERROR_TCP_RECEIVE			(-HTTP_BAD_REQUEST*100)-33
-#define FASTERHTTP_INFO_TCP_SEND_WOULDBLOCK		10
-#define FASTERHTTP_ERROR_TCP_SELECT_SEND		(-HTTP_BAD_REQUEST*100)-41
-#define FASTERHTTP_ERROR_TCP_SELECT_SEND_TIMEOUT	(-HTTP_REQUEST_TIMEOUT*100)-42
-#define FASTERHTTP_ERROR_TCP_SEND			(-HTTP_BAD_REQUEST*100)-43
-#define FASTERHTTP_ERROR_TCP_CLOSE			-200
-#define FASTERHTTP_INFO_TCP_CLOSE			200
-#define FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER		100
-#define FASTERHTTP_ERROR_METHOD_INVALID			(-HTTP_NOT_IMPLEMENTED*100)
-#define FASTERHTTP_ERROR_VERSION_NOT_SUPPORTED		(-HTTP_VERSION_NOT_SUPPORTED*100)
-#define FASTERHTTP_ERROR_HTTP_HEADERSTARTLINE_INVALID	(-HTTP_BAD_REQUEST*100)-51
-#define FASTERHTTP_ERROR_HTTP_HEADER_INVALID		(-HTTP_BAD_REQUEST*100)-52
-#define FASTERHTTP_ERROR_HTTP_TRUNCATE			(-HTTP_BAD_REQUEST*100)-61
-#define FASTERHTTP_ERROR_ZLIB__				(-HTTP_INTERNAL_SERVER_ERROR*100)
+#define FASTERHTTP_ERROR_ALLOC				-11	/* 申请内存失败 */
+#define FASTERHTTP_ERROR_PARAMTER			-12	/* 参数无效 */
+#define FASTERHTTP_ERROR_INTERNAL			-14	/* 内部错误 */
+#define FASTERHTTP_ERROR_TCP_SELECT_SEND		-31	/* 通讯发送SELECT报错 */
+#define FASTERHTTP_ERROR_TCP_SELECT_SEND_TIMEOUT	-32	/* 通讯发送超时 */
+#define FASTERHTTP_ERROR_TCP_SEND			-33	/* 通讯发送报错 */
+#define FASTERHTTP_INFO_TCP_SEND_WOULDBLOCK		35	/* 通讯发送重试 */
+#define FASTERHTTP_ERROR_TCP_SELECT_RECEIVE		-41	/* 通讯接收SELECT报错 */
+#define FASTERHTTP_ERROR_TCP_SELECT_RECEIVE_TIMEOUT	-42	/* 通讯接收超时 */
+#define FASTERHTTP_ERROR_TCP_RECEIVE			-43	/* 通讯接收报错 */
+#define FASTERHTTP_ERROR_TCP_CLOSE			-44	/* 通讯连接异常断开 */
+#define FASTERHTTP_INFO_TCP_CLOSE			45	/* 通讯连接正常断开 */
+#define FASTERHTTP_INFO_NEED_MORE_HTTP_BUFFER		46	/* 通讯接收重试 */
+#define FASTERHTTP_ERROR_METHOD_INVALID			-51	/* HTTP方法无效 */
+#define FASTERHTTP_ERROR_VERSION_NOT_SUPPORTED		-52	/* HTTP版本不支持 */
+#define FASTERHTTP_ERROR_HTTP_HEADERSTARTLINE_INVALID	-53	/* HTTP首行无效 */
+#define FASTERHTTP_ERROR_HTTP_HEADER_INVALID		-54	/* HTTP头无效 */
+#define FASTERHTTP_ERROR_HTTP_TRUNCATE			-55	/* HTTP被截短 */
+#define FASTERHTTP_ERROR_ZLIB__				-81	/* ZLIB报错 */
+#define FASTERHTTP_ERROR_FILE_NOT_FOUND			-82	/* 文件不存在 */
 
 #define FASTERHTTP_TIMEOUT_DEFAULT			60
 
@@ -348,7 +352,7 @@ _WINDLL_FUNC void ResetHttpEnv( struct HttpEnv *e );
 _WINDLL_FUNC void DestroyHttpEnv( struct HttpEnv *e );
 
 /* properties */
-_WINDLL_FUNC void SetHttpTimeout( struct HttpEnv *e , long timeout );
+_WINDLL_FUNC void SetHttpTimeout( struct HttpEnv *e , int timeout );
 _WINDLL_FUNC struct timeval *GetHttpElapse( struct HttpEnv *e );
 _WINDLL_FUNC void EnableHttpResponseCompressing( struct HttpEnv *e , int enable_response_compressing );
 
@@ -356,6 +360,12 @@ _WINDLL_FUNC void SetParserCustomIntData( struct HttpEnv *e , int i );
 _WINDLL_FUNC int GetParserCustomIntData( struct HttpEnv *e );
 _WINDLL_FUNC void SetParserCustomPtrData( struct HttpEnv *e , void *ptr );
 _WINDLL_FUNC void *GetParserCustomPtrData( struct HttpEnv *e );
+
+typedef int funcProcessBeforeSendProc( struct HttpEnv *e , struct HttpBuffer *b );
+_WINDLL_FUNC void SetProcessBeforeSendProc( struct HttpEnv *e , funcProcessBeforeSendProc *pfuncProcessBeforeSendProc );
+
+typedef int funcProcessAfterReceiveProc( struct HttpEnv *e , struct HttpBuffer *b );
+_WINDLL_FUNC void SetProcessAfterReceiveProc( struct HttpEnv *e , funcProcessAfterReceiveProc *pfuncProcessAfterReceiveProc );
 
 /* global properties */
 _WINDLL_FUNC void ResetAllHttpStatus();
@@ -366,8 +376,8 @@ _WINDLL_FUNC void GetHttpStatus( int status_code , char **pp_status_code_s , cha
 _WINDLL_FUNC int RequestHttp( SOCKET sock , SSL *ssl , struct HttpEnv *e );
 
 /* http server advance api */
-typedef int funcProcessHttpRequest( struct HttpEnv *e , void *p );
-_WINDLL_FUNC int ResponseAllHttp( SOCKET sock , SSL *ssl , struct HttpEnv *e , funcProcessHttpRequest *pfuncProcessHttpRequest , void *p );
+typedef int funcProcessHttpRequest( struct HttpEnv *e );
+_WINDLL_FUNC int ResponseAllHttp( SOCKET sock , SSL *ssl , struct HttpEnv *e , funcProcessHttpRequest *pfuncProcessHttpRequest );
 
 /* http client api */
 _WINDLL_FUNC int SendHttpRequest( SOCKET sock , SSL *ssl , struct HttpEnv *e );
@@ -418,6 +428,7 @@ _WINDLL_FUNC int GetHttpHeaderValueLen( struct HttpHeader *p_header );
 
 _WINDLL_FUNC char *GetHttpBodyPtr( struct HttpEnv *e , int *p_body_len );
 _WINDLL_FUNC int GetHttpBodyLen( struct HttpEnv *e );
+_WINDLL_FUNC void TruncateHttpBodyLen( struct HttpEnv *e , int new_length );
 
 /* buffer operations */
 _WINDLL_FUNC struct HttpBuffer *GetHttpRequestBuffer( struct HttpEnv *e );
@@ -435,7 +446,7 @@ _WINDLL_FUNC int StrcatHttpBuffer( struct HttpBuffer *b , char *str );
 _WINDLL_FUNC int StrcatfHttpBuffer( struct HttpBuffer *b , char *format , ... );
 _WINDLL_FUNC int StrcatvHttpBuffer( struct HttpBuffer *b , char *format , va_list valist );
 _WINDLL_FUNC int MemcatHttpBuffer( struct HttpBuffer *b , char *base , int len );
-_WINDLL_FUNC int StrcatHttpBufferFromFile( struct HttpBuffer *b , char *pathfilename , int *p_filesize );
+_WINDLL_FUNC int MemcatHttpBufferFromFile( struct HttpBuffer *b , char *pathfilename , int *p_file_len );
 
 _WINDLL_FUNC int InitHttpBuffer( struct HttpBuffer *b , int buf_size );
 _WINDLL_FUNC int InitHttpBuffer2( struct HttpBuffer *b , int buf_size , char *base );
@@ -451,14 +462,16 @@ _WINDLL_FUNC int DuplicateHttpBufferPtr( struct HttpBuffer *b );
 
 _WINDLL_FUNC void AppendHttpBuffer( struct HttpEnv *e , struct HttpBuffer *b );
 
+_WINDLL_FUNC char *GetHttpBufferFillPtr( struct HttpBuffer *b );
+_WINDLL_FUNC void SetHttpBufferFillPtr( struct HttpBuffer *b , int offset );
 _WINDLL_FUNC void OffsetHttpBufferFillPtr( struct HttpBuffer *b , int offset );
-_WINDLL_FUNC int GetHttpBufferLengthFilled( struct HttpBuffer *b );
 _WINDLL_FUNC int GetHttpBufferLengthUnfilled( struct HttpBuffer *b );
 _WINDLL_FUNC void OffsetHttpBufferProcessPtr( struct HttpBuffer *b , int offset );
 _WINDLL_FUNC int GetHttpBufferLengthProcessed( struct HttpBuffer *b );
 _WINDLL_FUNC int GetHttpBufferLengthUnprocessed( struct HttpBuffer *b );
 
 _WINDLL_FUNC void CopyHttpHeader_STATUSCODE( struct HttpEnv *e , struct HttpEnv *e2 );
+_WINDLL_FUNC int GetHttpStatusCode( struct HttpEnv *e );
 
 /* util */
 #define SetHttpReuseAddr(_sock_) \

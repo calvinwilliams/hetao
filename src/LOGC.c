@@ -197,13 +197,13 @@ int WriteLogBase( int log_level , char *c_filename , long c_fileline , char *for
 {
 	va_list		valist ;
 	
-	int		nret = 0 ;
+	int		nret ;
 	
 	va_start( valist , format );
 	nret = WriteLogBaseV( log_level , c_filename , c_fileline , format , valist );
 	va_end( valist );
 	
-	return 0;
+	return nret;
 }
 
 #if ( defined __STDC_VERSION__ ) && ( __STDC_VERSION__ >= 199901 )
@@ -403,13 +403,13 @@ int WriteHexLogBase( int log_level , char *c_filename , long c_fileline , char *
 {
 	va_list		valist ;
 	
-	int		nret = 0 ;
+	int		nret ;
 	
 	va_start( valist , format );
 	nret = WriteHexLogBaseV( log_level , c_filename , c_fileline , buf , buflen , format , valist ) ;
 	va_end( valist );
 	
-	return 0;
+	return nret;
 }
 
 #if ( defined __STDC_VERSION__ ) && ( __STDC_VERSION__ >= 199901 )
