@@ -24,7 +24,6 @@ void *WorkerThread( void *pv )
 	struct DataSession	*p_data_session = NULL ;
 	struct list_head	*p_curr = NULL ;
 	struct ListenSession	*p_listen_session = NULL ;
-	struct HtmlCacheSession	*p_htmlcache_session = NULL ;
 	struct HttpSession	*p_http_session = NULL ;
 	
 	int			nret = 0 ;
@@ -479,8 +478,6 @@ void *WorkerThread( void *pv )
 			/* 如果是网页缓存事件 */
 			else if( p_data_session->type == DATASESSION_TYPE_HTMLCACHE )
 			{
-				p_htmlcache_session = (struct HtmlCacheSession *)p_data_session ;
-				
 				DebugLog( __FILE__ , __LINE__ , "[%d]DATASESSION_TYPE_HTMLCACHE[%p] ---------" , p_env->process_info_index , p_data_session );
 				
 				nret = HtmlCacheEventHander( p_env ) ;

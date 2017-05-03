@@ -1,3 +1,6 @@
+0.13.0		2017-05-03	calvin
+		* Update LOGC,fasterhttp
+
 0.12.5		2016-11-23	calvin
 		* Fixed a bug about not enough load-balace on multi-processes
 
