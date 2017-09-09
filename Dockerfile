@@ -2,6 +2,8 @@
 #   docker pull centos
 #   after make hetao , NOT make clean
 
+# build like this : docker build -f Dockerfile -t hetao .
+
 FROM centos
 
 MAINTAINER calvinwilliams@163.com
@@ -15,9 +17,6 @@ COPY src/hetaocheck /usr/local/bin/hetaocheck
 COPY src/minihetao /usr/local/bin/minihetao
 
 WORKDIR /tmp
-
-RUN echo "then run the following command to build docker image"
-RUN echo "docker build -f Dockerfile -t hetao ."
 
 RUN echo "then run the following command to start docker container"
 RUN echo "docker run -d -v /etc/hetao:/etc/hetao -v /var/hetao/www:/var/hetao/www -v /var/hetao/log:/var/hetao/log -p 80:80 hetao /usr/local/bin/hetao /etc/hetao/hetao.conf --no-daemon"

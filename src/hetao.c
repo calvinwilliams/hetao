@@ -144,7 +144,7 @@ int main( int argc , char *argv[] )
 		}
 		
 #if ( defined __linux ) || ( defined __unix )
-		if( STRCMP( argv[2] , == , "--no-daemon" ) )
+		if( argc == 1 + 2 && STRCMP( argv[2] , == , "--no-daemon" ) )
 		{
 			return -MonitorProcess( (void*)p_env );
 		}
