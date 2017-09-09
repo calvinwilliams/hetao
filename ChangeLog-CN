@@ -1,3 +1,6 @@
+0.14.0		2017-09-09	calvin
+		* 增加Dockerfile，支持docker容器了
+
 0.13.0		2017-05-03	calvin
 		* 同步更新了第三方库LOGC,fasterhttp
 
