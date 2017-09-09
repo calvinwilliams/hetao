@@ -42,7 +42,7 @@ int main( int argc , char *argv[] )
 	/* …Ë÷√Œƒº˛—⁄¬Î0 */
 	UMASK(0);
 	
-	if( argc == 1 + 1 || ( argc == 1 + 2 && ( STRCMP( argv[2] , == , "--service" ) || STRCMP( argv[2] , == , "--child" ) ) ) )
+	if( argc == 1 + 1 || ( argc == 1 + 2 && ( STRCMP( argv[2] , == , "--no-daemon" ) || STRCMP( argv[2] , == , "--service" ) || STRCMP( argv[2] , == , "--child" ) ) ) )
 	{
 #if ( defined __linux ) || ( defined __unix )
 #elif ( defined _WIN32 )
@@ -144,7 +144,14 @@ int main( int argc , char *argv[] )
 		}
 		
 #if ( defined __linux ) || ( defined __unix )
-		return -BindDaemonServer( & MonitorProcess , p_env );
+		if( STRCMP( argv[2] , == , "--no-daemon" ) )
+		{
+			return -MonitorProcess( (void*)p_env );
+		}
+		else
+		{
+			return -BindDaemonServer( & MonitorProcess , p_env );
+		}
 #elif ( defined _WIN32 )
 		if( argc == 1 + 2 && STRCMP( argv[2] , == , "--service" ) )
 		{
