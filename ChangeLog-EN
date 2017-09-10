@@ -1,5 +1,6 @@
 0.14.0		2017-09-09	calvin
 		* Add Dockerfile , support docker container
+		* Adjust kernel options addon file : conf/sysctl.conf.add
 
 0.13.0		2017-05-03	calvin
 		* Update LOGC,fasterhttp

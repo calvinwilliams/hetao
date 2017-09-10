@@ -19,7 +19,7 @@ COPY src/minihetao /usr/local/bin/minihetao
 WORKDIR /tmp
 
 RUN echo "then run the following command to start docker container"
-RUN echo "docker run -d -v /etc/hetao:/etc/hetao -v /var/hetao/www:/var/hetao/www -v /var/hetao/log:/var/hetao/log -p 80:80 hetao /usr/local/bin/hetao /etc/hetao/hetao.conf --no-daemon"
+RUN echo "docker run -d -v /etc/hetao:/etc/hetao -v /var/hetao/www:/var/hetao/www -v /var/hetao/log:/var/hetao/log -p 80:80 --net=host hetao /usr/local/bin/hetao /etc/hetao/hetao.conf --no-daemon"
 
 # DISCARD :
 #   docker run -it -v /media:/media -v /etc/hetao:/etc/hetao -v /var/hetao/www:/var/hetao/www -v /var/hetao/log:/var/hetao/log -p 80:80 --net=host --privileged=true hetao /bin/bash

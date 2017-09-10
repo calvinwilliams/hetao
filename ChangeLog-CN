@@ -1,5 +1,6 @@
 0.14.0		2017-09-09	calvin
 		* 增加Dockerfile，支持docker容器了
+		* 调整了内核参数引用文件conf/sysctl.conf.add
 
 0.13.0		2017-05-03	calvin
 		* 同步更新了第三方库LOGC,fasterhttp
