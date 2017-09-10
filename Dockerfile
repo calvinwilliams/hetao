@@ -1,6 +1,6 @@
 # NOTICE :
 #   docker pull centos
-#   after make hetao , NOT make clean
+#   AFTER make -f makefile.Linux && sudo make -f makefile.Linux install , NOT make -f makefile.Linux clean
 
 # build like this : docker build -f Dockerfile -t hetao .
 
@@ -15,6 +15,10 @@ RUN yum install lynx -y
 COPY src/hetao /usr/local/bin/hetao
 COPY src/hetaocheck /usr/local/bin/hetaocheck
 COPY src/minihetao /usr/local/bin/minihetao
+
+RUN mkdir -p /etc/hetao
+RUN mkdir -p /var/hetao/www
+RUN mkdir -p /var/hetao/log
 
 WORKDIR /tmp
 
